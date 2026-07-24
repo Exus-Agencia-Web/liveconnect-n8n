@@ -1,0 +1,39 @@
+name: Release
+
+# Publica el paquete a npm cuando se publica un release en GitHub
+# (o manualmente desde la pestaña Actions con workflow_dispatch).
+# Requiere el secret NPM_TOKEN (token de npm con permiso de publish).
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # requerido para npm provenance
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: 'https://registry.npmjs.org'
+
+      # --ignore-scripts: isolated-vm (transitiva de n8n-workflow) no compila
+      # en runners sin toolchain nativa; ninguna dependencia nuestra necesita
+      # scripts de instalación. prepublishOnly (build + lint estricto) sí corre
+      # durante npm publish.
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Publish to npm
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
