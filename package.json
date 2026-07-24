@@ -1,0 +1,61 @@
+{
+	"name": "n8n-nodes-liveconnect",
+	"version": "0.1.0",
+	"description": "n8n community node for the LiveConnect API (omnichannel messaging + CRM): contacts, conversations, WhatsApp QR & Business API, CRM deals, catalog, AI assistants and more",
+	"keywords": [
+		"n8n-community-node-package",
+		"liveconnect",
+		"whatsapp",
+		"waba",
+		"crm",
+		"chat",
+		"omnichannel",
+		"messaging"
+	],
+	"license": "MIT",
+	"homepage": "https://liveconnect.chat",
+	"author": {
+		"name": "Herduin Rivera",
+		"email": "hrivera@exus.com.co"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/exuscol/n8n-nodes-liveconnect.git"
+	},
+	"engines": {
+		"node": ">=20.15"
+	},
+	"main": "index.js",
+	"scripts": {
+		"build": "tsc && gulp build:icons",
+		"dev": "tsc --watch",
+		"format": "prettier nodes credentials --write",
+		"lint": "eslint nodes credentials package.json",
+		"lintfix": "eslint nodes credentials package.json --fix",
+		"prepublishOnly": "npm run build && eslint -c .eslintrc.prepublish.js nodes credentials package.json"
+	},
+	"files": [
+		"dist"
+	],
+	"n8n": {
+		"n8nNodesApiVersion": 1,
+		"credentials": [
+			"dist/credentials/LiveConnectApi.credentials.js"
+		],
+		"nodes": [
+			"dist/nodes/LiveConnect/LiveConnect.node.js"
+		]
+	},
+	"devDependencies": {
+		"@typescript-eslint/parser": "~8.32.0",
+		"eslint": "^8.57.0",
+		"eslint-plugin-n8n-nodes-base": "^1.16.3",
+		"gulp": "^5.0.0",
+		"n8n-workflow": "^1.82.0",
+		"prettier": "^3.5.3",
+		"typescript": "^5.8.2"
+	},
+	"peerDependencies": {
+		"n8n-workflow": "*"
+	}
+}

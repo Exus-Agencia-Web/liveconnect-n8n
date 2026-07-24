@@ -1,0 +1,391 @@
+import type { INodeProperties } from 'n8n-workflow';
+
+import { handleLcResponse } from '../GenericFunctions';
+
+export const historyOperations: INodeProperties[] = [
+	{
+		displayName: 'Operation',
+		name: 'operation',
+		type: 'options',
+		noDataExpression: true,
+		displayOptions: {
+			show: {
+				resource: ['history'],
+			},
+		},
+		options: [
+			{
+				name: 'Get Attachments',
+				value: 'getAttachments',
+				action: 'Get attachments of a conversation',
+				description: 'Lista los anexos (archivos) de una conversación',
+				routing: {
+					request: { method: 'POST', url: '/history/attachments' },
+					output: { postReceive: [handleLcResponse] },
+				},
+			},
+			{
+				name: 'Get Conversation',
+				value: 'getConversation',
+				action: 'Get a conversation',
+				description: 'Retorna una conversación junto con sus mensajes, anexos y participantes',
+				routing: {
+					request: { method: 'POST', url: '/history/conversation' },
+					output: { postReceive: [handleLcResponse] },
+				},
+			},
+			{
+				name: 'Get Many Conversations',
+				value: 'getManyConversations',
+				action: 'Get many conversations',
+				description: 'Lista las conversaciones históricas de la cuenta, paginadas y con filtros opcionales',
+				routing: {
+					request: { method: 'POST', url: '/history/conversations' },
+					output: { postReceive: [handleLcResponse] },
+				},
+			},
+			{
+				name: 'Get Messages',
+				value: 'getMessages',
+				action: 'Get messages of a conversation',
+				description: 'Lista los mensajes de una conversación',
+				routing: {
+					request: { method: 'POST', url: '/history/messages' },
+					output: { postReceive: [handleLcResponse] },
+				},
+			},
+			{
+				name: 'Get Participants',
+				value: 'getParticipants',
+				action: 'Get participants of a conversation',
+				description: 'Lista los participantes (agentes) de una conversación',
+				routing: {
+					request: { method: 'POST', url: '/history/participants' },
+					output: { postReceive: [handleLcResponse] },
+				},
+			},
+		],
+		default: 'getManyConversations',
+	},
+];
+
+export const historyFields: INodeProperties[] = [
+	// ----------------------------------
+	//         history: getAttachments
+	// ----------------------------------
+	{
+		displayName: 'Filters',
+		name: 'filters',
+		type: 'collection',
+		placeholder: 'Add Filter',
+		default: {},
+		description: 'Requiere el ID de la conversación o el ID de conversación en Firebase',
+		displayOptions: {
+			show: {
+				resource: ['history'],
+				operation: ['getAttachments'],
+			},
+		},
+		options: [
+			{
+				displayName: 'Attachment ID',
+				name: 'id',
+				type: 'number',
+				default: 0,
+				description: 'ID del anexo (retorna un único objeto)',
+				routing: { send: { type: 'body', property: 'id' } },
+			},
+			{
+				displayName: 'Conversation ID',
+				name: 'id_conversacion',
+				type: 'number',
+				default: 0,
+				description: 'ID de la conversación',
+				routing: { send: { type: 'body', property: 'id_conversacion' } },
+			},
+			{
+				displayName: 'Firebase Conversation ID',
+				name: 'id_conversacion_fb',
+				type: 'string',
+				default: '',
+				description: 'ID de conversación en Firebase',
+				routing: { send: { type: 'body', property: 'id_conversacion_fb' } },
+			},
+			{
+				displayName: 'Limit',
+				name: 'limit',
+				type: 'number',
+				typeOptions: { minValue: 1 },
+				default: 50,
+				description: 'Max number of results to return',
+				routing: { send: { type: 'body', property: 'limit' } },
+			},
+			{
+				displayName: 'Offset',
+				name: 'initFrom',
+				type: 'number',
+				default: 0,
+				description: 'Offset de paginación',
+				routing: { send: { type: 'body', property: 'initFrom' } },
+			},
+		],
+	},
+
+	// ----------------------------------
+	//         history: getConversation
+	// ----------------------------------
+	{
+		displayName: 'Search Fields',
+		name: 'searchFields',
+		type: 'collection',
+		placeholder: 'Add Field',
+		default: {},
+		description: 'Requiere el ID de la conversación o el ID de conversación en Firebase',
+		displayOptions: {
+			show: {
+				resource: ['history'],
+				operation: ['getConversation'],
+			},
+		},
+		options: [
+			{
+				displayName: 'Conversation ID',
+				name: 'id',
+				type: 'number',
+				default: 0,
+				description: 'ID de la conversación',
+				routing: { send: { type: 'body', property: 'id' } },
+			},
+			{
+				displayName: 'Firebase Conversation ID',
+				name: 'id_conversacion_fb',
+				type: 'string',
+				default: '',
+				description: 'ID de conversación en Firebase',
+				routing: { send: { type: 'body', property: 'id_conversacion_fb' } },
+			},
+		],
+	},
+
+	// ----------------------------------
+	//         history: getManyConversations
+	// ----------------------------------
+	{
+		displayName: 'Filters',
+		name: 'filters',
+		type: 'collection',
+		placeholder: 'Add Filter',
+		default: {},
+		displayOptions: {
+			show: {
+				resource: ['history'],
+				operation: ['getManyConversations'],
+			},
+		},
+		options: [
+			{
+				displayName: 'Channel ID',
+				name: 'id_canal',
+				type: 'number',
+				default: 0,
+				description: 'Filtra por canal',
+				routing: { send: { type: 'body', property: 'id_canal' } },
+			},
+			{
+				displayName: 'Contact ID',
+				name: 'id_contacto',
+				type: 'number',
+				default: 0,
+				description: 'Filtra por contacto',
+				routing: { send: { type: 'body', property: 'id_contacto' } },
+			},
+			{
+				displayName: 'Conversation ID',
+				name: 'id',
+				type: 'number',
+				default: 0,
+				description: 'ID de la conversación (retorna un único objeto)',
+				routing: { send: { type: 'body', property: 'id' } },
+			},
+			{
+				displayName: 'Firebase Conversation ID',
+				name: 'id_conversacion_fb',
+				type: 'string',
+				default: '',
+				description: 'ID de conversación en Firebase (retorna un único objeto)',
+				routing: { send: { type: 'body', property: 'id_conversacion_fb' } },
+			},
+			{
+				displayName: 'Group ID',
+				name: 'id_grupo',
+				type: 'number',
+				default: 0,
+				description: 'Filtra por equipo/grupo',
+				routing: { send: { type: 'body', property: 'id_grupo' } },
+			},
+			{
+				displayName: 'Limit',
+				name: 'limit',
+				type: 'number',
+				typeOptions: { minValue: 1 },
+				default: 50,
+				description: 'Max number of results to return',
+				routing: { send: { type: 'body', property: 'limit' } },
+			},
+			{
+				displayName: 'Offset',
+				name: 'initFrom',
+				type: 'number',
+				default: 0,
+				description: 'Offset de paginación',
+				routing: { send: { type: 'body', property: 'initFrom' } },
+			},
+			{
+				displayName: 'Tag IDs',
+				name: 'etiquetas',
+				type: 'string',
+				default: '',
+				placeholder: '1,2,3',
+				description: 'Filtra por IDs de etiquetas asociadas, separados por comas',
+				routing: {
+					send: {
+						type: 'body',
+						property: 'etiquetas',
+						value:
+							'={{ $value.toString().split(",").map((v) => v.trim()).filter((v) => v !== "").map((v) => Number(v)).filter((v) => !isNaN(v)) }}',
+					},
+				},
+			},
+			{
+				displayName: 'User ID',
+				name: 'id_usuario',
+				type: 'number',
+				default: 0,
+				description: 'Filtra por agente asignado',
+				routing: { send: { type: 'body', property: 'id_usuario' } },
+			},
+		],
+	},
+
+	// ----------------------------------
+	//         history: getMessages
+	// ----------------------------------
+	{
+		displayName: 'Filters',
+		name: 'filters',
+		type: 'collection',
+		placeholder: 'Add Filter',
+		default: {},
+		description: 'Requiere el ID de la conversación o el ID de conversación en Firebase',
+		displayOptions: {
+			show: {
+				resource: ['history'],
+				operation: ['getMessages'],
+			},
+		},
+		options: [
+			{
+				displayName: 'Conversation ID',
+				name: 'id_conversacion',
+				type: 'number',
+				default: 0,
+				description: 'ID de la conversación',
+				routing: { send: { type: 'body', property: 'id_conversacion' } },
+			},
+			{
+				displayName: 'Firebase Conversation ID',
+				name: 'id_conversacion_fb',
+				type: 'string',
+				default: '',
+				description: 'ID de conversación en Firebase',
+				routing: { send: { type: 'body', property: 'id_conversacion_fb' } },
+			},
+			{
+				displayName: 'Limit',
+				name: 'limit',
+				type: 'number',
+				typeOptions: { minValue: 1 },
+				default: 50,
+				description: 'Max number of results to return',
+				routing: { send: { type: 'body', property: 'limit' } },
+			},
+			{
+				displayName: 'Message ID',
+				name: 'id',
+				type: 'number',
+				default: 0,
+				description: 'ID del mensaje (retorna un único objeto)',
+				routing: { send: { type: 'body', property: 'id' } },
+			},
+			{
+				displayName: 'Offset',
+				name: 'initFrom',
+				type: 'number',
+				default: 0,
+				description: 'Offset de paginación',
+				routing: { send: { type: 'body', property: 'initFrom' } },
+			},
+		],
+	},
+
+	// ----------------------------------
+	//         history: getParticipants
+	// ----------------------------------
+	{
+		displayName: 'Filters',
+		name: 'filters',
+		type: 'collection',
+		placeholder: 'Add Filter',
+		default: {},
+		description: 'Requiere el ID de la conversación o el ID de conversación en Firebase',
+		displayOptions: {
+			show: {
+				resource: ['history'],
+				operation: ['getParticipants'],
+			},
+		},
+		options: [
+			{
+				displayName: 'Conversation ID',
+				name: 'id_conversacion',
+				type: 'number',
+				default: 0,
+				description: 'ID de la conversación',
+				routing: { send: { type: 'body', property: 'id_conversacion' } },
+			},
+			{
+				displayName: 'Firebase Conversation ID',
+				name: 'id_conversacion_fb',
+				type: 'string',
+				default: '',
+				description: 'ID de conversación en Firebase',
+				routing: { send: { type: 'body', property: 'id_conversacion_fb' } },
+			},
+			{
+				displayName: 'Limit',
+				name: 'limit',
+				type: 'number',
+				typeOptions: { minValue: 1 },
+				default: 50,
+				description: 'Max number of results to return',
+				routing: { send: { type: 'body', property: 'limit' } },
+			},
+			{
+				displayName: 'Offset',
+				name: 'initFrom',
+				type: 'number',
+				default: 0,
+				description: 'Offset de paginación',
+				routing: { send: { type: 'body', property: 'initFrom' } },
+			},
+			{
+				displayName: 'Participant ID',
+				name: 'id',
+				type: 'number',
+				default: 0,
+				description: 'ID del participante (retorna un único objeto)',
+				routing: { send: { type: 'body', property: 'id' } },
+			},
+		],
+	},
+];
