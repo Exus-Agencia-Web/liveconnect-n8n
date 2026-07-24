@@ -1,0 +1,63 @@
+{
+	"name": "LiveConnect 07 — Chatbot con Callback Trigger (actions)",
+	"nodes": [
+		{
+			"parameters": {
+				"content": "## Chatbot con el LiveConnect Callback Trigger\n\nUsa el trigger nativo del paquete (v0.2.0+): parsea el payload del Flowbot (mensaje, sessionId, esPrimerTurno, hayAgenteHumano) y valida el secret.\n\n**Configuración:**\n1. Activa el workflow y pega la URL Production del trigger en la acción de **callback** de tu Flowbot de LiveConnect.\n2. Pon el mismo `secret` en el Flowbot y en el trigger.\n\n**Regla de oro del callback:** la respuesta SIEMPRE es `{status:1, status_message:\"Ok\", data:{actions:[...]}}` y debe cerrar con una acción `input` (vacía sirve) — sin `input` LiveConnect abandona el callback. Única excepción: si delegas (`userDelegate`/`teamDelegate`) NO mandes `input`.\n\nPara IA: inserta un AI Agent entre el trigger y el nodo Code, y usa su salida como `sendText` (el Code ya garantiza el `input` de cierre).",
+				"height": 420,
+				"width": 480
+			},
+			"id": "b7000000-0000-4000-8000-000000000001",
+			"name": "Instrucciones",
+			"type": "n8n-nodes-base.stickyNote",
+			"typeVersion": 1,
+			"position": [0, -280]
+		},
+		{
+			"parameters": {
+				"secret": "cambia-este-secreto",
+				"responseMode": "responseNode",
+				"simple": true
+			},
+			"id": "b7000000-0000-4000-8000-000000000002",
+			"name": "LiveConnect Callback Trigger",
+			"type": "n8n-nodes-liveconnect.liveConnectCallbackTrigger",
+			"typeVersion": 1,
+			"position": [540, 60],
+			"webhookId": "liveconnect-callback-demo"
+		},
+		{
+			"parameters": {
+				"jsCode": "// Motor de reglas mínimo (patrón del gateway: reglas primero, IA como fallback).\n// Entrada simplificada del trigger: { mensaje, sessionId, esPrimerTurno, hayAgenteHumano, contacto, inputs, ... }\nconst e = $input.first().json;\nconst texto = String(e.mensaje || '').toLowerCase();\nconst has = (palabras) => palabras.some((p) => texto.includes(p));\n\nconst TYPES = ['sendText','sendImage','sendFile','addTag','userDelegate','teamDelegate','addVar','setVar','input','updateContact'];\nlet actions = [];\n\nif (e.esPrimerTurno) {\n\tactions = [\n\t\t{ type: 'sendText', text: `¡Hola${e.contacto?.nombre ? ' ' + e.contacto.nombre : ''}! Soy el asistente virtual. ¿En qué puedo ayudarte?` },\n\t];\n} else if (has(['humano', 'asesor', 'persona', 'agente'])) {\n\tactions = [\n\t\t{ type: 'sendText', text: 'Con gusto, te transfiero con nuestro equipo.' },\n\t\t{ type: 'teamDelegate', id_team: 0 }, // ← ID de tu equipo (Group · Get Many)\n\t];\n} else if (has(['precio', 'costo', 'cotiza', 'comprar', 'plan'])) {\n\tactions = [\n\t\t{ type: 'sendText', text: 'Claro, te ayudo con precios. ¿Qué producto o plan te interesa?' },\n\t\t{ type: 'addVar', varname: 'intencion', varvalue: 'precio' },\n\t];\n} else {\n\t// Fallback (aquí puedes enchufar la salida de un AI Agent)\n\tactions = [{ type: 'sendText', text: 'Cuéntame un poco más para poder ayudarte.' }];\n}\n\n// Saneo: solo tipos válidos, nunca vacío.\nactions = actions.filter((a) => a && TYPES.includes(a.type));\nif (actions.length === 0) {\n\tactions = [{ type: 'sendText', text: 'No pude procesar tu solicitud, dame más detalles.' }];\n}\n\n// CRÍTICO: input de cierre salvo delegación (sin input, LiveConnect sale del callback).\nconst delega = actions.some((a) => a.type === 'userDelegate' || a.type === 'teamDelegate');\nif (!delega && !actions.some((a) => a.type === 'input')) {\n\tactions.push({ type: 'input', input: '' });\n}\n\n// Envelope apiResp obligatorio: actions SIEMPRE bajo data.\nreturn [{ json: { status: 1, status_message: 'Ok', data: { actions } } }];"
+			},
+			"id": "b7000000-0000-4000-8000-000000000003",
+			"name": "Motor de reglas → actions",
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [780, 60]
+		},
+		{
+			"parameters": {
+				"respondWith": "json",
+				"responseBody": "={{ $json }}",
+				"options": {}
+			},
+			"id": "b7000000-0000-4000-8000-000000000004",
+			"name": "Responder actions",
+			"type": "n8n-nodes-base.respondToWebhook",
+			"typeVersion": 1.1,
+			"position": [1020, 60]
+		}
+	],
+	"connections": {
+		"LiveConnect Callback Trigger": {
+			"main": [[{ "node": "Motor de reglas → actions", "type": "main", "index": 0 }]]
+		},
+		"Motor de reglas → actions": {
+			"main": [[{ "node": "Responder actions", "type": "main", "index": 0 }]]
+		}
+	},
+	"settings": { "executionOrder": "v1" },
+	"pinData": {},
+	"meta": { "templateCredsSetupCompleted": false }
+}

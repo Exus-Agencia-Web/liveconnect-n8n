@@ -15,16 +15,38 @@ credentials/LiveConnectApi.credentials.ts   # auth: cKey+privateKey → JWT (pre
 nodes/LiveConnect/
   LiveConnect.node.ts                       # nodo principal: selector de resource + spread de descripciones
   GenericFunctions.ts                       # LIVECONNECT_BASE_URL + handleLcResponse (postReceive compartido)
+  TriggerFunctions.ts                       # helpers de triggers: secret, sessionId, simplify, lcHookRequest
+  LiveConnectProxyTrigger.node.ts           # trigger: notificaciones del proxy (registra webhook vía API)
+  LiveConnectCallbackTrigger.node.ts        # trigger: callbacks del Flowbot (URL manual, respuesta síncrona)
   descriptions/<Recurso>Description.ts      # 1 archivo por recurso: <camel>Operations + <camel>Fields
   descriptions/index.ts                     # re-exporta todo
 scripts/verify-spec.mjs                     # diff automático dist/ vs OpenAPI (npm run verify)
+scripts/smoke-triggers.mjs                  # humo de triggers con payload real y mocks (npm run smoke)
 .github/workflows/ci.yml                    # build + lint en push/PR
 .github/workflows/release.yml               # release de GitHub → npm publish (secret NPM_TOKEN)
 ```
 
-- **Sin execute()**: el nodo es 100 % declarativo — cada operación lleva `routing.request` (method/url) y cada campo `routing.send` (`type: 'body' | 'query'`, `property: <nombre exacto del API>`).
+- **Nodo de acciones sin execute()**: 100 % declarativo — cada operación lleva `routing.request` (method/url) y cada campo `routing.send` (`type: 'body' | 'query'`, `property: <nombre exacto del API>`). **Excepción**: los dos triggers son programáticos (`webhook()` + `webhookMethods`), es la única forma de hacer triggers en n8n.
 - `ContactDescription.ts` es el **template canónico**: imitar su estilo para cualquier recurso nuevo.
-- 18 recursos, 58 operaciones (todas las del spec menos `/account/token`, que lo manejan las credenciales).
+- 18 recursos, 58 operaciones (todas las del spec menos `/account/token`, que lo manejan las credenciales) + 2 triggers.
+
+## Triggers (contratos verificados)
+
+**LiveConnectProxyTrigger** — gestiona el webhook del canal automáticamente:
+- `webhookMethods.default.create` → `POST /proxy/setWebhook {id_canal, url, estado:1, secret}` (estado=1 alta/REEMPLAZA — slot único por canal; estado≠1 elimina). `checkExists` → `POST /proxy/getWebhook` y compara `webhook`, `secret` y `TTL` (epoch DynamoDB; vencido = re-registrar). `delete` traga errores para nunca bloquear la desactivación.
+- Secret vacío → `create()` genera `randomBytes(16).hex` y lo persiste en `getWorkflowStaticData('node')`.
+- El payload de las notificaciones del proxy NO está documentado: `simplifyProxyEvent` simplifica solo si reconoce `{chat|inputs|userInput}`, si no entrega crudo.
+
+**LiveConnectCallbackTrigger** — callback del chatbot (Flowbot). Contrato completo en la skill `liveconnect-chatbot-gateway` (repo liveconnect-super-agent):
+- POST `{chat, inputs, userInput, intent, userFile, idcs}`; secret en query `?secret=` Y header `secret`; user-agent `PageGear-Lambda-Hook/x`.
+- Primer turno: `userInput === ''` y el mensaje real está en `inputs.mensaje_inicial`.
+- `chat.usuarios` es OBJETO indexado por id (no array); hay humano solo si alguna entrada tiene `isbot === 0`.
+- Session ID: `inputs.id` → `chat.contacto.id` → `chat.id` → hash.
+- LiveConnect espera respuesta SÍNCRONA `{status:1, status_message:'Ok', data:{actions:[...]}}` — la construye el workflow (Respond to Webhook); 10 tipos de action; SIEMPRE cerrar con `{type:'input'}` salvo delegación (sin `input` LiveConnect abandona el callback). El trigger NO responde actions: `responseMode` por expresión (default `responseNode`).
+- Sin `webhookMethods` (la URL se pega a mano en el Flowbot). OJO: en n8n-workflow 1.120 el tipo de `webhookMethods.default` exige los 3 métodos — omitir el bloque entero, no hacer no-ops.
+- Secret inválido en ambos triggers: `getResponseObject().status(403).json(...)` + `{noWebhookResponse:true}` (workflow no corre). Comparación con `timingSafeEqual`.
+
+ESLint de triggers (el plugin los detecta por archivo `*Trigger.node.ts`): name/displayName sufijados con Trigger, `inputs: []`, `outputs: ['main']`, el parámetro Simplify DEBE llamarse `simple` con la description literal `Whether to return a simplified version of the response instead of the raw data`, NO agregar subtitle.
 
 ## API LiveConnect — comportamiento real (verificado, no todo está en el spec)
 
@@ -85,6 +107,7 @@ npm install --ignore-scripts   # instalar (NUNCA npm install a secas)
 npm run build                  # tsc + íconos
 npm run lint / npm run lintfix
 npm run verify                 # diff dist/ vs OpenAPI del CDN (acepta spec local como arg)
+npm run smoke                  # humo de los triggers (payload real + mocks de n8n)
 ```
 
 Repo: https://github.com/Exus-Agencia-Web/liveconnect-n8n · npm: `n8n-nodes-liveconnect`

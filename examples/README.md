@@ -20,6 +20,7 @@ En n8n: **Workflow → ⋯ (menú) → Import from File** y selecciona el `.json
 | 04 | `04-chatbot-ia-crm.json` | Chatbot vendedor: el agente usa el nodo LiveConnect como **herramienta** para buscar el contacto y **crear la negociación en el CRM** cuando califica el lead. |
 | 05 | `05-reporte-diario-conversaciones.json` | Reporte diario 7:00 con métricas del historial de conversaciones (total, por canal, por agente). |
 | 06 | `06-verificar-numero-crear-contacto.json` | Alta validada: verifica el número en WhatsApp, crea contacto, abre conversación y envía bienvenida. |
+| 07 | `07-chatbot-callback-trigger.json` | Chatbot con el **LiveConnect Callback Trigger** (v0.2.0+): motor de reglas que responde `data.actions` con el `input` de cierre obligatorio. |
 
 ## Requisito para el workflow 04 (nodo como herramienta de IA)
 

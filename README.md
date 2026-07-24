@@ -2,7 +2,7 @@
 
 Nodo comunitario de [n8n](https://n8n.io) para la **API pública de LiveConnect** (mensajería omnicanal + CRM): contactos, conversaciones, WhatsApp QR, WhatsApp Business API (WABA), CRM (deals, tareas, automatizaciones), catálogo, asistentes de IA, historial y más.
 
-Cubre las 58 operaciones de la [especificación OpenAPI pública](https://cdn.liveconnect.chat/liveconnect/public-openapi.json) (la emisión de token es automática vía credenciales).
+Cubre las 58 operaciones de la [especificación OpenAPI pública](https://cdn.liveconnect.chat/liveconnect/public-openapi.json) (la emisión de token es automática vía credenciales), más **dos triggers**: notificaciones del proxy de conversaciones y callbacks del chatbot (Flowbot).
 
 ## Instalación
 
@@ -48,6 +48,29 @@ El nodo llama a `POST /account/token` automáticamente, guarda el JWT de sesión
 | **User** | Get Many, Get, Set State |
 | **WhatsApp Business (WABA)** | Get Many Templates, Get Template, Send Template, Send Quick Reply |
 | **WhatsApp QR** | Check Number, Send Message, Send File, Send Quick Reply |
+
+## Triggers
+
+### LiveConnect Proxy Trigger
+
+Se dispara con las notificaciones del **proxy de conversaciones**. Gestiona el webhook del canal solo: al activar el workflow lo registra (`/proxy/setWebhook`) y al desactivarlo lo elimina. Si dejas el campo Secret vacío, genera uno seguro automáticamente y valida cada notificación entrante.
+
+> ⚠️ LiveConnect permite **un solo webhook por canal**: no actives dos workflows con el mismo Channel ID (se roban el registro entre sí; probar con "Listen for test event" también reemplaza temporalmente el webhook de producción).
+
+### LiveConnect Callback Trigger
+
+Recibe los **callbacks del chatbot (Flowbot)**. Activa el workflow y pega la URL Production del trigger en la acción de callback del Flowbot. El trigger valida el secret (query o header) y entrega el evento simplificado: `mensaje` (resuelve el primer turno desde `inputs.mensaje_inicial`), `sessionId` estable para memoria, `esPrimerTurno`, `hayAgenteHumano`, `contacto`, `inputs`, `intent` y `raw`.
+
+**El callback exige respuesta síncrona** con este envelope (constrúyelo y devuélvelo con un nodo *Respond to Webhook*):
+
+```json
+{ "status": 1, "status_message": "Ok", "data": { "actions": [
+  { "type": "sendText", "text": "¡Hola! ¿En qué puedo ayudarte?" },
+  { "type": "input", "input": "" }
+] } }
+```
+
+Regla de oro: **cierra siempre con una acción `input`** (vacía sirve) — sin ella LiveConnect abandona el callback y no vuelve a llamar. Única excepción: cuando delegas a un humano (`userDelegate`/`teamDelegate`). Tipos de action soportados: `sendText`, `sendImage`, `sendFile`, `addTag`, `userDelegate`, `teamDelegate`, `addVar`, `setVar`, `input`, `updateContact`. Ver el ejemplo [`examples/07-chatbot-callback-trigger.json`](examples/07-chatbot-callback-trigger.json).
 
 ## Respuesta del API
 

@@ -1,6 +1,6 @@
 {
 	"name": "n8n-nodes-liveconnect",
-	"version": "0.1.2",
+	"version": "0.2.0",
 	"description": "n8n community node for the LiveConnect API (omnichannel messaging + CRM): contacts, conversations, WhatsApp QR & Business API, CRM deals, catalog, AI assistants and more",
 	"keywords": [
 		"n8n-community-node-package",
@@ -10,7 +10,9 @@
 		"crm",
 		"chat",
 		"omnichannel",
-		"messaging"
+		"messaging",
+		"trigger",
+		"chatbot"
 	],
 	"license": "MIT",
 	"homepage": "https://liveconnect.chat",
@@ -33,6 +35,7 @@
 		"lint": "eslint nodes credentials package.json",
 		"lintfix": "eslint nodes credentials package.json --fix",
 		"verify": "node scripts/verify-spec.mjs",
+		"smoke": "node scripts/smoke-triggers.mjs",
 		"prepublishOnly": "npm run build && eslint -c .eslintrc.prepublish.js nodes credentials package.json"
 	},
 	"files": [
@@ -44,10 +47,13 @@
 			"dist/credentials/LiveConnectApi.credentials.js"
 		],
 		"nodes": [
-			"dist/nodes/LiveConnect/LiveConnect.node.js"
+			"dist/nodes/LiveConnect/LiveConnect.node.js",
+			"dist/nodes/LiveConnect/LiveConnectCallbackTrigger.node.js",
+			"dist/nodes/LiveConnect/LiveConnectProxyTrigger.node.js"
 		]
 	},
 	"devDependencies": {
+		"@types/node": "^20.19.43",
 		"@typescript-eslint/parser": "~8.32.0",
 		"eslint": "^8.57.0",
 		"eslint-plugin-n8n-nodes-base": "^1.16.3",
