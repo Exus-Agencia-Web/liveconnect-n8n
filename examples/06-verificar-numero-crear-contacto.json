@@ -1,0 +1,163 @@
+{
+	"name": "LiveConnect 06 — Verificar número y crear contacto + conversación",
+	"nodes": [
+		{
+			"parameters": {
+				"content": "## Alta validada de contactos por WhatsApp\n\nRecibe un formulario (webhook con `nombre` y `celular`), valida que el número exista en WhatsApp, crea el contacto, abre conversación y envía la bienvenida.\n\n**Configura:**\n- `id_canal` en **Verificar número** y **Crear conversación**: ID de tu canal WhatsApp QR (`Channel · Get Many`).\n- El campo `usuario` de **Crear conversación**: `{ \"id_equipo\": <ID> }` asigna a un equipo (`Group · Get Many`), o `{ \"id\": <ID>, \"nombre\": \"...\" }` a un agente.\n- La condición del IF valida contra la respuesta real de `Check Number` — revisa una ejecución y ajusta el nombre del campo si difiere.\n\nPrueba con: `curl -X POST <url-webhook> -H 'Content-Type: application/json' -d '{\"nombre\":\"Ana\",\"celular\":\"573001112233\"}'`",
+				"height": 400,
+				"width": 480
+			},
+			"id": "b6000000-0000-4000-8000-000000000001",
+			"name": "Instrucciones",
+			"type": "n8n-nodes-base.stickyNote",
+			"typeVersion": 1,
+			"position": [0, -260]
+		},
+		{
+			"parameters": {
+				"httpMethod": "POST",
+				"path": "alta-contacto",
+				"responseMode": "responseNode",
+				"options": {}
+			},
+			"id": "b6000000-0000-4000-8000-000000000002",
+			"name": "Webhook alta",
+			"type": "n8n-nodes-base.webhook",
+			"typeVersion": 2,
+			"position": [540, 60],
+			"webhookId": "liveconnect-alta-contacto-demo"
+		},
+		{
+			"parameters": {
+				"resource": "whatsapp",
+				"operation": "checkNumber",
+				"id_canal": 0,
+				"numero": "={{ $json.body.celular }}"
+			},
+			"id": "b6000000-0000-4000-8000-000000000003",
+			"name": "Verificar número",
+			"type": "n8n-nodes-liveconnect.liveConnect",
+			"typeVersion": 1,
+			"position": [760, 60]
+		},
+		{
+			"parameters": {
+				"conditions": {
+					"options": {
+						"caseSensitive": true,
+						"leftValue": "",
+						"typeValidation": "loose",
+						"version": 2
+					},
+					"conditions": [
+						{
+							"leftValue": "={{ $json.existe ?? $json.exists ?? $json.valido ?? false }}",
+							"rightValue": "true",
+							"operator": { "type": "boolean", "operation": "true", "singleValue": true }
+						}
+					],
+					"combinator": "and"
+				},
+				"options": {}
+			},
+			"id": "b6000000-0000-4000-8000-000000000004",
+			"name": "¿Número válido?",
+			"type": "n8n-nodes-base.if",
+			"typeVersion": 2.2,
+			"position": [980, 60]
+		},
+		{
+			"parameters": {
+				"resource": "contact",
+				"operation": "create",
+				"nombre": "={{ $('Webhook alta').first().json.body.nombre }}",
+				"additionalFields": {
+					"celular": "={{ $('Webhook alta').first().json.body.celular }}"
+				}
+			},
+			"id": "b6000000-0000-4000-8000-000000000005",
+			"name": "Crear contacto",
+			"type": "n8n-nodes-liveconnect.liveConnect",
+			"typeVersion": 1,
+			"position": [1200, 40]
+		},
+		{
+			"parameters": {
+				"resource": "conversation",
+				"operation": "create",
+				"id_canal": 0,
+				"contacto": "={{ { \"id\": $json.id } }}",
+				"usuario": "={{ { \"id_equipo\": 0 } }}",
+				"additionalFields": {}
+			},
+			"id": "b6000000-0000-4000-8000-000000000006",
+			"name": "Crear conversación",
+			"type": "n8n-nodes-liveconnect.liveConnect",
+			"typeVersion": 1,
+			"position": [1420, 40]
+		},
+		{
+			"parameters": {
+				"resource": "proxy",
+				"operation": "sendMessage",
+				"id_conversacion": "={{ String($json.id ?? $json.id_conversacion) }}",
+				"mensaje": "=¡Hola {{ $('Webhook alta').first().json.body.nombre }}! 👋 Gracias por registrarte. Un asesor te atenderá en breve."
+			},
+			"id": "b6000000-0000-4000-8000-000000000007",
+			"name": "Mensaje de bienvenida",
+			"type": "n8n-nodes-liveconnect.liveConnect",
+			"typeVersion": 1,
+			"position": [1640, 40]
+		},
+		{
+			"parameters": {
+				"respondWith": "json",
+				"responseBody": "{ \"ok\": true, \"mensaje\": \"Contacto creado y bienvenida enviada\" }",
+				"options": {}
+			},
+			"id": "b6000000-0000-4000-8000-000000000008",
+			"name": "Respond OK",
+			"type": "n8n-nodes-base.respondToWebhook",
+			"typeVersion": 1.1,
+			"position": [1860, 60]
+		},
+		{
+			"parameters": {
+				"respondWith": "json",
+				"responseBody": "{ \"ok\": false, \"error\": \"El número no está registrado en WhatsApp\" }",
+				"options": {}
+			},
+			"id": "b6000000-0000-4000-8000-000000000009",
+			"name": "Respond número inválido",
+			"type": "n8n-nodes-base.respondToWebhook",
+			"typeVersion": 1.1,
+			"position": [1200, 220]
+		}
+	],
+	"connections": {
+		"Webhook alta": {
+			"main": [[{ "node": "Verificar número", "type": "main", "index": 0 }]]
+		},
+		"Verificar número": {
+			"main": [[{ "node": "¿Número válido?", "type": "main", "index": 0 }]]
+		},
+		"¿Número válido?": {
+			"main": [
+				[{ "node": "Crear contacto", "type": "main", "index": 0 }],
+				[{ "node": "Respond número inválido", "type": "main", "index": 0 }]
+			]
+		},
+		"Crear contacto": {
+			"main": [[{ "node": "Crear conversación", "type": "main", "index": 0 }]]
+		},
+		"Crear conversación": {
+			"main": [[{ "node": "Mensaje de bienvenida", "type": "main", "index": 0 }]]
+		},
+		"Mensaje de bienvenida": {
+			"main": [[{ "node": "Respond OK", "type": "main", "index": 0 }]]
+		}
+	},
+	"settings": { "executionOrder": "v1" },
+	"pinData": {},
+	"meta": { "templateCredsSetupCompleted": false }
+}

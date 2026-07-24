@@ -1,0 +1,162 @@
+{
+	"name": "LiveConnect 03 — Chatbot con IA",
+	"nodes": [
+		{
+			"parameters": {
+				"content": "## Chatbot IA sobre LiveConnect\n\n**Antes de activar:**\n1. Importa y ejecuta el workflow **01 — Configurar webhook del proxy** apuntando a la URL Production de este Webhook.\n2. Configura la credencial **OpenAI** en el nodo del modelo.\n3. Configura la credencial **LiveConnect API** en el nodo de respuesta.\n\n**Payload que envía LiveConnect** (real): `chat.id` (ID conversación), `chat.id_canal`, `chat.contacto` (id, nombre, celular…), `userInput` (mensaje del turno) e `inputs.mensaje_inicial` (primer turno, cuando `userInput` llega vacío).\n\nLa memoria del agente usa el ID de conversación como clave de sesión: cada chat mantiene su propio historial.",
+				"height": 360,
+				"width": 460
+			},
+			"id": "b3000000-0000-4000-8000-000000000001",
+			"name": "Instrucciones",
+			"type": "n8n-nodes-base.stickyNote",
+			"typeVersion": 1,
+			"position": [0, -220]
+		},
+		{
+			"parameters": {
+				"httpMethod": "POST",
+				"path": "liveconnect-chatbot",
+				"responseMode": "responseNode",
+				"options": {}
+			},
+			"id": "b3000000-0000-4000-8000-000000000002",
+			"name": "Webhook LiveConnect",
+			"type": "n8n-nodes-base.webhook",
+			"typeVersion": 2,
+			"position": [520, 60],
+			"webhookId": "liveconnect-chatbot-demo"
+		},
+		{
+			"parameters": {
+				"jsCode": "// Payload real de LiveConnect: {chat, inputs, userInput, intent}\nconst raw = $input.first().json;\nconst body = raw.body ?? raw;\nconst chat = body.chat ?? {};\nconst inputs = body.inputs ?? {};\nconst mensaje = String(body.userInput || inputs.mensaje_inicial || '').trim();\n\nreturn [{\n\tjson: {\n\t\tmensaje,\n\t\tid_conversacion: String(chat.id ?? ''),\n\t\tid_canal: chat.id_canal ?? null,\n\t\tcontacto_id: chat.contacto?.id ?? null,\n\t\tcontacto_nombre: chat.contacto?.nombre || 'Cliente',\n\t\tcontacto_celular: chat.contacto?.celular || inputs.celular || '',\n\t},\n}];"
+			},
+			"id": "b3000000-0000-4000-8000-000000000003",
+			"name": "Parsear mensaje",
+			"type": "n8n-nodes-base.code",
+			"typeVersion": 2,
+			"position": [740, 60]
+		},
+		{
+			"parameters": {
+				"conditions": {
+					"options": {
+						"caseSensitive": true,
+						"leftValue": "",
+						"typeValidation": "loose",
+						"version": 2
+					},
+					"conditions": [
+						{
+							"leftValue": "={{ $json.mensaje }}",
+							"rightValue": "",
+							"operator": { "type": "string", "operation": "notEmpty", "singleValue": true }
+						}
+					],
+					"combinator": "and"
+				},
+				"options": {}
+			},
+			"id": "b3000000-0000-4000-8000-000000000004",
+			"name": "¿Hay mensaje?",
+			"type": "n8n-nodes-base.if",
+			"typeVersion": 2.2,
+			"position": [960, 60]
+		},
+		{
+			"parameters": {
+				"promptType": "define",
+				"text": "={{ $json.mensaje }}",
+				"options": {
+					"systemMessage": "Eres el asistente virtual de la empresa. Atiendes clientes por chat (WhatsApp y web) en español, con respuestas breves y cordiales. El cliente se llama {{ $json.contacto_nombre }}. Si no sabes algo, dilo y ofrece pasar con un agente humano. Nunca inventes precios ni datos."
+				}
+			},
+			"id": "b3000000-0000-4000-8000-000000000005",
+			"name": "AI Agent",
+			"type": "@n8n/n8n-nodes-langchain.agent",
+			"typeVersion": 1.9,
+			"position": [1180, 40]
+		},
+		{
+			"parameters": {
+				"model": {
+					"__rl": true,
+					"value": "gpt-4o-mini",
+					"mode": "list",
+					"cachedResultName": "gpt-4o-mini"
+				},
+				"options": {}
+			},
+			"id": "b3000000-0000-4000-8000-000000000006",
+			"name": "OpenAI Chat Model",
+			"type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+			"typeVersion": 1.2,
+			"position": [1120, 280]
+		},
+		{
+			"parameters": {
+				"sessionIdType": "customKey",
+				"sessionKey": "={{ $('Parsear mensaje').first().json.id_conversacion }}"
+			},
+			"id": "b3000000-0000-4000-8000-000000000007",
+			"name": "Memoria por conversación",
+			"type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+			"typeVersion": 1.3,
+			"position": [1280, 280]
+		},
+		{
+			"parameters": {
+				"resource": "proxy",
+				"operation": "sendMessage",
+				"id_conversacion": "={{ $('Parsear mensaje').first().json.id_conversacion }}",
+				"mensaje": "={{ $json.output }}"
+			},
+			"id": "b3000000-0000-4000-8000-000000000008",
+			"name": "Responder al cliente",
+			"type": "n8n-nodes-liveconnect.liveConnect",
+			"typeVersion": 1,
+			"position": [1520, 40]
+		},
+		{
+			"parameters": {
+				"respondWith": "json",
+				"responseBody": "{ \"ok\": true }",
+				"options": {}
+			},
+			"id": "b3000000-0000-4000-8000-000000000009",
+			"name": "Respond OK",
+			"type": "n8n-nodes-base.respondToWebhook",
+			"typeVersion": 1.1,
+			"position": [1740, 60]
+		}
+	],
+	"connections": {
+		"Webhook LiveConnect": {
+			"main": [[{ "node": "Parsear mensaje", "type": "main", "index": 0 }]]
+		},
+		"Parsear mensaje": {
+			"main": [[{ "node": "¿Hay mensaje?", "type": "main", "index": 0 }]]
+		},
+		"¿Hay mensaje?": {
+			"main": [
+				[{ "node": "AI Agent", "type": "main", "index": 0 }],
+				[{ "node": "Respond OK", "type": "main", "index": 0 }]
+			]
+		},
+		"AI Agent": {
+			"main": [[{ "node": "Responder al cliente", "type": "main", "index": 0 }]]
+		},
+		"OpenAI Chat Model": {
+			"ai_languageModel": [[{ "node": "AI Agent", "type": "ai_languageModel", "index": 0 }]]
+		},
+		"Memoria por conversación": {
+			"ai_memory": [[{ "node": "AI Agent", "type": "ai_memory", "index": 0 }]]
+		},
+		"Responder al cliente": {
+			"main": [[{ "node": "Respond OK", "type": "main", "index": 0 }]]
+		}
+	},
+	"settings": { "executionOrder": "v1" },
+	"pinData": {},
+	"meta": { "templateCredsSetupCompleted": false }
+}

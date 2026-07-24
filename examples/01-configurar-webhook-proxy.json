@@ -1,0 +1,63 @@
+{
+	"name": "LiveConnect 01 — Configurar webhook del proxy",
+	"nodes": [
+		{
+			"parameters": {
+				"content": "## Paso 0 — Configurar el webhook del canal\n\nRegistra la URL de tu chatbot (workflows 03/04) como webhook del canal en LiveConnect.\n\n1. Ejecuta el workflow: lista los canales de la cuenta.\n2. En **Set Webhook** reemplaza:\n   - `id_canal`: el ID del canal que quieres conectar (sale del nodo anterior)\n   - `url`: la URL **Production** del Webhook de tu chatbot (ej. `https://tu-n8n.com/webhook/liveconnect-chatbot`)\n   - `secret`: un secreto propio (LiveConnect lo reenvía para que valides las llamadas)\n\nPara desactivar el webhook: `estado = 0`.",
+				"height": 320,
+				"width": 420
+			},
+			"id": "b1000000-0000-4000-8000-000000000001",
+			"name": "Instrucciones",
+			"type": "n8n-nodes-base.stickyNote",
+			"typeVersion": 1,
+			"position": [0, -100]
+		},
+		{
+			"parameters": {},
+			"id": "b1000000-0000-4000-8000-000000000002",
+			"name": "Ejecutar manualmente",
+			"type": "n8n-nodes-base.manualTrigger",
+			"typeVersion": 1,
+			"position": [480, 40]
+		},
+		{
+			"parameters": {
+				"resource": "channel",
+				"operation": "getMany",
+				"filters": {}
+			},
+			"id": "b1000000-0000-4000-8000-000000000003",
+			"name": "Listar canales",
+			"type": "n8n-nodes-liveconnect.liveConnect",
+			"typeVersion": 1,
+			"position": [700, 40]
+		},
+		{
+			"parameters": {
+				"resource": "proxy",
+				"operation": "setWebhook",
+				"id_canal": "={{ $json.id }}",
+				"url": "https://TU-N8N.com/webhook/liveconnect-chatbot",
+				"estado": 1,
+				"secret": "cambia-este-secreto"
+			},
+			"id": "b1000000-0000-4000-8000-000000000004",
+			"name": "Set Webhook",
+			"type": "n8n-nodes-liveconnect.liveConnect",
+			"typeVersion": 1,
+			"position": [920, 40]
+		}
+	],
+	"connections": {
+		"Ejecutar manualmente": {
+			"main": [[{ "node": "Listar canales", "type": "main", "index": 0 }]]
+		},
+		"Listar canales": {
+			"main": [[{ "node": "Set Webhook", "type": "main", "index": 0 }]]
+		}
+	},
+	"settings": { "executionOrder": "v1" },
+	"pinData": {},
+	"meta": { "templateCredsSetupCompleted": false }
+}

@@ -63,6 +63,10 @@ LiveConnect responde siempre `{ status, status_message, data }` (`status > 0` é
 - El nodo es utilizable como **herramienta de AI Agents** (`usableAsTool`).
 - Base URL: `https://api.liveconnect.chat/prod`.
 
+## Ejemplos
+
+En [`examples/`](examples/) hay workflows importables listos para usar: envío masivo de plantillas WABA, chatbot con IA (con memoria por conversación), chatbot vendedor que crea negociaciones en el CRM usando el nodo como herramienta del AI Agent, reporte diario de conversaciones y alta validada de contactos. Ver [examples/README.md](examples/README.md).
+
 ## Desarrollo
 
 ```bash
