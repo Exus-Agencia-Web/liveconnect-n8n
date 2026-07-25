@@ -121,7 +121,18 @@ Mapeo: `id_canal`→getChannels · `id_grupo`/`id_team`/`id_to_delegate`→getGr
 
 **Refresco de selectores dependientes**: sin `typeOptions.loadOptionsDependsOn` las opciones quedan cacheadas y no se recargan al cambiar el campo del que dependen. Se declara con **ruta relativa `&`** (`['&id_canal']`, `['&id_pipeline']`), que resuelve al campo hermano y por eso sirve igual top-level que dentro de una colección (`node-parameters/path-utils.js:22`).
 
-## Plantillas WABA: campo "Contenido de la Plantilla" (v0.7.0)
+## Plantillas WABA: 4 campos planos (v0.8.0 — diseño vigente)
+
+Enviar una plantilla son campos normales, **sin resourceMapper y sin duplicidad**: `ID del Canal` · `Número` · `ID de la Plantilla` · `Variables` (CSV en orden) · `URL del Encabezado`, y en Campos Adicionales solo lo que no se repite (Botones, Mensaje Adicional, Equipo a Delegar, Variables del Encabezado, **Usar Datos de Ejemplo**).
+
+Dos iteraciones previas fallaron por lo mismo: **dar dos caminos para lo mismo** (un campo "inteligente" + las mismas opciones sueltas en Campos Adicionales) y meter la UI de mapeo donde bastaban campos de texto. El nodo oficial de WhatsApp tampoco usa resourceMapper (`MessagesDescription.ts:1118-1210`).
+
+Quién hace el trabajo:
+- **El selector** (`getWabaTemplates` → `describeTemplateNeeds`) dice lo que hay que rellenar: `bienvenida · es · 2 variables · imagen · botón`.
+- **El preSend `prepareTemplateSend`** consulta la plantilla (caché en memoria por `id_canal+id_plantilla`, TTL 5 min, para no pedirla en cada ítem), coloca la URL en `url_imagen|video|documento_encabezado` según el formato **declarado** por la plantilla, y **valida con mensajes que enseñan**: *«La plantilla X necesita 2 variables y recibió 1 … Por ejemplo: Ana, 12 de mayo»*. Si la consulta falla, NO bloquea: envía lo configurado.
+- `buildTemplateLayout` cuenta las variables por los `{{n}}` del texto y, si no hay `components`, usa `data` (texto del cuerpo) como respaldo.
+
+## Historial: campo "Contenido de la Plantilla" (v0.7.0, retirado)
 
 `type: 'resourceMapper'` (`resourceMapperMethod: getTemplateFields`) que devuelve **UN único campo** `id: 'datos'`, `type: 'object'` con `defaultValue` = la estructura JSON de la plantilla. Truco clave: un `ResourceMapperField` de tipo `object` se renderiza como **editor JSON** (`MappingFields.vue:267-273` mapea object/array → `json`), y `defaultValue` es lo que lo prellena (interfaces.d.ts:2321 · ResourceMapper.vue:93). Así se logra "un campo JSON que se llena solo", que n8n no permite en un `type: 'json'` normal.
 

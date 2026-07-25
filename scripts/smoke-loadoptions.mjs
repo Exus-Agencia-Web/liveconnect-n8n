@@ -161,8 +161,8 @@ await test('getWabaTemplates lee data.templates (respuesta anidada real del API)
 	const options = await lo.getWabaTemplates.call(con.ctx);
 	// Aprobadas primero, luego alfabético.
 	assert.deepEqual(options, [
-		{ name: 'bienvenida (es)', value: '123456789' },
-		{ name: 'aviso_pago (es_CO · PENDING)', value: '987654321' },
+		{ name: 'bienvenida · es · sin variables', value: '123456789' },
+		{ name: 'aviso_pago · es_CO · sin variables · PENDING', value: '987654321' },
 	]);
 	assert.deepEqual(con.calls[0].body, { id_canal: 67095 });
 });
@@ -183,11 +183,12 @@ await test('plantillas sin name: usa campos alternativos o el contenido, no el U
 		params: { resource: 'waba', operation: 'sendTemplate', id_canal: 1 },
 	});
 	const options = await lo.getWabaTemplates.call(ctx);
+	// El sufijo describe lo que pide cada plantilla (aquí, ninguna tiene variables).
 	assert.deepEqual(options, [
-		{ name: 'Hola {{1}}, tu pedido ya salió', value: 'uuid-3' },
-		{ name: 'pago_recibido', value: 'uuid-2' },
-		{ name: 'recordatorio_cita', value: 'uuid-1' },
-		{ name: 'ID uuid-4 (FAILED)', value: 'uuid-4' },
+		{ name: 'Hola {{1}}, tu pedido ya salió · 1 variable', value: 'uuid-3' },
+		{ name: 'pago_recibido · sin variables', value: 'uuid-2' },
+		{ name: 'recordatorio_cita · sin variables', value: 'uuid-1' },
+		{ name: 'ID uuid-4 · sin variables · FAILED', value: 'uuid-4' },
 	]);
 });
 
@@ -251,8 +252,8 @@ await test('nombres opacos de Meta ceden ante el contenido de la plantilla', asy
 	});
 	const options = await lo.getWabaTemplates.call(ctx);
 	const byValue = Object.fromEntries(options.map((o) => [o.value, o.name]));
-	assert.equal(byValue.a1, 'Hola {{1}}, tu cita quedó confirmada (marketing)');
-	assert.equal(byValue.a2, '667058365993373_67d4976c2921a_9999');
+	assert.equal(byValue.a1, 'Hola {{1}}, tu cita quedó confirmada · 1 variable');
+	assert.equal(byValue.a2, '667058365993373_67d4976c2921a_9999 · sin variables');
 });
 
 await test('envelope con status<0 → error con el mensaje del API', async () => {

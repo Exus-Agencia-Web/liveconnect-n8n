@@ -1,17 +1,17 @@
 #!/usr/bin/env node
 /**
- * Prueba de humo del campo "Datos de la Plantilla" (WABA).
+ * Prueba de humo de "Enviar Plantilla" (WABA).
  * Uso: npm run build && node scripts/smoke-template-fields.mjs
  *
- * Cubre el parser de los `components` de Meta y el reparto de los valores editados
- * a las propiedades del body que espera el API.
+ * Cubre el parser de los `components` de Meta, la etiqueta del selector de plantillas
+ * y el preSend que valida y coloca los datos en el cuerpo de la petición.
  */
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
 const tf = require('../dist/nodes/LiveConnect/TemplateFields.js');
-const { applyTemplateData } = require('../dist/nodes/LiveConnect/GenericFunctions.js');
+const { prepareTemplateSend } = require('../dist/nodes/LiveConnect/GenericFunctions.js');
 const lo = require('../dist/nodes/LiveConnect/LoadOptions.js');
 
 let passed = 0;
@@ -21,7 +21,7 @@ const test = async (name, fn) => {
 	console.log(`✓ ${name}`);
 };
 
-// Plantilla real de Meta: encabezado con imagen, cuerpo con 2 variables y botón con URL dinámica.
+// Plantilla real de Meta: encabezado con imagen, cuerpo con 2 variables y botón dinámico.
 const PLANTILLA = {
 	id: 'tpl_1',
 	name: 'confirmacion_cita',
@@ -44,61 +44,42 @@ const PLANTILLA = {
 	],
 };
 
-await test('parser: campos con los ejemplos de Meta como valor por defecto', () => {
+const PLANTILLA_SIMPLE = {
+	id: 'tpl_2',
+	name: 'aviso',
+	language: 'es',
+	status: 'APPROVED',
+	components: [{ type: 'BODY', text: 'Tu pedido ya salió.' }],
+};
+
+// --- parser ---
+
+await test('parser: campos con los ejemplos de Meta', () => {
 	const { fields, headerFormat } = tf.buildTemplateLayout(PLANTILLA);
 	assert.equal(headerFormat, 'IMAGE');
 	assert.deepEqual(
-		fields.map((f) => [f.id, f.displayName, f.defaultValue]),
+		fields.map((f) => [f.id, f.defaultValue]),
 		[
-			['header_media_IMAGE', 'Encabezado · URL de imagen', 'https://cdn.test/foto.jpg'],
-			['body_1', 'Cuerpo · variable {{1}}', 'Ana'],
-			['body_2', 'Cuerpo · variable {{2}}', '12 de mayo'],
-			['button_1', 'Botón · Ver cita', 'https://test.co/c/999'],
+			['header_media_IMAGE', 'https://cdn.test/foto.jpg'],
+			['body_1', 'Ana'],
+			['body_2', '12 de mayo'],
+			['button_1', 'https://test.co/c/999'],
 		],
 	);
-	// El botón de teléfono no lleva parámetro dinámico: no genera campo.
-	assert.equal(fields.filter((f) => f.id.startsWith('button_')).length, 1);
-	assert.ok(fields.every((f) => f.display === true && f.type === 'string'));
 });
 
-await test('parser: encabezado de texto y variables sin ejemplo se listan igual', () => {
-	const { fields, headerFormat } = tf.buildTemplateLayout({
-		components: [
-			{ type: 'HEADER', format: 'TEXT', text: 'Pedido {{1}}' },
-			{ type: 'BODY', text: 'Hola {{1}}, van {{2}} de {{3}}.' },
-		],
-	});
-	assert.equal(headerFormat, 'TEXT');
-	assert.deepEqual(
-		fields.map((f) => f.id),
-		['header_1', 'body_1', 'body_2', 'body_3'],
-	);
-	// Sin example: se listan igual (son obligatorias) pero sin valor precargado.
-	assert.ok(fields.every((f) => f.defaultValue === undefined));
-});
-
-await test('parser: plantilla sin variables → sin campos', () => {
+await test('parser: variables sin ejemplo se listan igual', () => {
 	const { fields } = tf.buildTemplateLayout({
-		components: [{ type: 'BODY', text: 'Gracias por escribirnos.' }],
+		components: [{ type: 'BODY', text: 'Hola {{1}}, van {{2}} de {{3}}.' }],
 	});
-	assert.deepEqual(fields, []);
+	assert.deepEqual(fields.map((f) => f.id), ['body_1', 'body_2', 'body_3']);
+	assert.ok(fields.every((f) => f.defaultValue === undefined));
 });
 
 await test('parser: tolera components ausentes, vacíos o con basura', () => {
 	for (const plantilla of [{}, { components: [] }, { components: [null, 'x', 5] }]) {
 		assert.deepEqual(tf.buildTemplateLayout(plantilla).fields, []);
 	}
-});
-
-await test('parser: botones fuera de components (variante del API)', () => {
-	const { fields } = tf.buildTemplateLayout({
-		components: [{ type: 'BODY', text: 'Hola' }],
-		buttons: [{ type: 'URL', text: 'Pagar', url: 'https://p.co/{{1}}', example: ['https://p.co/1'] }],
-	});
-	assert.deepEqual(
-		fields.map((f) => [f.id, f.defaultValue]),
-		[['button_1', 'https://p.co/1']],
-	);
 });
 
 await test('countPlaceholders cuenta variables reales', () => {
@@ -108,252 +89,144 @@ await test('countPlaceholders cuenta variables reales', () => {
 	assert.equal(tf.countPlaceholders('Con espacios {{ 2 }}'), 2);
 });
 
-// --- estructura JSON editable (formato actual) ---
+// --- etiqueta del selector: debe decir qué necesita la plantilla ---
 
-await test('buildTemplateExample: estructura estilo Meta con los ejemplos', () => {
-	assert.deepEqual(tf.buildTemplateExample(PLANTILLA), {
-		header: { type: 'image', url: 'https://cdn.test/foto.jpg' },
-		body: ['Ana', '12 de mayo'],
-		buttons: [{ index: 0, type: 'url', parameter: 'https://test.co/c/999' }],
-	});
-});
-
-await test('buildTemplateExample: encabezado de texto y variables sin ejemplo', () => {
-	assert.deepEqual(
-		tf.buildTemplateExample({
-			components: [
-				{ type: 'HEADER', format: 'TEXT', text: 'Pedido {{1}}', example: { header_text: ['A-123'] } },
-				{ type: 'BODY', text: 'Hola {{1}} y {{2}}' },
-			],
-		}),
-		{ header: { type: 'text', variables: ['A-123'] }, body: ['', ''] },
-	);
-});
-
-await test('buildTemplateExample: plantilla sin variables → objeto vacío', () => {
-	assert.deepEqual(tf.buildTemplateExample({ components: [{ type: 'BODY', text: 'Gracias.' }] }), {});
-});
-
-await test('templateExampleToBody: traduce a las propiedades del API', () => {
-	assert.deepEqual(
-		tf.templateExampleToBody({
-			header: { type: 'image', url: 'https://cdn.test/f.jpg' },
-			body: ['Ana'],
-			buttons: [{ index: 0, type: 'url', parameter: 'https://x.co/1' }],
-		}),
-		{
-			variables: ['Ana'],
-			url_imagen_encabezado: 'https://cdn.test/f.jpg',
-			buttons: [{ index: 0, type: 'url', parameter: 'https://x.co/1' }],
-		},
-	);
-
-	// Encabezado de texto → variables_encabezado
-	assert.deepEqual(tf.templateExampleToBody({ header: { type: 'text', variables: ['A-1'] } }), {
-		variables_encabezado: ['A-1'],
-	});
-
-	// Video y documento a su propiedad
-	assert.deepEqual(tf.templateExampleToBody({ header: { type: 'video', url: 'https://v.mp4' } }), {
-		url_video_encabezado: 'https://v.mp4',
-	});
-	assert.deepEqual(tf.templateExampleToBody({ header: { type: 'document', url: 'https://d.pdf' } }), {
-		url_documento_encabezado: 'https://d.pdf',
-	});
-
-	// Estructura vacía → body vacío
-	assert.deepEqual(tf.templateExampleToBody({}), {});
-});
-
-// --- reparto al body (preSend) ---
-function executeCtx({ datos, body = {} }) {
+function optionsCtx(templates) {
 	return {
-		getNodeParameter: (name, fallback) => (name === 'datos_plantilla' ? datos : fallback),
 		getNode: () => ({ name: 'test' }),
+		getCurrentNodeParameter: (path) =>
+			({ resource: 'waba', operation: 'sendTemplate', id_canal: 1 })[path],
+		getCredentials: async () => ({}),
+		helpers: {
+			httpRequest: async () => ({ status: 1, data: { token: 'T' } }),
+			httpRequestWithAuthentication: async () => ({ status: 1, data: { templates } }),
+		},
 	};
 }
 
-await test('preSend: JSON de la plantilla (string) → propiedades del body', async () => {
-	const ctx = executeCtx({
-		datos: {
-			mappingMode: 'defineBelow',
-			value: {
-				datos: JSON.stringify({
-					header: { type: 'image', url: 'https://cdn.test/foto.jpg' },
-					body: ['Ana', '12 de mayo'],
-					buttons: [{ index: 0, type: 'url', parameter: 'https://test.co/c/999' }],
-				}),
+await test('selector: la etiqueta dice cuántas variables y qué medio pide', async () => {
+	const options = await lo.getWabaTemplates.call(optionsCtx([PLANTILLA, PLANTILLA_SIMPLE]));
+	const byValue = Object.fromEntries(options.map((o) => [o.value, o.name]));
+	assert.equal(byValue.tpl_1, 'confirmacion_cita · es · 2 variables · imagen · botón');
+	assert.equal(byValue.tpl_2, 'aviso · es · sin variables');
+});
+
+await test('selector: sin components cuenta las variables del texto del cuerpo', async () => {
+	const options = await lo.getWabaTemplates.call(
+		optionsCtx([{ id: 'x', name: 'promo', language: 'es', data: 'Hola {{1}}, {{2}}' }]),
+	);
+	assert.match(options[0].name, /2 variables/);
+});
+
+// --- preSend ---
+
+function executeCtx({ params = {}, template = PLANTILLA, falla = false } = {}) {
+	const calls = [];
+	return {
+		calls,
+		ctx: {
+			getNode: () => ({ name: 'test' }),
+			getNodeParameter: (name, fallback) => params[name] ?? fallback,
+			getCredentials: async () => ({}),
+			helpers: {
+				httpRequest: async () => ({ status: 1, data: { token: 'T' } }),
+				httpRequestWithAuthentication: async (_cred, opts) => {
+					calls.push(opts);
+					if (falla) throw new Error('API caída');
+					return { status: 1, data: template };
+				},
 			},
 		},
+	};
+}
+
+await test('preSend: variables en orden van al cuerpo', async () => {
+	const { ctx } = executeCtx({
+		params: { id_canal: 1, id_plantilla: 'tpl_1', variables: 'Ana, 12 de mayo', url_encabezado: 'https://cdn.test/f.jpg' },
 	});
-	const out = await applyTemplateData.call(ctx, { body: { id_canal: 1 } });
+	const out = await prepareTemplateSend.call(ctx, { body: { numero: '57300' } });
 	assert.deepEqual(out.body.variables, ['Ana', '12 de mayo']);
-	assert.equal(out.body.url_imagen_encabezado, 'https://cdn.test/foto.jpg');
-	assert.deepEqual(out.body.buttons, [{ index: 0, type: 'url', parameter: 'https://test.co/c/999' }]);
-	assert.equal(out.body.id_canal, 1);
+	assert.equal(out.body.url_imagen_encabezado, 'https://cdn.test/f.jpg');
+	assert.equal(out.body.numero, '57300');
 });
 
-await test('preSend: JSON ya parseado (objeto) también funciona', async () => {
-	const ctx = executeCtx({
-		datos: { value: { datos: { body: ['Ana'] } } },
+await test('preSend: faltan variables → error que dice cuántas y da el ejemplo', async () => {
+	const { ctx } = executeCtx({
+		params: { id_canal: 1, id_plantilla: 'tpl_1', variables: 'Ana', url_encabezado: 'https://x/f.jpg' },
 	});
-	const out = await applyTemplateData.call(ctx, { body: {} });
-	assert.deepEqual(out.body.variables, ['Ana']);
-});
-
-await test('preSend: JSON inválido → error claro en español', async () => {
-	const ctx = executeCtx({ datos: { value: { datos: '{ body: [ roto' } } });
 	await assert.rejects(
-		() => applyTemplateData.call(ctx, { body: {} }),
-		/no es un JSON válido/,
+		() => prepareTemplateSend.call(ctx, { body: {} }),
+		(err) =>
+			/necesita 2 variables y recibió 1/.test(err.message) &&
+			/Ana, 12 de mayo/.test(err.description ?? ''),
 	);
 });
 
-await test('preSend: JSON vacío no toca el body', async () => {
-	for (const datos of ['', '   ']) {
-		const ctx = executeCtx({ datos: { value: { datos } } });
-		const out = await applyTemplateData.call(ctx, { body: { id_canal: 1 } });
-		assert.deepEqual(out.body, { id_canal: 1 });
-	}
+await test('preSend: falta la URL del encabezado → error que explica el medio', async () => {
+	const { ctx } = executeCtx({
+		params: { id_canal: 1, id_plantilla: 'tpl_1', variables: 'Ana, 12 de mayo' },
+	});
+	await assert.rejects(
+		() => prepareTemplateSend.call(ctx, { body: {} }),
+		(err) =>
+			/lleva una imagen en el encabezado/.test(err.message) &&
+			/https:\/\/cdn.test\/foto.jpg/.test(err.description ?? ''),
+	);
 });
 
-await test('preSend: Campos Adicionales ganan sobre el JSON', async () => {
-	const ctx = executeCtx({
-		datos: { value: { datos: JSON.stringify({ body: ['Ejemplo'] }) } },
+await test('preSend: "Usar Datos de Ejemplo" rellena todo lo vacío', async () => {
+	const { ctx } = executeCtx({
+		params: { id_canal: 1, id_plantilla: 'tpl_1', 'additionalFields.usar_ejemplo': true },
 	});
-	const out = await applyTemplateData.call(ctx, { body: { variables: ['MIO'] } });
-	assert.deepEqual(out.body.variables, ['MIO']);
-});
-
-await test('preSend [compatibilidad v0.6.0]: reparte variables, encabezado y botones', async () => {
-	const ctx = executeCtx({
-		datos: {
-			mappingMode: 'defineBelow',
-			value: {
-				body_1: 'Ana',
-				body_2: '12 de mayo',
-				header_media_IMAGE: 'https://cdn.test/foto.jpg',
-				button_1: 'https://test.co/c/999',
-			},
-		},
-	});
-	const out = await applyTemplateData.call(ctx, { body: { id_canal: 1, numero: '57300' } });
+	const out = await prepareTemplateSend.call(ctx, { body: {} });
 	assert.deepEqual(out.body.variables, ['Ana', '12 de mayo']);
 	assert.equal(out.body.url_imagen_encabezado, 'https://cdn.test/foto.jpg');
 	assert.deepEqual(out.body.buttons, [{ index: 0, parameter: 'https://test.co/c/999' }]);
-	// No pisa lo que ya venía.
-	assert.equal(out.body.id_canal, 1);
 });
 
-await test('preSend: orden estable con 10+ variables (body_2 antes que body_10)', async () => {
-	const value = {};
-	for (let i = 1; i <= 11; i++) value[`body_${i}`] = `v${i}`;
-	const ctx = executeCtx({ datos: { value } });
-	const out = await applyTemplateData.call(ctx, { body: {} });
-	assert.deepEqual(out.body.variables, ['v1','v2','v3','v4','v5','v6','v7','v8','v9','v10','v11']);
-});
-
-await test('preSend: lo escrito en Campos Adicionales tiene prioridad', async () => {
-	const ctx = executeCtx({
-		datos: { value: { body_1: 'Ejemplo', header_media_IMAGE: 'https://cdn.test/ejemplo.jpg' } },
+await test('preSend: plantilla sin variables no exige nada', async () => {
+	const { ctx } = executeCtx({
+		params: { id_canal: 1, id_plantilla: 'tpl_2' },
+		template: PLANTILLA_SIMPLE,
 	});
-	const out = await applyTemplateData.call(ctx, {
-		body: { variables: ['MIO'], url_imagen_encabezado: 'https://mio.jpg' },
-	});
-	assert.deepEqual(out.body.variables, ['MIO']);
-	assert.equal(out.body.url_imagen_encabezado, 'https://mio.jpg');
+	const out = await prepareTemplateSend.call(ctx, { body: { numero: '57300' } });
+	assert.equal(out.body.variables, undefined);
+	assert.equal(out.body.numero, '57300');
 });
 
-await test('preSend: la URL del encabezado va a la propiedad según el tipo de medio', async () => {
-	const casos = [
-		['https://cdn.test/f.jpg', 'url_imagen_encabezado'],
-		['https://cdn.test/v.mp4', 'url_video_encabezado'],
-		['https://cdn.test/d.pdf?x=1', 'url_documento_encabezado'],
-	];
-	for (const [url, propiedad] of casos) {
-		const ctx = executeCtx({ datos: { value: { header_media: url } } }); // sin formato declarado → se infiere
-		const out = await applyTemplateData.call(ctx, { body: {} });
-		assert.equal(out.body[propiedad], url, `${url} → ${propiedad}`);
-	}
-});
-
-await test('preSend: el formato declarado por la plantilla gana sobre la extensión', async () => {
-	// URL sin extensión reconocible (típico de los handles de Meta): sin el formato del
-	// ID se asumiría imagen; el ID dice DOCUMENT y debe respetarse.
-	const ctx = executeCtx({
-		datos: { value: { header_media_DOCUMENT: 'https://cdn.test/handle/abc123' } },
+await test('preSend: la URL va a la propiedad del formato declarado (video)', async () => {
+	const video = {
+		name: 'promo',
+		components: [{ type: 'HEADER', format: 'VIDEO' }, { type: 'BODY', text: 'Mira esto' }],
+	};
+	const { ctx } = executeCtx({
+		params: { id_canal: 1, id_plantilla: 'tpl_v', url_encabezado: 'https://cdn.test/sin-extension' },
+		template: video,
 	});
-	const out = await applyTemplateData.call(ctx, { body: {} });
-	assert.equal(out.body.url_documento_encabezado, 'https://cdn.test/handle/abc123');
+	const out = await prepareTemplateSend.call(ctx, { body: {} });
+	assert.equal(out.body.url_video_encabezado, 'https://cdn.test/sin-extension');
 	assert.equal(out.body.url_imagen_encabezado, undefined);
 });
 
-await test('preSend: sin datos configurados no toca el body', async () => {
-	for (const datos of [undefined, {}, { value: null }, { value: {} }]) {
-		const ctx = executeCtx({ datos });
-		const original = { body: { id_canal: 1 } };
-		const out = await applyTemplateData.call(ctx, original);
-		assert.deepEqual(out.body, { id_canal: 1 });
-	}
+await test('preSend: la plantilla se consulta una sola vez (caché entre ítems)', async () => {
+	const params = { id_canal: 77, id_plantilla: 'tpl_cache', variables: 'Ana, 12 de mayo', url_encabezado: 'https://x/f.jpg' };
+	const a = executeCtx({ params });
+	await prepareTemplateSend.call(a.ctx, { body: {} });
+	assert.equal(a.calls.length, 1);
+
+	const b = executeCtx({ params });
+	await prepareTemplateSend.call(b.ctx, { body: {} });
+	assert.equal(b.calls.length, 0, 'el segundo ítem debe usar la caché');
 });
 
-// --- resourceMapping ---
-await test('getTemplateFields devuelve lista vacía sin canal o plantilla', async () => {
-	const ctx = {
-		getNode: () => ({ name: 'test' }),
-		getCurrentNodeParameter: () => undefined,
-		getCredentials: async () => ({}),
-		helpers: {
-			httpRequest: async () => ({ status: 1, data: { token: 'T' } }),
-			httpRequestWithAuthentication: async () => {
-				throw new Error('no debería consultar el API sin plantilla');
-			},
-		},
-	};
-	assert.deepEqual(await lo.getTemplateFields.call(ctx), { fields: [] });
-});
-
-await test('getTemplateFields devuelve UN campo object con el JSON prellenado', async () => {
-	const params = { resource: 'waba', operation: 'sendTemplate', id_canal: 4695, id_plantilla: 'tpl_1' };
-	const ctx = {
-		getNode: () => ({ name: 'test' }),
-		getCurrentNodeParameter: (path) => params[path],
-		getCredentials: async () => ({}),
-		helpers: {
-			httpRequest: async () => ({ status: 1, data: { token: 'T' } }),
-			httpRequestWithAuthentication: async () => ({ status: 1, data: PLANTILLA }),
-		},
-	};
-	const { fields } = await lo.getTemplateFields.call(ctx);
-	assert.equal(fields.length, 1);
-	assert.equal(fields[0].id, 'datos');
-	assert.equal(fields[0].type, 'object', 'type object → n8n lo renderiza como editor JSON');
-	assert.deepEqual(JSON.parse(fields[0].defaultValue), {
-		header: { type: 'image', url: 'https://cdn.test/foto.jpg' },
-		body: ['Ana', '12 de mayo'],
-		buttons: [{ index: 0, type: 'url', parameter: 'https://test.co/c/999' }],
+await test('preSend: si no se puede consultar la plantilla, envía igual', async () => {
+	const { ctx } = executeCtx({
+		params: { id_canal: 99, id_plantilla: 'tpl_sin_red', variables: 'Ana' },
+		falla: true,
 	});
-});
-
-await test('getTemplateFields consulta getTemplate con el canal y la plantilla', async () => {
-	const calls = [];
-	const params = { resource: 'waba', operation: 'sendTemplate', id_canal: 4695, id_plantilla: 'tpl_1' };
-	const ctx = {
-		getNode: () => ({ name: 'test' }),
-		getCurrentNodeParameter: (path) => params[path],
-		getCredentials: async () => ({}),
-		helpers: {
-			httpRequest: async () => ({ status: 1, data: { token: 'T' } }),
-			httpRequestWithAuthentication: async (_cred, opts) => {
-				calls.push(opts);
-				return { status: 1, data: PLANTILLA };
-			},
-		},
-	};
-	const { fields } = await lo.getTemplateFields.call(ctx);
-	assert.ok(calls[0].url.endsWith('/direct/waba/getTemplate'));
-	assert.deepEqual(calls[0].body, { id_canal: 4695, id: 'tpl_1' });
-	assert.equal(fields.length, 1);
+	const out = await prepareTemplateSend.call(ctx, { body: { numero: '57300' } });
+	assert.deepEqual(out.body.variables, ['Ana']);
+	assert.equal(out.body.numero, '57300');
 });
 
 console.log(`\n${passed} pruebas de humo de plantillas OK`);

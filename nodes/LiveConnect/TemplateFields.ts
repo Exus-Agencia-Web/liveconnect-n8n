@@ -12,9 +12,6 @@ import type { IDataObject, ResourceMapperField } from 'n8n-workflow';
  *   button_1, button_2…  → parámetro dinámico de cada botón
  */
 
-/** ID del campo único que contiene la estructura JSON de la plantilla. */
-export const TEMPLATE_PAYLOAD_FIELD = 'datos';
-
 export const TEMPLATE_FIELD_PREFIX = {
 	body: 'body_',
 	header: 'header_',
@@ -84,6 +81,7 @@ export function buildTemplateLayout(template: IDataObject): TemplateLayout {
 	const fields: ResourceMapperField[] = [];
 	let headerFormat: HeaderFormat = 'NONE';
 	let buttons: IDataObject[] = [];
+	let hayCuerpo = false;
 
 	const components = asArray(template.components)
 		.map((component) => asObject(component))
@@ -131,6 +129,7 @@ export function buildTemplateLayout(template: IDataObject): TemplateLayout {
 		}
 
 		if (tipo === 'BODY') {
+			hayCuerpo = true;
 			const texto = asText(component.text) ?? '';
 			// example.body_text es un array de filas de ejemplo: se usa la primera.
 			const primeraFila = asArray(asArray(example.body_text)[0]);
@@ -151,6 +150,17 @@ export function buildTemplateLayout(template: IDataObject): TemplateLayout {
 			buttons = asArray(component.buttons)
 				.map((button) => asObject(button))
 				.filter((button): button is IDataObject => button !== undefined);
+		}
+	}
+
+	// Sin componente BODY, el texto del cuerpo llega en `data`: de ahí salen las variables.
+	if (!hayCuerpo) {
+		const texto = asText(template.data) ?? '';
+		const total = countPlaceholders(texto);
+		for (let i = 0; i < total; i++) {
+			fields.push(
+				field(`${TEMPLATE_FIELD_PREFIX.body}${i + 1}`, `Cuerpo · variable {{${i + 1}}}`),
+			);
 		}
 	}
 
@@ -183,176 +193,10 @@ export function buildTemplateLayout(template: IDataObject): TemplateLayout {
 	return { fields: unicos, headerFormat, buttons };
 }
 
-/**
- * Ordena por el número del sufijo (body_2 antes que body_10). Los IDs sin número
- * (p. ej. `header_media_IMAGE`) van al final con orden estable, para no volver
- * inconsistente al comparador.
- */
-function bySuffixNumber(a: string, b: string): number {
-	const num = (id: string) => {
-		const parsed = Number(id.slice(id.lastIndexOf('_') + 1));
-		return Number.isFinite(parsed) ? parsed : Number.MAX_SAFE_INTEGER;
-	};
-	const diff = num(a) - num(b);
-	return diff !== 0 ? diff : a.localeCompare(b);
-}
-
-/** Valores del campo agrupados por destino en el body del API. */
-export interface TemplatePayload {
-	variables: string[];
-	variablesEncabezado: string[];
-	urlEncabezado?: string;
-	/** Formato declarado por la plantilla para el medio del encabezado. */
-	formatoEncabezado?: HeaderFormat;
-	botones: Record<number, string>;
-}
-
-/** Reparte los valores editados por el usuario según el prefijo de su ID. */
-export function splitTemplateValues(values: IDataObject): TemplatePayload {
-	const body: string[] = [];
-	const header: string[] = [];
-	const botones: Record<number, string> = {};
-	let urlEncabezado: string | undefined;
-	let formatoEncabezado: HeaderFormat | undefined;
-
-	for (const id of Object.keys(values).sort(bySuffixNumber)) {
-		const raw = values[id];
-		const valor = raw === null || raw === undefined ? '' : String(raw);
-
-		// Debe comprobarse ANTES que `header_`, porque el ID empieza igual.
-		if (id.startsWith(TEMPLATE_FIELD_PREFIX.headerMedia)) {
-			if (valor !== '') {
-				urlEncabezado = valor;
-				const sufijo = id.slice(TEMPLATE_FIELD_PREFIX.headerMedia.length + 1).toUpperCase();
-				if (sufijo === 'IMAGE' || sufijo === 'VIDEO' || sufijo === 'DOCUMENT') {
-					formatoEncabezado = sufijo;
-				}
-			}
-			continue;
-		}
-		if (id.startsWith(TEMPLATE_FIELD_PREFIX.body)) {
-			body.push(valor);
-			continue;
-		}
-		if (id.startsWith(TEMPLATE_FIELD_PREFIX.header)) {
-			header.push(valor);
-			continue;
-		}
-		if (id.startsWith(TEMPLATE_FIELD_PREFIX.button)) {
-			const indice = Number(id.slice(TEMPLATE_FIELD_PREFIX.button.length));
-			if (Number.isInteger(indice) && valor !== '') botones[indice] = valor;
-		}
-	}
-
-	return { variables: body, variablesEncabezado: header, urlEncabezado, formatoEncabezado, botones };
-}
-
 /** Propiedad del body que corresponde a la URL del encabezado según su formato. */
 export function headerUrlProperty(formato: HeaderFormat): string | undefined {
 	if (formato === 'IMAGE') return 'url_imagen_encabezado';
 	if (formato === 'VIDEO') return 'url_video_encabezado';
 	if (formato === 'DOCUMENT') return 'url_documento_encabezado';
 	return undefined;
-}
-
-/* ------------------------------------------------------------------ *
- * Estructura editable de la plantilla (formato estilo Meta)
- * ------------------------------------------------------------------ */
-
-export interface TemplateExampleHeader {
-	type: 'text' | 'image' | 'video' | 'document';
-	/** Variables del encabezado de texto. */
-	variables?: string[];
-	/** URL del medio (imagen, video o documento). */
-	url?: string;
-}
-
-export interface TemplateExampleButton {
-	index: number;
-	type: string;
-	parameter: string;
-}
-
-export interface TemplateExample {
-	header?: TemplateExampleHeader;
-	body?: string[];
-	buttons?: TemplateExampleButton[];
-}
-
-/**
- * Estructura que la plantilla necesita para enviarse, con los ejemplos de Meta como
- * valores. Solo incluye las claves que esa plantilla usa: lo que se ve es exactamente
- * lo que hay que rellenar.
- */
-export function buildTemplateExample(template: IDataObject): TemplateExample {
-	const { fields, headerFormat, buttons } = buildTemplateLayout(template);
-	const valorDe = (id: string): string => {
-		const campo = fields.find((f) => f.id === id);
-		const valor = campo?.defaultValue;
-		return typeof valor === 'string' ? valor : '';
-	};
-
-	const ejemplo: TemplateExample = {};
-
-	// Encabezado: variables de texto o URL del medio.
-	const variablesEncabezado = fields
-		.filter((f) => f.id.startsWith(TEMPLATE_FIELD_PREFIX.header) && !f.id.startsWith(TEMPLATE_FIELD_PREFIX.headerMedia))
-		.map((f) => (typeof f.defaultValue === 'string' ? f.defaultValue : ''));
-	if (headerFormat === 'TEXT' && variablesEncabezado.length > 0) {
-		ejemplo.header = { type: 'text', variables: variablesEncabezado };
-	} else if (headerFormat === 'IMAGE' || headerFormat === 'VIDEO' || headerFormat === 'DOCUMENT') {
-		ejemplo.header = {
-			type: headerFormat.toLowerCase() as TemplateExampleHeader['type'],
-			url: valorDe(`${TEMPLATE_FIELD_PREFIX.headerMedia}_${headerFormat}`),
-		};
-	}
-
-	const variablesCuerpo = fields
-		.filter((f) => f.id.startsWith(TEMPLATE_FIELD_PREFIX.body))
-		.map((f) => (typeof f.defaultValue === 'string' ? f.defaultValue : ''));
-	if (variablesCuerpo.length > 0) ejemplo.body = variablesCuerpo;
-
-	const botones = fields
-		.filter((f) => f.id.startsWith(TEMPLATE_FIELD_PREFIX.button))
-		.map((f) => {
-			const indice = Number(f.id.slice(TEMPLATE_FIELD_PREFIX.button.length));
-			const definicion = buttons[indice - 1] ?? {};
-			const tipo = typeof definicion.type === 'string' ? definicion.type.toLowerCase() : 'url';
-			return {
-				index: indice - 1,
-				type: tipo,
-				parameter: typeof f.defaultValue === 'string' ? f.defaultValue : '',
-			};
-		});
-	if (botones.length > 0) ejemplo.buttons = botones;
-
-	return ejemplo;
-}
-
-/** Traduce la estructura editable a las propiedades que espera el cuerpo de la petición. */
-export function templateExampleToBody(example: TemplateExample): IDataObject {
-	const body: IDataObject = {};
-
-	if (Array.isArray(example.body) && example.body.length > 0) {
-		body.variables = example.body.map((valor) => String(valor ?? ''));
-	}
-
-	const header = example.header;
-	if (header !== undefined && header !== null) {
-		const tipo = (header.type ?? '').toString().toUpperCase();
-		if (tipo === 'TEXT' && Array.isArray(header.variables) && header.variables.length > 0) {
-			body.variables_encabezado = header.variables.map((valor) => String(valor ?? ''));
-		}
-		const url = typeof header.url === 'string' ? header.url.trim() : '';
-		if (url !== '') {
-			const propiedad = headerUrlProperty(tipo as HeaderFormat) ?? 'url_imagen_encabezado';
-			body[propiedad] = url;
-		}
-	}
-
-	if (Array.isArray(example.buttons) && example.buttons.length > 0) {
-		body.buttons = example.buttons as unknown as IDataObject[];
-	}
-
-	return body;
 }

@@ -1,6 +1,6 @@
 import type { INodeProperties } from 'n8n-workflow';
 
-import { applyTemplateData, handleLcResponse } from '../GenericFunctions';
+import { handleLcResponse, prepareTemplateSend } from '../GenericFunctions';
 
 export const wabaOperations: INodeProperties[] = [
 	{
@@ -348,37 +348,38 @@ export const wabaFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Datos de la Plantilla',
-		name: 'datos_plantilla',
-		type: 'resourceMapper',
-		noDataExpression: true,
-		default: {
-			mappingMode: 'defineBelow',
-			value: null,
-		},
+		displayName: 'Variables',
+		name: 'variables',
+		type: 'string',
+		default: '',
+		placeholder: 'Ana, 12 de mayo',
 		description:
-			'Estructura que la plantilla necesita (encabezado, variables del cuerpo y botones), precargada con los ejemplos que trae de Meta. Edita el JSON antes de enviar; admite expresiones de n8n en cualquier valor. Los carruseles no están soportados todavía.',
-		typeOptions: {
-			loadOptionsDependsOn: ['&id_canal', '&id_plantilla'],
-			resourceMapper: {
-				resourceMapperMethod: 'getTemplateFields',
-				mode: 'add',
-				fieldWords: { singular: 'contenido', plural: 'contenidos' },
-				addAllFields: true,
-				multiKeyMatch: false,
-				supportAutoMap: false,
-			},
-		},
+			'Valores de las variables del cuerpo, separados por comas y en el orden {{1}}, {{2}}… El desplegable de arriba indica cuántas pide la plantilla. Déjalo vacío y activa "Usar Datos de Ejemplo" para una prueba rápida.',
 		displayOptions: {
 			show: {
 				resource: ['waba'],
 				operation: ['sendTemplate'],
 			},
 		},
-		// Los valores se reparten en varias propiedades del body (variables, encabezado,
-		// botones), así que no puede hacerse con un routing.send de una sola propiedad.
+	},
+	{
+		displayName: 'URL del Encabezado',
+		name: 'url_encabezado',
+		type: 'string',
+		default: '',
+		placeholder: 'https://…',
+		description:
+			'URL pública de la imagen, video o documento del encabezado. Solo hace falta si el desplegable de la plantilla indica que lleva uno; el nodo la coloca en el campo que corresponda.',
+		displayOptions: {
+			show: {
+				resource: ['waba'],
+				operation: ['sendTemplate'],
+			},
+		},
+		// El preSend consulta la plantilla, valida lo que falta y reparte los valores
+		// (variables, URL del encabezado y botones) en las propiedades del cuerpo.
 		routing: {
-			send: { preSend: [applyTemplateData] },
+			send: { preSend: [prepareTemplateSend] },
 		},
 	},
 	{
@@ -433,44 +434,12 @@ export const wabaFields: INodeProperties[] = [
 				},
 			},
 			{
-				displayName: 'URL de la Imagen del Encabezado',
-				name: 'url_imagen_encabezado',
-				type: 'string',
-				default: '',
-				description: 'URL de imagen para el encabezado',
-				routing: { send: { type: 'body', property: 'url_imagen_encabezado' } },
-			},
-			{
-				displayName: 'URL del Documento del Encabezado',
-				name: 'url_documento_encabezado',
-				type: 'string',
-				default: '',
-				description: 'URL de documento para el encabezado',
-				routing: { send: { type: 'body', property: 'url_documento_encabezado' } },
-			},
-			{
-				displayName: 'URL del Video del Encabezado',
-				name: 'url_video_encabezado',
-				type: 'string',
-				default: '',
-				description: 'URL de video (mp4/3gp, máx. 16MB) para el encabezado.',
-				routing: { send: { type: 'body', property: 'url_video_encabezado' } },
-			},
-			{
-				displayName: 'Variables del Cuerpo',
-				name: 'variables',
-				type: 'string',
-				default: '',
-				placeholder: 'value1,value2',
-				description: 'Variables del cuerpo de la plantilla, separadas por comas',
-				routing: {
-					send: {
-						type: 'body',
-						property: 'variables',
-						value:
-							'={{ $value.toString().split(",").map((v) => v.trim()).filter((v) => v !== "") }}',
-					},
-				},
+				displayName: 'Usar Datos de Ejemplo',
+				name: 'usar_ejemplo',
+				type: 'boolean',
+				default: false,
+				description:
+					'Si se activa, rellena lo que dejes vacío con los datos de ejemplo que trae la plantilla de Meta. Sirve para enviarte una prueba sin escribir nada.',
 			},
 			{
 				displayName: 'Variables del Encabezado',

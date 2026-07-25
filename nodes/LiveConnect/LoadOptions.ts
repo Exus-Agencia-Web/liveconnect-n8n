@@ -1,12 +1,7 @@
-import type {
-	IDataObject,
-	ILoadOptionsFunctions,
-	INodePropertyOptions,
-	ResourceMapperFields,
-} from 'n8n-workflow';
+import type { IDataObject, ILoadOptionsFunctions, INodePropertyOptions } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
 
-import { buildTemplateExample, TEMPLATE_PAYLOAD_FIELD } from './TemplateFields';
+import { buildTemplateLayout } from './TemplateFields';
 
 import type { LcTokenContext } from './GenericFunctions';
 import {
@@ -285,23 +280,22 @@ export async function getWabaTemplates(
 		id_canal: Number(idCanal),
 	});
 
-	// El ID de una plantilla WABA es un UUID ilegible y no todas las cuentas devuelven
-	// `name`, así que se busca el nombre en los campos alternativos conocidos y, como
-	// último recurso, en el contenido de la plantilla.
+	// La etiqueta dice lo que hay que rellenar para enviar esa plantilla: cuántas
+	// variables pide y si necesita imagen, video o documento en el encabezado.
 	return rows
 		.filter((row) => row.id !== undefined && row.id !== null)
 		.map((row) => {
 			const estado = typeof row.status === 'string' ? row.status.toUpperCase() : '';
 			const detalles = [
 				typeof row.language === 'string' ? row.language : '',
-				typeof row.category === 'string' ? row.category.toLowerCase() : '',
+				describeTemplateNeeds(row),
 				estado !== '' && estado !== 'APPROVED' ? estado : '',
 			]
 				.filter((part) => part !== '')
 				.join(' · ');
 			const nombre = templateLabel(row);
 			return {
-				name: detalles !== '' ? `${nombre} (${detalles})` : nombre,
+				name: detalles !== '' ? `${nombre} · ${detalles}` : nombre,
 				value: row.id as string | number,
 				// Las aprobadas primero: son las únicas que se pueden enviar.
 				aprobada: estado === '' || estado === 'APPROVED',
@@ -312,6 +306,27 @@ export async function getWabaTemplates(
 			return a.name.localeCompare(b.name, 'es');
 		})
 		.map(({ name, value }) => ({ name, value }));
+}
+
+/** Resumen de lo que la plantilla exige: "2 variables · imagen · botón". */
+function describeTemplateNeeds(row: IDataObject): string {
+	const { fields, headerFormat } = buildTemplateLayout(row);
+	const partes: string[] = [];
+
+	const variables = fields.filter(
+		(f) => f.id.startsWith('body_') || (f.id.startsWith('header_') && !f.id.startsWith('header_media')),
+	).length;
+	if (variables > 0) partes.push(variables === 1 ? '1 variable' : `${variables} variables`);
+
+	if (headerFormat === 'IMAGE') partes.push('imagen');
+	else if (headerFormat === 'VIDEO') partes.push('video');
+	else if (headerFormat === 'DOCUMENT') partes.push('documento');
+
+	const botones = fields.filter((f) => f.id.startsWith('button_')).length;
+	if (botones > 0) partes.push(botones === 1 ? 'botón' : `${botones} botones`);
+
+	if (partes.length === 0) return 'sin variables';
+	return partes.join(' · ');
 }
 
 /**
@@ -376,54 +391,20 @@ function parseTemplateBody(data: unknown): string | undefined {
 }
 
 /**
- * Campos editables de la plantilla seleccionada (método `resourceMapping`): sus
- * variables con el ejemplo de Meta como valor por defecto.
- *
- * Nunca lanza cuando falta el canal o la plantilla: devuelve una lista vacía para que
- * el panel del nodo siga usable mientras el usuario termina de elegir.
+ * Plantilla WABA concreta, en crudo. La usa el preSend de "Enviar Plantilla" para saber
+ * qué necesita la plantilla antes de enviarla.
  */
-export async function getTemplateFields(
-	this: ILoadOptionsFunctions,
-): Promise<ResourceMapperFields> {
-	let idCanal: string | number | undefined;
-	let idPlantilla: string | number | undefined;
-	try {
-		idCanal = dependencyValue(this, 'id_canal', 'el Canal');
-		idPlantilla = dependencyValue(this, 'id_plantilla', 'la Plantilla');
-	} catch {
-		// Expresiones o valores aún sin resolver: no hay nada que mostrar todavía.
-		return { fields: [] };
-	}
-	if (idCanal === undefined || idPlantilla === undefined) return { fields: [] };
-
-	// getTemplate devuelve UN objeto: se pide en crudo (pickRows tomaría `components`).
-	const data = await lcRequest(this, '/direct/waba/getTemplate', 'POST', {
-		id_canal: Number(idCanal),
-		id: String(idPlantilla),
+export async function fetchTemplate(
+	ctx: ILoadOptionsFunctions,
+	idCanal: number,
+	idPlantilla: string,
+): Promise<IDataObject | undefined> {
+	const data = await lcRequest(ctx, '/direct/waba/getTemplate', 'POST', {
+		id_canal: idCanal,
+		id: idPlantilla,
 	});
-
-	const template = Array.isArray(data) ? (data[0] as IDataObject | undefined) : (data as IDataObject | null);
-	if (template === undefined || template === null || typeof template !== 'object') {
-		return { fields: [] };
-	}
-
-	// Un único campo `object`: n8n lo renderiza como editor JSON (MappingFields.vue),
-	// así que el usuario ve y edita toda la estructura de la plantilla de una vez.
-	const ejemplo = buildTemplateExample(template);
-	return {
-		fields: [
-			{
-				id: TEMPLATE_PAYLOAD_FIELD,
-				displayName: 'Contenido de la Plantilla',
-				type: 'object',
-				required: false,
-				display: true,
-				defaultMatch: false,
-				canBeUsedToMatch: false,
-				defaultValue: JSON.stringify(ejemplo, null, 2),
-			},
-		],
-	};
+	const template = Array.isArray(data) ? data[0] : data;
+	return template !== null && typeof template === 'object' ? (template as IDataObject) : undefined;
 }
 
 /** Métodos listos para el bloque `methods.loadOptions` de cada nodo. */
