@@ -73,7 +73,27 @@ async function lcList(
 		);
 	}
 
-	return Array.isArray(response.data) ? (response.data as IDataObject[]) : [];
+	return pickRows(response.data);
+}
+
+/**
+ * Filas de la respuesta. La mayoría de listados devuelve `data` como array, pero
+ * algunos lo anidan (p. ej. /direct/waba/getTemplates → `data.templates` + `paging`),
+ * así que se busca el primer array dentro del objeto.
+ */
+function pickRows(data: unknown): IDataObject[] {
+	if (Array.isArray(data)) return data as IDataObject[];
+	if (data === null || typeof data !== 'object') return [];
+
+	const container = data as IDataObject;
+	// Claves conocidas primero; si el API cambia el nombre, cae al primer array que haya.
+	for (const key of ['templates', 'items', 'list', 'rows', 'results', 'data']) {
+		if (Array.isArray(container[key])) return container[key] as IDataObject[];
+	}
+	for (const value of Object.values(container)) {
+		if (Array.isArray(value)) return value as IDataObject[];
+	}
+	return [];
 }
 
 /** Filas del API → opciones del selector, con el ID visible y orden alfabético español. */
@@ -205,7 +225,25 @@ export async function getWabaTemplates(
 	const rows = await lcList(this, '/direct/waba/getTemplates', 'POST', {
 		id_canal: Number(idCanal),
 	});
-	return toOptions(rows, 'name', 'id');
+
+	// El ID de una plantilla WABA es un número largo poco legible: se etiqueta con el
+	// nombre, el idioma y el estado (solo las aprobadas se pueden enviar).
+	return rows
+		.filter((row) => row.id !== undefined && row.id !== null)
+		.map((row) => {
+			const nombre =
+				typeof row.name === 'string' && row.name.trim() !== '' ? row.name : `ID ${row.id}`;
+			const idioma = typeof row.language === 'string' && row.language !== '' ? row.language : '';
+			const estado = typeof row.status === 'string' ? row.status.toUpperCase() : '';
+			const detalles = [idioma, estado !== 'APPROVED' && estado !== '' ? estado : '']
+				.filter((part) => part !== '')
+				.join(' · ');
+			return {
+				name: detalles !== '' ? `${nombre} (${detalles})` : nombre,
+				value: row.id as string | number,
+			};
+		})
+		.sort((a, b) => a.name.localeCompare(b.name, 'es'));
 }
 
 /** Métodos listos para el bloque `methods.loadOptions` de cada nodo. */

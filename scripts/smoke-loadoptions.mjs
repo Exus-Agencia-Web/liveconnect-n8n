@@ -140,17 +140,44 @@ await test('campo dependiente con expresión → error explicativo, no NaN', asy
 	assert.equal(calls.length, 0, 'no debe llamar al API con NaN');
 });
 
-await test('getWabaTemplates depende del canal y usa id/name string', async () => {
-	const sin = ctxFor({ response: { status: 1, data: [] } });
+await test('getWabaTemplates lee data.templates (respuesta anidada real del API)', async () => {
+	const sin = ctxFor({ response: { status: 1, data: { templates: [] } } });
 	await assert.rejects(() => lo.getWabaTemplates.call(sin.ctx), /Selecciona primero el Canal/);
 
 	const con = ctxFor({
-		response: { status: 1, data: [{ id: 'tpl_123', name: 'bienvenida' }] },
+		// Forma REAL: data es un objeto { templates, paging }, no un array.
+		response: {
+			status: 1,
+			data: {
+				templates: [
+					{ id: '123456789', name: 'bienvenida', language: 'es', status: 'APPROVED' },
+					{ id: '987654321', name: 'aviso_pago', language: 'es_CO', status: 'PENDING' },
+				],
+				paging: false,
+			},
+		},
 		params: { resource: 'waba', operation: 'sendTemplate', id_canal: 67095 },
 	});
 	const options = await lo.getWabaTemplates.call(con.ctx);
-	assert.deepEqual(options, [{ name: 'bienvenida (tpl_123)', value: 'tpl_123' }]);
+	assert.deepEqual(options, [
+		{ name: 'aviso_pago (es_CO · PENDING)', value: '987654321' },
+		{ name: 'bienvenida (es)', value: '123456789' },
+	]);
 	assert.deepEqual(con.calls[0].body, { id_canal: 67095 });
+});
+
+await test('pickRows tolera array plano, objeto anidado y formas raras', async () => {
+	// array plano (la mayoría de listados)
+	const plano = ctxFor({ response: { status: 1, data: [{ id: 1, nombre: 'A' }] } });
+	assert.equal((await lo.getChannels.call(plano.ctx)).length, 1);
+
+	// objeto con clave desconocida que contiene el array
+	const raro = ctxFor({ response: { status: 1, data: { cualquiera: [{ id: 2, nombre: 'B' }] } } });
+	assert.deepEqual(await lo.getGroups.call(raro.ctx), [{ name: 'B (2)', value: 2 }]);
+
+	// objeto sin ningún array → lista vacía, sin reventar
+	const vacio = ctxFor({ response: { status: 1, data: { paging: false } } });
+	assert.deepEqual(await lo.getUsers.call(vacio.ctx), []);
 });
 
 await test('envelope con status<0 → error con el mensaje del API', async () => {

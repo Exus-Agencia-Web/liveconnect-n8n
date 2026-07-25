@@ -115,7 +115,9 @@ Los campos de ID con endpoint de listado son desplegables: `type: 'options'` + `
 
 Mapeo: `id_canal`→getChannels · `id_grupo`/`id_team`/`id_to_delegate`→getGroups · `id_usuario`/`id_responsable`/`id_asignado`/`idSupervisor`/`id_user`→getUsers · `id_pipeline`→getPipelines · `id_etapa_pipeline`→getStages (depende de `id_pipeline`) · `origen_lead`→getLeadOrigins · `canal_origen`→getLeadChannels · `id_categoria`→getCategories · `id_assistant`→getAssistants · `id_plantilla`→getWabaTemplates (depende de `id_canal`; su ID es string).
 
-**Sin selector por falta de endpoint en el spec**: `id_tag`, `etiquetas`, `id_respuesta`, `id_empresa`, `id_contacto`, `id_deal`. Las dependencias se resuelven con `getCurrentNodeParameter` probando la ruta top-level y las de las colecciones. La regla `node-param-display-name-wrong-for-dynamic-options` está desactivada (exige el literal inglés "Name or ID").
+**Sin selector por falta de endpoint en el spec**: `id_tag`, `etiquetas`, `id_respuesta`, `id_empresa`, `id_contacto`, `id_deal`. Las dependencias se resuelven con el mapa `DEPENDENCY_PATHS` (`${resource}.${operation}.${campo}` → ruta exacta): n8n NO limpia los valores de los campos ocultos al cambiar de operación, así que probar varias rutas candidatas devolvía el valor de otra operación. La regla `node-param-display-name-wrong-for-dynamic-options` está desactivada (exige el literal inglés "Name or ID").
+
+**Forma de la respuesta**: casi todos los listados devuelven `data` como array plano, pero `/direct/waba/getTemplates` lo anida en **`data.templates`** (+ `paging`). `pickRows` acepta ambas formas (array, o el primer array dentro del objeto), así que un endpoint nuevo que anide no rompe el selector.
 
 ## Gotchas de build/publicación
 
