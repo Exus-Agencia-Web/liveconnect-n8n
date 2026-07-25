@@ -22,6 +22,7 @@ En n8n: **Workflow → ⋯ (menú) → Import from File** y selecciona el `.json
 | 06 | `06-verificar-numero-crear-contacto.json` | Alta validada: verifica el número en WhatsApp, crea contacto, abre conversación y envía bienvenida. |
 | 07 | `07-chatbot-callback-trigger.json` | Chatbot con el **LiveConnect Callback Trigger** (v0.2.0+): motor de reglas que responde `data.actions` con el `input` de cierre obligatorio. |
 | 08 | `08-mensajes-proxy-trigger.json` | Mensajes entrantes con el **LiveConnect Proxy Trigger** (v0.2.0+): registro automático del webhook del canal + auto-respuesta. |
+| 09 | `09-chatbot-callback-visual.json` | Chatbot **sin código** (v0.4.0+): el nodo **LiveConnect Respuesta al Callback** arma las actions visualmente y responde el webhook él mismo. |
 
 ## Requisito para el workflow 04 (nodo como herramienta de IA)
 

@@ -61,7 +61,9 @@ Se dispara con las notificaciones del **proxy de conversaciones**. Gestiona el w
 
 Recibe los **callbacks del chatbot (Flowbot)**. Activa el workflow y pega la URL Production del trigger en la acción de callback del Flowbot. El trigger valida el secret (query o header) y entrega el evento simplificado: `mensaje` (resuelve el primer turno desde `inputs.mensaje_inicial`), `sessionId` estable para memoria, `esPrimerTurno`, `hayAgenteHumano`, `contacto`, `inputs`, `intent` y `raw`.
 
-**El callback exige respuesta síncrona** con este envelope (constrúyelo y devuélvelo con un nodo *Respond to Webhook*):
+**El callback exige respuesta síncrona.** La forma fácil (v0.4.0+): el nodo **LiveConnect Respuesta al Callback** arma las acciones visualmente desde el editor (texto, imagen, archivo, etiqueta, variables, delegación, actualizar contacto), aplica solo la regla del `input` de cierre y **responde el webhook él mismo** — sin Code ni Respond to Webhook. Ver [`examples/09-chatbot-callback-visual.json`](examples/09-chatbot-callback-visual.json).
+
+Si prefieres construirla a mano, este es el envelope (devuélvelo con un nodo *Respond to Webhook*):
 
 ```json
 { "status": 1, "status_message": "Ok", "data": { "actions": [

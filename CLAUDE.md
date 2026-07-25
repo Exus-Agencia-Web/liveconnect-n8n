@@ -18,8 +18,10 @@ nodes/LiveConnect/
   LiveConnect.node.ts                       # nodo principal: selector de resource + spread de descripciones
   GenericFunctions.ts                       # LIVECONNECT_BASE_URL + handleLcResponse (postReceive compartido)
   TriggerFunctions.ts                       # helpers de triggers: secret, sessionId, simplify, lcHookRequest
+  ActionsFunctions.ts                       # helpers del constructor de actions: toAction, applyClosingRule, buildEnvelope
   LiveConnectProxyTrigger.node.ts           # trigger: notificaciones del proxy (registra webhook vía API)
   LiveConnectCallbackTrigger.node.ts        # trigger: callbacks del Flowbot (URL manual, respuesta síncrona)
+  LiveConnectCallbackResponse.node.ts       # constructor visual de actions; responde el webhook vía sendResponse()
   descriptions/<Recurso>Description.ts      # 1 archivo por recurso: <camel>Operations + <camel>Fields
   descriptions/index.ts                     # re-exporta todo
 scripts/verify-spec.mjs                     # diff automático dist/ vs OpenAPI (npm run verify)
@@ -49,6 +51,8 @@ scripts/smoke-triggers.mjs                  # humo de triggers con payload real 
 - Secret inválido en ambos triggers: `getResponseObject().status(403).json(...)` + `{noWebhookResponse:true}` (workflow no corre). Comparación con `timingSafeEqual`.
 
 ESLint de triggers (el plugin los detecta por archivo `*Trigger.node.ts`): name/displayName sufijados con Trigger, `inputs: []`, `outputs: ['main']`, el parámetro Simplify DEBE llamarse `simple` con la description literal `Whether to return a simplified version of the response instead of the raw data`, NO agregar subtitle.
+
+**LiveConnectCallbackResponse** ("LiveConnect Respuesta al Callback") — constructor visual de actions: fixedCollection `acciones.accion[]` con campo `tipo` + campos condicionales (`displayOptions.show.tipo` funciona entre hermanos dentro del fixedCollection, scope local del item). `toAction` valida obligatorios (IDs enteros >0 rechazando '' antes de `Number()`; URLs http(s)), `applyClosingRule` aplica la regla del input de cierre (delegación gana y elimina inputs), y responde el webhook con `this.sendResponse({body, headers, statusCode})` — API pública de IExecuteFunctions (interfaces.d.ts:733), no-op sin webhook esperando (NO copiar el guard "No Webhook node found" del core: su lista de triggers no incluye nodos comunitarios). Requiere el Callback Trigger en responseMode `responseNode` (default). Smoke: scripts/smoke-response.mjs.
 
 ## API LiveConnect — comportamiento real (verificado, no todo está en el spec)
 
