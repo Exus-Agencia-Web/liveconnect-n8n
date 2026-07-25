@@ -4,7 +4,7 @@ import { handleLcResponse } from '../GenericFunctions';
 
 export const whatsAppOperations: INodeProperties[] = [
 	{
-		displayName: 'Operation',
+		displayName: 'Operación',
 		name: 'operation',
 		type: 'options',
 		noDataExpression: true,
@@ -15,20 +15,9 @@ export const whatsAppOperations: INodeProperties[] = [
 		},
 		options: [
 			{
-				name: 'Check Number',
-				value: 'checkNumber',
-				action: 'Check a number',
-				description:
-					'Verifica, contra el canal WhatsApp QR indicado, si el número destino es un usuario válido de WhatsApp',
-				routing: {
-					request: { method: 'POST', url: '/direct/wa/checkNumber' },
-					output: { postReceive: [handleLcResponse] },
-				},
-			},
-			{
-				name: 'Send File',
+				name: 'Enviar Archivo',
 				value: 'sendFile',
-				action: 'Send a file',
+				action: 'Enviar un archivo',
 				description:
 					'Envía un archivo (imagen, documento, etc.) por URL al número destino a través del canal WhatsApp QR indicado',
 				routing: {
@@ -37,9 +26,9 @@ export const whatsAppOperations: INodeProperties[] = [
 				},
 			},
 			{
-				name: 'Send Message',
+				name: 'Enviar Mensaje',
 				value: 'sendMessage',
-				action: 'Send a message',
+				action: 'Enviar un mensaje',
 				description:
 					'Envía un mensaje de texto al número destino a través del canal WhatsApp QR indicado',
 				routing: {
@@ -48,13 +37,24 @@ export const whatsAppOperations: INodeProperties[] = [
 				},
 			},
 			{
-				name: 'Send Quick Reply',
+				name: 'Enviar Respuesta Rápida',
 				value: 'sendQuickAnswer',
-				action: 'Send a quick reply',
+				action: 'Enviar una respuesta r pida',
 				description:
 					'Envía una respuesta rápida al número destino, reemplazando las variables indicadas en el texto. Si la respuesta rápida tiene archivo adjunto, lo envía además del texto.',
 				routing: {
 					request: { method: 'POST', url: '/direct/wa/sendQuickAnswer' },
+					output: { postReceive: [handleLcResponse] },
+				},
+			},
+			{
+				name: 'Verificar Número',
+				value: 'checkNumber',
+				action: 'Verificar un n mero',
+				description:
+					'Verifica, contra el canal WhatsApp QR indicado, si el número destino es un usuario válido de WhatsApp',
+				routing: {
+					request: { method: 'POST', url: '/direct/wa/checkNumber' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
@@ -68,7 +68,7 @@ export const whatsAppFields: INodeProperties[] = [
 	//         whatsapp: checkNumber
 	// ----------------------------------
 	{
-		displayName: 'Channel ID',
+		displayName: 'ID del Canal',
 		name: 'id_canal',
 		type: 'number',
 		required: true,
@@ -85,7 +85,7 @@ export const whatsAppFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Phone Number',
+		displayName: 'Número de Teléfono',
 		name: 'numero',
 		type: 'string',
 		required: true,
@@ -106,7 +106,7 @@ export const whatsAppFields: INodeProperties[] = [
 	//         whatsapp: sendFile
 	// ----------------------------------
 	{
-		displayName: 'Channel ID',
+		displayName: 'ID del Canal',
 		name: 'id_canal',
 		type: 'number',
 		required: true,
@@ -123,7 +123,7 @@ export const whatsAppFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Phone Number',
+		displayName: 'Número de Teléfono',
 		name: 'numero',
 		type: 'string',
 		required: true,
@@ -140,7 +140,7 @@ export const whatsAppFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'File URL',
+		displayName: 'URL del Archivo',
 		name: 'url',
 		type: 'string',
 		required: true,
@@ -157,10 +157,10 @@ export const whatsAppFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Additional Fields',
+		displayName: 'Campos Adicionales',
 		name: 'additionalFields',
 		type: 'collection',
-		placeholder: 'Add Field',
+		placeholder: 'Agregar Campo',
 		default: {},
 		displayOptions: {
 			show: {
@@ -170,7 +170,7 @@ export const whatsAppFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'File Extension',
+				displayName: 'Extensión del Archivo',
 				name: 'extension',
 				type: 'string',
 				default: '',
@@ -178,7 +178,7 @@ export const whatsAppFields: INodeProperties[] = [
 				routing: { send: { type: 'body', property: 'extension' } },
 			},
 			{
-				displayName: 'File Name',
+				displayName: 'Nombre del Archivo',
 				name: 'nombre',
 				type: 'string',
 				default: '',
@@ -186,7 +186,7 @@ export const whatsAppFields: INodeProperties[] = [
 				routing: { send: { type: 'body', property: 'nombre' } },
 			},
 			{
-				displayName: 'Reply To',
+				displayName: 'Responder A',
 				name: 'replyTo',
 				type: 'string',
 				default: '',
@@ -200,7 +200,7 @@ export const whatsAppFields: INodeProperties[] = [
 	//         whatsapp: sendMessage
 	// ----------------------------------
 	{
-		displayName: 'Channel ID',
+		displayName: 'ID del Canal',
 		name: 'id_canal',
 		type: 'number',
 		required: true,
@@ -217,7 +217,7 @@ export const whatsAppFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Phone Number',
+		displayName: 'Número de Teléfono',
 		name: 'numero',
 		type: 'string',
 		required: true,
@@ -234,7 +234,7 @@ export const whatsAppFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Message',
+		displayName: 'Mensaje',
 		name: 'mensaje',
 		type: 'string',
 		typeOptions: { rows: 3 },
@@ -252,10 +252,10 @@ export const whatsAppFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Additional Fields',
+		displayName: 'Campos Adicionales',
 		name: 'additionalFields',
 		type: 'collection',
-		placeholder: 'Add Field',
+		placeholder: 'Agregar Campo',
 		default: {},
 		displayOptions: {
 			show: {
@@ -265,7 +265,7 @@ export const whatsAppFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Reply To',
+				displayName: 'Responder A',
 				name: 'replyTo',
 				type: 'string',
 				default: '',
@@ -279,7 +279,7 @@ export const whatsAppFields: INodeProperties[] = [
 	//         whatsapp: sendQuickAnswer
 	// ----------------------------------
 	{
-		displayName: 'Channel ID',
+		displayName: 'ID del Canal',
 		name: 'id_canal',
 		type: 'number',
 		required: true,
@@ -296,7 +296,7 @@ export const whatsAppFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Phone Number',
+		displayName: 'Número de Teléfono',
 		name: 'numero',
 		type: 'string',
 		required: true,
@@ -313,7 +313,7 @@ export const whatsAppFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Quick Reply ID',
+		displayName: 'ID de la Respuesta Rápida',
 		name: 'id_respuesta',
 		type: 'number',
 		required: true,
@@ -330,10 +330,10 @@ export const whatsAppFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Additional Fields',
+		displayName: 'Campos Adicionales',
 		name: 'additionalFields',
 		type: 'collection',
-		placeholder: 'Add Field',
+		placeholder: 'Agregar Campo',
 		default: {},
 		displayOptions: {
 			show: {

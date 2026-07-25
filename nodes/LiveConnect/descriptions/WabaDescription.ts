@@ -4,7 +4,7 @@ import { handleLcResponse } from '../GenericFunctions';
 
 export const wabaOperations: INodeProperties[] = [
 	{
-		displayName: 'Operation',
+		displayName: 'Operación',
 		name: 'operation',
 		type: 'options',
 		noDataExpression: true,
@@ -15,31 +15,20 @@ export const wabaOperations: INodeProperties[] = [
 		},
 		options: [
 			{
-				name: 'Get Many Templates',
-				value: 'getManyTemplates',
-				action: 'Get many templates',
+				name: 'Enviar Plantilla',
+				value: 'sendTemplate',
+				action: 'Enviar una plantilla',
 				description:
-					'Retorna las plantillas de WhatsApp Business API configuradas en el canal, con paginación y filtros opcionales de Meta',
+					'Envía la plantilla indicada al número destino por el canal seleccionado. El encabezado admite imagen, documento o video (el video se rechaza si supera 16MB o no es mp4/3gp).',
 				routing: {
-					request: { method: 'POST', url: '/direct/waba/getTemplates' },
+					request: { method: 'POST', url: '/direct/waba/sendTemplate' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
 			{
-				name: 'Get Template',
-				value: 'getTemplate',
-				action: 'Get a template',
-				description:
-					'Busca una plantilla por ID o por nombre. Requiere el ID del canal y, como identificador, el ID de la plantilla en Meta o su nombre alterno.',
-				routing: {
-					request: { method: 'POST', url: '/direct/waba/getTemplate' },
-					output: { postReceive: [handleLcResponse] },
-				},
-			},
-			{
-				name: 'Send Quick Reply',
+				name: 'Enviar Respuesta Rápida',
 				value: 'sendQuickAnswer',
-				action: 'Send a quick reply',
+				action: 'Enviar una respuesta r pida',
 				description:
 					'Envía una respuesta rápida (texto y/o archivo adjunto) al número destino, sustituyendo {clave} en el texto por las variables indicadas',
 				routing: {
@@ -48,13 +37,24 @@ export const wabaOperations: INodeProperties[] = [
 				},
 			},
 			{
-				name: 'Send Template',
-				value: 'sendTemplate',
-				action: 'Send a template',
+				name: 'Obtener Plantilla',
+				value: 'getTemplate',
+				action: 'Obtener una plantilla',
 				description:
-					'Envía la plantilla indicada al número destino por el canal seleccionado. El encabezado admite imagen, documento o video (el video se rechaza si supera 16MB o no es mp4/3gp).',
+					'Busca una plantilla por ID o por nombre. Requiere el ID del canal y, como identificador, el ID de la plantilla en Meta o su nombre alterno.',
 				routing: {
-					request: { method: 'POST', url: '/direct/waba/sendTemplate' },
+					request: { method: 'POST', url: '/direct/waba/getTemplate' },
+					output: { postReceive: [handleLcResponse] },
+				},
+			},
+			{
+				name: 'Obtener Varias Plantillas',
+				value: 'getManyTemplates',
+				action: 'Obtener varias plantillas',
+				description:
+					'Retorna las plantillas de WhatsApp Business API configuradas en el canal, con paginación y filtros opcionales de Meta',
+				routing: {
+					request: { method: 'POST', url: '/direct/waba/getTemplates' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
@@ -68,7 +68,7 @@ export const wabaFields: INodeProperties[] = [
 	//         waba: getManyTemplates
 	// ----------------------------------
 	{
-		displayName: 'Channel ID',
+		displayName: 'ID del Canal',
 		name: 'id_canal',
 		type: 'number',
 		required: true,
@@ -85,10 +85,10 @@ export const wabaFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Filters',
+		displayName: 'Filtros',
 		name: 'filters',
 		type: 'collection',
-		placeholder: 'Add Filter',
+		placeholder: 'Agregar Filtro',
 		default: {},
 		displayOptions: {
 			show: {
@@ -98,37 +98,37 @@ export const wabaFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Approved Only',
-				name: 'approved',
-				type: 'boolean',
-				default: false,
-				description: 'Whether to return only templates with APPROVED status',
-				routing: { send: { type: 'body', property: 'approved' } },
-			},
-			{
-				displayName: 'Category',
+				displayName: 'Categoría',
 				name: 'category',
 				type: 'options',
 				options: [
-					{ name: 'Authentication', value: 'AUTHENTICATION' },
+					{ name: 'Autenticación', value: 'AUTHENTICATION' },
 					{ name: 'Marketing', value: 'MARKETING' },
-					{ name: 'Utility', value: 'UTILITY' },
+					{ name: 'Utilidad', value: 'UTILITY' },
 				],
 				default: 'MARKETING',
 				description: 'Filtra por categoría de Meta',
 				routing: { send: { type: 'body', property: 'category' } },
 			},
 			{
-				displayName: 'Limit',
+				displayName: 'Cursor de Paginación',
+				name: 'paging',
+				type: 'string',
+				default: '',
+				description: 'Cursor de paginación devuelto por una llamada previa',
+				routing: { send: { type: 'body', property: 'paging' } },
+			},
+			{
+				displayName: 'Límite',
 				name: 'limit',
 				type: 'number',
 				typeOptions: { minValue: 1 },
 				default: 50,
-				description: 'Max number of results to return',
+				description: 'Cantidad máxima de resultados a devolver',
 				routing: { send: { type: 'body', property: 'limit' } },
 			},
 			{
-				displayName: 'Name',
+				displayName: 'Nombre',
 				name: 'name',
 				type: 'string',
 				default: '',
@@ -136,12 +136,12 @@ export const wabaFields: INodeProperties[] = [
 				routing: { send: { type: 'body', property: 'name' } },
 			},
 			{
-				displayName: 'Paging Cursor',
-				name: 'paging',
-				type: 'string',
-				default: '',
-				description: 'Cursor de paginación devuelto por una llamada previa',
-				routing: { send: { type: 'body', property: 'paging' } },
+				displayName: 'Solo Aprobadas',
+				name: 'approved',
+				type: 'boolean',
+				default: false,
+				description: 'Si se activa, devuelve solo las plantillas con estado APPROVED',
+				routing: { send: { type: 'body', property: 'approved' } },
 			},
 		],
 	},
@@ -150,7 +150,7 @@ export const wabaFields: INodeProperties[] = [
 	//         waba: getTemplate
 	// ----------------------------------
 	{
-		displayName: 'Channel ID',
+		displayName: 'ID del Canal',
 		name: 'id_canal',
 		type: 'number',
 		required: true,
@@ -167,10 +167,10 @@ export const wabaFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Search Fields',
+		displayName: 'Campos de Búsqueda',
 		name: 'searchFields',
 		type: 'collection',
-		placeholder: 'Add Field',
+		placeholder: 'Agregar Campo',
 		default: {},
 		description: 'Envía el ID de la plantilla en Meta o su nombre alterno para identificarla',
 		displayOptions: {
@@ -181,7 +181,7 @@ export const wabaFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Template ID',
+				displayName: 'ID de la Plantilla',
 				name: 'id',
 				type: 'string',
 				default: '',
@@ -189,7 +189,7 @@ export const wabaFields: INodeProperties[] = [
 				routing: { send: { type: 'body', property: 'id' } },
 			},
 			{
-				displayName: 'Template Name',
+				displayName: 'Nombre de la Plantilla',
 				name: 'id_template',
 				type: 'string',
 				default: '',
@@ -203,7 +203,7 @@ export const wabaFields: INodeProperties[] = [
 	//         waba: sendQuickAnswer
 	// ----------------------------------
 	{
-		displayName: 'Channel ID',
+		displayName: 'ID del Canal',
 		name: 'id_canal',
 		type: 'number',
 		required: true,
@@ -220,7 +220,7 @@ export const wabaFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Phone Number',
+		displayName: 'Número de Teléfono',
 		name: 'numero',
 		type: 'string',
 		required: true,
@@ -237,7 +237,7 @@ export const wabaFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Quick Reply ID',
+		displayName: 'ID de la Respuesta Rápida',
 		name: 'id_respuesta',
 		type: 'number',
 		required: true,
@@ -254,10 +254,10 @@ export const wabaFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Additional Fields',
+		displayName: 'Campos Adicionales',
 		name: 'additionalFields',
 		type: 'collection',
-		placeholder: 'Add Field',
+		placeholder: 'Agregar Campo',
 		default: {},
 		displayOptions: {
 			show: {
@@ -287,7 +287,7 @@ export const wabaFields: INodeProperties[] = [
 	//         waba: sendTemplate
 	// ----------------------------------
 	{
-		displayName: 'Channel ID',
+		displayName: 'ID del Canal',
 		name: 'id_canal',
 		type: 'number',
 		required: true,
@@ -304,7 +304,7 @@ export const wabaFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Phone Number',
+		displayName: 'Número de Teléfono',
 		name: 'numero',
 		type: 'string',
 		required: true,
@@ -321,7 +321,7 @@ export const wabaFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Template ID',
+		displayName: 'ID de la Plantilla',
 		name: 'id_plantilla',
 		type: 'string',
 		required: true,
@@ -338,10 +338,10 @@ export const wabaFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Additional Fields',
+		displayName: 'Campos Adicionales',
 		name: 'additionalFields',
 		type: 'collection',
-		placeholder: 'Add Field',
+		placeholder: 'Agregar Campo',
 		default: {},
 		displayOptions: {
 			show: {
@@ -351,7 +351,29 @@ export const wabaFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Additional Message',
+				displayName: 'Botones',
+				name: 'buttons',
+				type: 'json',
+				default: '[]',
+				description: 'Botones dinámicos de la plantilla (arreglo de objetos)',
+				routing: {
+					send: {
+						type: 'body',
+						property: 'buttons',
+						value: '={{ typeof $value === "object" && $value !== null ? $value : JSON.parse($value || "[]") }}',
+					},
+				},
+			},
+			{
+				displayName: 'ID del Equipo a Delegar',
+				name: 'id_to_delegate',
+				type: 'number',
+				default: 0,
+				description: 'ID del equipo al que delegar el seguimiento de la plantilla enviada',
+				routing: { send: { type: 'body', property: 'id_to_delegate' } },
+			},
+			{
+				displayName: 'Mensaje Adicional',
 				name: 'message',
 				type: 'json',
 				default: '{}',
@@ -365,7 +387,31 @@ export const wabaFields: INodeProperties[] = [
 				},
 			},
 			{
-				displayName: 'Body Variables',
+				displayName: 'URL de la Imagen del Encabezado',
+				name: 'url_imagen_encabezado',
+				type: 'string',
+				default: '',
+				description: 'URL de imagen para el encabezado',
+				routing: { send: { type: 'body', property: 'url_imagen_encabezado' } },
+			},
+			{
+				displayName: 'URL del Documento del Encabezado',
+				name: 'url_documento_encabezado',
+				type: 'string',
+				default: '',
+				description: 'URL de documento para el encabezado',
+				routing: { send: { type: 'body', property: 'url_documento_encabezado' } },
+			},
+			{
+				displayName: 'URL del Video del Encabezado',
+				name: 'url_video_encabezado',
+				type: 'string',
+				default: '',
+				description: 'URL de video (mp4/3gp, máx. 16MB) para el encabezado.',
+				routing: { send: { type: 'body', property: 'url_video_encabezado' } },
+			},
+			{
+				displayName: 'Variables del Cuerpo',
 				name: 'variables',
 				type: 'string',
 				default: '',
@@ -381,45 +427,7 @@ export const wabaFields: INodeProperties[] = [
 				},
 			},
 			{
-				displayName: 'Buttons',
-				name: 'buttons',
-				type: 'json',
-				default: '[]',
-				description: 'Botones dinámicos de la plantilla (arreglo de objetos)',
-				routing: {
-					send: {
-						type: 'body',
-						property: 'buttons',
-						value: '={{ typeof $value === "object" && $value !== null ? $value : JSON.parse($value || "[]") }}',
-					},
-				},
-			},
-			{
-				displayName: 'Delegate Team ID',
-				name: 'id_to_delegate',
-				type: 'number',
-				default: 0,
-				description: 'ID del equipo al que delegar el seguimiento de la plantilla enviada',
-				routing: { send: { type: 'body', property: 'id_to_delegate' } },
-			},
-			{
-				displayName: 'Header Document URL',
-				name: 'url_documento_encabezado',
-				type: 'string',
-				default: '',
-				description: 'URL de documento para el encabezado',
-				routing: { send: { type: 'body', property: 'url_documento_encabezado' } },
-			},
-			{
-				displayName: 'Header Image URL',
-				name: 'url_imagen_encabezado',
-				type: 'string',
-				default: '',
-				description: 'URL de imagen para el encabezado',
-				routing: { send: { type: 'body', property: 'url_imagen_encabezado' } },
-			},
-			{
-				displayName: 'Header Variables',
+				displayName: 'Variables del Encabezado',
 				name: 'variables_encabezado',
 				type: 'string',
 				default: '',
@@ -433,14 +441,6 @@ export const wabaFields: INodeProperties[] = [
 							'={{ $value.toString().split(",").map((v) => v.trim()).filter((v) => v !== "") }}',
 					},
 				},
-			},
-			{
-				displayName: 'Header Video URL',
-				name: 'url_video_encabezado',
-				type: 'string',
-				default: '',
-				description: 'URL de video (mp4/3gp, máx. 16MB) para el encabezado.',
-				routing: { send: { type: 'body', property: 'url_video_encabezado' } },
 			},
 		],
 	},

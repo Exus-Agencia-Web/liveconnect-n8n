@@ -4,7 +4,7 @@ import { handleLcResponse } from '../GenericFunctions';
 
 export const userOperations: INodeProperties[] = [
 	{
-		displayName: 'Operation',
+		displayName: 'Operación',
 		name: 'operation',
 		type: 'options',
 		noDataExpression: true,
@@ -15,9 +15,19 @@ export const userOperations: INodeProperties[] = [
 		},
 		options: [
 			{
-				name: 'Get',
+				name: 'Cambiar Estado',
+				value: 'setState',
+				action: 'Cambiar el estado de un usuario',
+				description: 'Actualiza en tiempo real el estado de disponibilidad de un agente de la cuenta',
+				routing: {
+					request: { method: 'POST', url: '/users/setState' },
+					output: { postReceive: [handleLcResponse] },
+				},
+			},
+			{
+				name: 'Obtener',
 				value: 'get',
-				action: 'Get a user',
+				action: 'Obtener un usuario',
 				description: 'Obtiene un usuario de la cuenta por ID interno o por ID en PageGear',
 				routing: {
 					request: { method: 'POST', url: '/users/get' },
@@ -25,22 +35,12 @@ export const userOperations: INodeProperties[] = [
 				},
 			},
 			{
-				name: 'Get Many',
+				name: 'Obtener Varios',
 				value: 'getMany',
-				action: 'Get many users',
+				action: 'Obtener varios usuarios',
 				description: 'Lista los usuarios de la cuenta, paginados y con filtros opcionales',
 				routing: {
 					request: { method: 'GET', url: '/users/list' },
-					output: { postReceive: [handleLcResponse] },
-				},
-			},
-			{
-				name: 'Set State',
-				value: 'setState',
-				action: 'Set the state of a user',
-				description: 'Actualiza en tiempo real el estado de disponibilidad de un agente de la cuenta',
-				routing: {
-					request: { method: 'POST', url: '/users/setState' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
@@ -54,10 +54,10 @@ export const userFields: INodeProperties[] = [
 	//         user: get
 	// ----------------------------------
 	{
-		displayName: 'Search Fields',
+		displayName: 'Campos de Búsqueda',
 		name: 'searchFields',
 		type: 'collection',
-		placeholder: 'Add Field',
+		placeholder: 'Agregar Campo',
 		default: {},
 		description: 'Identifica al usuario por su ID interno o por su ID en PageGear',
 		displayOptions: {
@@ -68,20 +68,19 @@ export const userFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'PageGear User ID',
-				name: 'id_en_pge',
-				type: 'string',
-				default: '',
-				description: 'ID del usuario en PageGear',
-				routing: { send: { type: 'body', property: 'id_en_pge' } },
-			},
-			{
-				displayName: 'User ID',
+				displayName: 'ID del Usuario',
 				name: 'id',
 				type: 'string',
 				default: '',
 				description: 'ID interno del usuario (tabla lc_usuarios)',
 				routing: { send: { type: 'body', property: 'id' } },
+			},
+			{
+				displayName: 'ID del Usuario en PageGear',
+				name: 'id_en_pge',
+				type: 'string',
+				default: '',
+				routing: { send: { type: 'body', property: 'id_en_pge' } },
 			},
 		],
 	},
@@ -90,10 +89,10 @@ export const userFields: INodeProperties[] = [
 	//         user: getMany
 	// ----------------------------------
 	{
-		displayName: 'Filters',
+		displayName: 'Filtros',
 		name: 'filters',
 		type: 'collection',
-		placeholder: 'Add Filter',
+		placeholder: 'Agregar Filtro',
 		default: {},
 		displayOptions: {
 			show: {
@@ -103,7 +102,15 @@ export const userFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Created From',
+				displayName: 'Búsqueda',
+				name: 'palabras',
+				type: 'string',
+				default: '',
+				description: 'Búsqueda por nombre, celular o email (palabras separadas por espacio o coma)',
+				routing: { send: { type: 'query', property: 'palabras' } },
+			},
+			{
+				displayName: 'Creado Desde',
 				name: 'desde',
 				type: 'string',
 				default: '',
@@ -112,7 +119,7 @@ export const userFields: INodeProperties[] = [
 				routing: { send: { type: 'query', property: 'desde' } },
 			},
 			{
-				displayName: 'Created To',
+				displayName: 'Creado Hasta',
 				name: 'hasta',
 				type: 'string',
 				default: '',
@@ -121,16 +128,7 @@ export const userFields: INodeProperties[] = [
 				routing: { send: { type: 'query', property: 'hasta' } },
 			},
 			{
-				displayName: 'Limit',
-				name: 'limit',
-				type: 'number',
-				typeOptions: { minValue: 1 },
-				default: 50,
-				description: 'Max number of results to return',
-				routing: { send: { type: 'query', property: 'limit' } },
-			},
-			{
-				displayName: 'Offset',
+				displayName: 'Desplazamiento',
 				name: 'initFrom',
 				type: 'number',
 				default: 0,
@@ -138,15 +136,7 @@ export const userFields: INodeProperties[] = [
 				routing: { send: { type: 'query', property: 'initFrom' } },
 			},
 			{
-				displayName: 'Search',
-				name: 'palabras',
-				type: 'string',
-				default: '',
-				description: 'Búsqueda por nombre, celular o email (palabras separadas por espacio o coma)',
-				routing: { send: { type: 'query', property: 'palabras' } },
-			},
-			{
-				displayName: 'State',
+				displayName: 'Estado',
 				name: 'estado',
 				type: 'string',
 				default: '',
@@ -154,7 +144,16 @@ export const userFields: INodeProperties[] = [
 				routing: { send: { type: 'query', property: 'estado' } },
 			},
 			{
-				displayName: 'Type',
+				displayName: 'Límite',
+				name: 'limit',
+				type: 'number',
+				typeOptions: { minValue: 1 },
+				default: 50,
+				description: 'Cantidad máxima de resultados a devolver',
+				routing: { send: { type: 'query', property: 'limit' } },
+			},
+			{
+				displayName: 'Tipo',
 				name: 'tipo',
 				type: 'number',
 				default: 0,
@@ -168,7 +167,7 @@ export const userFields: INodeProperties[] = [
 	//         user: setState
 	// ----------------------------------
 	{
-		displayName: 'User ID',
+		displayName: 'ID del Usuario',
 		name: 'id',
 		type: 'string',
 		required: true,
@@ -185,17 +184,17 @@ export const userFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'State',
+		displayName: 'Estado',
 		name: 'state',
 		type: 'options',
 		required: true,
 		options: [
-			{ name: 'Absent', value: 'absent' },
-			{ name: 'Automatic', value: 'automatic' },
-			{ name: 'Connected', value: 'connected' },
-			{ name: 'Disconnected', value: 'disconnected' },
-			{ name: 'Disconnected (Legacy)', value: 'desconnected' },
-			{ name: 'Do Not Disturb', value: 'not_disturb' },
+			{ name: 'Ausente', value: 'absent' },
+			{ name: 'Automático', value: 'automatic' },
+			{ name: 'Conectado', value: 'connected' },
+			{ name: 'Desconectado', value: 'disconnected' },
+			{ name: 'Desconectado (Heredado)', value: 'desconnected' },
+			{ name: 'No Molestar', value: 'not_disturb' },
 		],
 		default: 'connected',
 		description: 'Estado deseado del agente',

@@ -4,7 +4,7 @@ import { handleLcResponse } from '../GenericFunctions';
 
 export const quickReplyOperations: INodeProperties[] = [
 	{
-		displayName: 'Operation',
+		displayName: 'Operación',
 		name: 'operation',
 		type: 'options',
 		noDataExpression: true,
@@ -15,24 +15,24 @@ export const quickReplyOperations: INodeProperties[] = [
 		},
 		options: [
 			{
-				name: 'Create',
-				value: 'create',
-				action: 'Create a quick reply',
-				description:
-					'Crea un atajo de respuesta rápida en la cuenta autenticada. Rechaza el alta si ya existe un atajo con el mismo nombre dentro del mismo grupo.',
-				routing: {
-					request: { method: 'POST', url: '/quickAnswers/addQuickReply' },
-					output: { postReceive: [handleLcResponse] },
-				},
-			},
-			{
-				name: 'Update',
+				name: 'Actualizar',
 				value: 'update',
-				action: 'Update a quick reply',
+				action: 'Actualizar una respuesta r pida',
 				description:
 					'Actualiza una respuesta rápida existente de la cuenta autenticada. Rechaza el cambio si el nuevo par grupo/atajo ya está en uso por otra respuesta rápida.',
 				routing: {
 					request: { method: 'POST', url: '/quickAnswers/edtQuickReply' },
+					output: { postReceive: [handleLcResponse] },
+				},
+			},
+			{
+				name: 'Crear',
+				value: 'create',
+				action: 'Crear una respuesta r pida',
+				description:
+					'Crea un atajo de respuesta rápida en la cuenta autenticada. Rechaza el alta si ya existe un atajo con el mismo nombre dentro del mismo grupo.',
+				routing: {
+					request: { method: 'POST', url: '/quickAnswers/addQuickReply' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
@@ -46,7 +46,7 @@ export const quickReplyFields: INodeProperties[] = [
 	//         quickReply: create
 	// ----------------------------------
 	{
-		displayName: 'Group',
+		displayName: 'Grupo',
 		name: 'grupo',
 		type: 'string',
 		required: true,
@@ -63,7 +63,7 @@ export const quickReplyFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Shortcut',
+		displayName: 'Atajo',
 		name: 'atajo',
 		type: 'string',
 		required: true,
@@ -80,7 +80,7 @@ export const quickReplyFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Response',
+		displayName: 'Respuesta',
 		name: 'respuesta',
 		type: 'string',
 		typeOptions: { rows: 3 },
@@ -98,10 +98,10 @@ export const quickReplyFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Additional Fields',
+		displayName: 'Campos Adicionales',
 		name: 'additionalFields',
 		type: 'collection',
-		placeholder: 'Add Field',
+		placeholder: 'Agregar Campo',
 		default: {},
 		displayOptions: {
 			show: {
@@ -111,7 +111,7 @@ export const quickReplyFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'File ID',
+				displayName: 'ID del Archivo',
 				name: 'file',
 				type: 'number',
 				default: 0,
@@ -119,20 +119,20 @@ export const quickReplyFields: INodeProperties[] = [
 				routing: { send: { type: 'body', property: 'file' } },
 			},
 			{
-				displayName: 'File URL',
-				name: 'fileurl',
-				type: 'string',
-				default: '',
-				description: 'URL del archivo adjunto',
-				routing: { send: { type: 'body', property: 'fileurl' } },
-			},
-			{
-				displayName: 'Supervisor ID',
+				displayName: 'ID del Supervisor',
 				name: 'idSupervisor',
 				type: 'number',
 				default: 0,
 				description: 'ID del usuario creador (se guarda como id_creador)',
 				routing: { send: { type: 'body', property: 'idSupervisor' } },
+			},
+			{
+				displayName: 'URL del Archivo',
+				name: 'fileurl',
+				type: 'string',
+				default: '',
+				description: 'URL del archivo adjunto',
+				routing: { send: { type: 'body', property: 'fileurl' } },
 			},
 		],
 	},
@@ -141,7 +141,7 @@ export const quickReplyFields: INodeProperties[] = [
 	//         quickReply: update
 	// ----------------------------------
 	{
-		displayName: 'Quick Reply ID',
+		displayName: 'ID de la Respuesta Rápida',
 		name: 'id',
 		type: 'number',
 		required: true,
@@ -158,10 +158,10 @@ export const quickReplyFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Update Fields',
+		displayName: 'Campos a Actualizar',
 		name: 'updateFields',
 		type: 'collection',
-		placeholder: 'Add Field',
+		placeholder: 'Agregar Campo',
 		default: {},
 		displayOptions: {
 			show: {
@@ -171,31 +171,15 @@ export const quickReplyFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Editor ID',
-				name: 'id_usuario',
-				type: 'number',
-				default: 0,
-				description: 'ID del usuario que edita',
-				routing: { send: { type: 'body', property: 'id_usuario' } },
-			},
-			{
-				displayName: 'File ID',
-				name: 'file',
-				type: 'number',
-				default: 0,
-				description: 'ID del archivo adjunto (lc_storage)',
-				routing: { send: { type: 'body', property: 'file' } },
-			},
-			{
-				displayName: 'File URL',
-				name: 'fileurl',
+				displayName: 'Atajo',
+				name: 'atajo',
 				type: 'string',
 				default: '',
-				description: 'URL del archivo adjunto',
-				routing: { send: { type: 'body', property: 'fileurl' } },
+				description: 'Nombre del atajo (único por grupo dentro de la cuenta)',
+				routing: { send: { type: 'body', property: 'atajo' } },
 			},
 			{
-				displayName: 'Group',
+				displayName: 'Grupo',
 				name: 'grupo',
 				type: 'string',
 				default: '',
@@ -203,7 +187,23 @@ export const quickReplyFields: INodeProperties[] = [
 				routing: { send: { type: 'body', property: 'grupo' } },
 			},
 			{
-				displayName: 'Response',
+				displayName: 'ID del Archivo',
+				name: 'file',
+				type: 'number',
+				default: 0,
+				description: 'ID del archivo adjunto (lc_storage)',
+				routing: { send: { type: 'body', property: 'file' } },
+			},
+			{
+				displayName: 'ID del Editor',
+				name: 'id_usuario',
+				type: 'number',
+				default: 0,
+				description: 'ID del usuario que edita',
+				routing: { send: { type: 'body', property: 'id_usuario' } },
+			},
+			{
+				displayName: 'Respuesta',
 				name: 'respuesta',
 				type: 'string',
 				typeOptions: { rows: 3 },
@@ -212,12 +212,12 @@ export const quickReplyFields: INodeProperties[] = [
 				routing: { send: { type: 'body', property: 'respuesta' } },
 			},
 			{
-				displayName: 'Shortcut',
-				name: 'atajo',
+				displayName: 'URL del Archivo',
+				name: 'fileurl',
 				type: 'string',
 				default: '',
-				description: 'Nombre del atajo (único por grupo dentro de la cuenta)',
-				routing: { send: { type: 'body', property: 'atajo' } },
+				description: 'URL del archivo adjunto',
+				routing: { send: { type: 'body', property: 'fileurl' } },
 			},
 		],
 	},

@@ -4,7 +4,7 @@ import { handleLcResponse } from '../GenericFunctions';
 
 export const channelOperations: INodeProperties[] = [
 	{
-		displayName: 'Operation',
+		displayName: 'Operación',
 		name: 'operation',
 		type: 'options',
 		noDataExpression: true,
@@ -15,9 +15,9 @@ export const channelOperations: INodeProperties[] = [
 		},
 		options: [
 			{
-				name: 'Get Many',
+				name: 'Obtener Varios',
 				value: 'getMany',
-				action: 'Get many channels',
+				action: 'Obtener varios canales',
 				description: 'Lista los canales configurados en la cuenta, con filtros opcionales',
 				routing: {
 					request: { method: 'GET', url: '/channels/list' },
@@ -34,10 +34,10 @@ export const channelFields: INodeProperties[] = [
 	//         channel: getMany
 	// ----------------------------------
 	{
-		displayName: 'Filters',
+		displayName: 'Filtros',
 		name: 'filters',
 		type: 'collection',
-		placeholder: 'Add Filter',
+		placeholder: 'Agregar Filtro',
 		default: {},
 		displayOptions: {
 			show: {
@@ -47,27 +47,7 @@ export const channelFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Channel ID',
-				name: 'id',
-				type: 'number',
-				default: 0,
-				description: 'Filtra por ID de canal',
-				routing: { send: { type: 'query', property: 'id' } },
-			},
-			{
-				displayName: 'Startable',
-				name: 'iniciable',
-				type: 'options',
-				options: [
-					{ name: 'No', value: 0 },
-					{ name: 'Yes', value: 1 },
-				],
-				default: 1,
-				description: 'Filtra por canales iniciables',
-				routing: { send: { type: 'query', property: 'iniciable' } },
-			},
-			{
-				displayName: 'State',
+				displayName: 'Estado',
 				name: 'estado',
 				type: 'number',
 				default: 1,
@@ -75,12 +55,32 @@ export const channelFields: INodeProperties[] = [
 				routing: { send: { type: 'query', property: 'estado' } },
 			},
 			{
+				displayName: 'ID del Canal',
+				name: 'id',
+				type: 'number',
+				default: 0,
+				description: 'Filtra por ID de canal',
+				routing: { send: { type: 'query', property: 'id' } },
+			},
+			{
+				displayName: 'Iniciable',
+				name: 'iniciable',
+				type: 'options',
+				options: [
+					{ name: 'No', value: 0 },
+					{ name: 'Sí', value: 1 },
+				],
+				default: 1,
+				description: 'Filtra por canales iniciables',
+				routing: { send: { type: 'query', property: 'iniciable' } },
+			},
+			{
 				displayName: 'Visible',
 				name: 'visible',
 				type: 'options',
 				options: [
 					{ name: 'No', value: 0 },
-					{ name: 'Yes', value: 1 },
+					{ name: 'Sí', value: 1 },
 				],
 				default: 1,
 				description: 'Filtra por visibilidad',

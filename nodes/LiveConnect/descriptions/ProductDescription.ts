@@ -4,7 +4,7 @@ import { handleLcResponse } from '../GenericFunctions';
 
 export const productOperations: INodeProperties[] = [
 	{
-		displayName: 'Operation',
+		displayName: 'Operación',
 		name: 'operation',
 		type: 'options',
 		noDataExpression: true,
@@ -15,9 +15,19 @@ export const productOperations: INodeProperties[] = [
 		},
 		options: [
 			{
-				name: 'Create',
+				name: 'Actualizar',
+				value: 'update',
+				action: 'Actualizar un producto',
+				description: 'Actualiza los campos enviados de un producto existente',
+				routing: {
+					request: { method: 'POST', url: '/catalogue/edtProduct' },
+					output: { postReceive: [handleLcResponse] },
+				},
+			},
+			{
+				name: 'Crear',
 				value: 'create',
-				action: 'Create a product',
+				action: 'Crear un producto',
 				description: 'Agrega un producto al catálogo de la cuenta',
 				routing: {
 					request: { method: 'POST', url: '/catalogue/addProduct' },
@@ -25,22 +35,12 @@ export const productOperations: INodeProperties[] = [
 				},
 			},
 			{
-				name: 'Get Many',
+				name: 'Obtener Varios',
 				value: 'getMany',
-				action: 'Get many products',
+				action: 'Obtener varios productos',
 				description: 'Lista los productos del catálogo de la cuenta, opcionalmente filtrados por ID',
 				routing: {
 					request: { method: 'GET', url: '/catalogue/listProducts' },
-					output: { postReceive: [handleLcResponse] },
-				},
-			},
-			{
-				name: 'Update',
-				value: 'update',
-				action: 'Update a product',
-				description: 'Actualiza los campos enviados de un producto existente',
-				routing: {
-					request: { method: 'POST', url: '/catalogue/edtProduct' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
@@ -54,7 +54,7 @@ export const productFields: INodeProperties[] = [
 	//         product: create
 	// ----------------------------------
 	{
-		displayName: 'Name',
+		displayName: 'Nombre',
 		name: 'nombre',
 		type: 'string',
 		required: true,
@@ -75,10 +75,10 @@ export const productFields: INodeProperties[] = [
 	//         product: getMany
 	// ----------------------------------
 	{
-		displayName: 'Filters',
+		displayName: 'Filtros',
 		name: 'filters',
 		type: 'collection',
-		placeholder: 'Add Filter',
+		placeholder: 'Agregar Filtro',
 		default: {},
 		displayOptions: {
 			show: {
@@ -88,7 +88,7 @@ export const productFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Product ID',
+				displayName: 'ID del Producto',
 				name: 'id',
 				type: 'number',
 				default: 0,
@@ -102,7 +102,7 @@ export const productFields: INodeProperties[] = [
 	//         product: update
 	// ----------------------------------
 	{
-		displayName: 'Product ID',
+		displayName: 'ID del Producto',
 		name: 'id',
 		type: 'number',
 		required: true,
@@ -119,7 +119,7 @@ export const productFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Name',
+		displayName: 'Nombre',
 		name: 'nombre',
 		type: 'string',
 		required: true,
@@ -136,10 +136,10 @@ export const productFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Update Fields',
+		displayName: 'Campos a Actualizar',
 		name: 'updateFields',
 		type: 'collection',
-		placeholder: 'Add Field',
+		placeholder: 'Agregar Campo',
 		default: {},
 		displayOptions: {
 			show: {
@@ -149,15 +149,7 @@ export const productFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Category ID',
-				name: 'id_categoria',
-				type: 'number',
-				default: 0,
-				description: 'ID de la categoría del producto',
-				routing: { send: { type: 'body', property: 'id_categoria' } },
-			},
-			{
-				displayName: 'Description',
+				displayName: 'Descripción',
 				name: 'descripcion',
 				type: 'string',
 				default: '',
@@ -165,23 +157,15 @@ export const productFields: INodeProperties[] = [
 				routing: { send: { type: 'body', property: 'descripcion' } },
 			},
 			{
-				displayName: 'Note',
-				name: 'nota',
-				type: 'string',
-				default: '',
-				description: 'Nota del producto',
-				routing: { send: { type: 'body', property: 'nota' } },
+				displayName: 'Estado',
+				name: 'estado',
+				type: 'number',
+				default: 0,
+				description: 'Estado del producto',
+				routing: { send: { type: 'body', property: 'estado' } },
 			},
 			{
-				displayName: 'Photo',
-				name: 'foto',
-				type: 'string',
-				default: '',
-				description: 'URL de la foto del producto',
-				routing: { send: { type: 'body', property: 'foto' } },
-			},
-			{
-				displayName: 'Pinned',
+				displayName: 'Fijado',
 				name: 'fijar',
 				type: 'number',
 				default: 0,
@@ -189,20 +173,36 @@ export const productFields: INodeProperties[] = [
 				routing: { send: { type: 'body', property: 'fijar' } },
 			},
 			{
-				displayName: 'Reference',
+				displayName: 'Foto',
+				name: 'foto',
+				type: 'string',
+				default: '',
+				description: 'URL de la foto del producto',
+				routing: { send: { type: 'body', property: 'foto' } },
+			},
+			{
+				displayName: 'ID de la Categoría',
+				name: 'id_categoria',
+				type: 'number',
+				default: 0,
+				description: 'ID de la categoría del producto',
+				routing: { send: { type: 'body', property: 'id_categoria' } },
+			},
+			{
+				displayName: 'Nota',
+				name: 'nota',
+				type: 'string',
+				default: '',
+				description: 'Nota del producto',
+				routing: { send: { type: 'body', property: 'nota' } },
+			},
+			{
+				displayName: 'Referencia',
 				name: 'referencia',
 				type: 'string',
 				default: '',
 				description: 'Referencia del producto',
 				routing: { send: { type: 'body', property: 'referencia' } },
-			},
-			{
-				displayName: 'Status',
-				name: 'estado',
-				type: 'number',
-				default: 0,
-				description: 'Estado del producto',
-				routing: { send: { type: 'body', property: 'estado' } },
 			},
 			{
 				displayName: 'URL',
@@ -213,7 +213,7 @@ export const productFields: INodeProperties[] = [
 				routing: { send: { type: 'body', property: 'url' } },
 			},
 			{
-				displayName: 'Value',
+				displayName: 'Valor',
 				name: 'valor',
 				type: 'string',
 				default: '',

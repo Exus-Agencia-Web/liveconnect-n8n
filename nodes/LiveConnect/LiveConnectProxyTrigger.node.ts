@@ -29,7 +29,7 @@ export class LiveConnectProxyTrigger implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'LiveConnect Proxy Trigger',
 		name: 'liveConnectProxyTrigger',
-		icon: 'file:liveconnect.svg',
+		icon: 'file:liveconnect2.svg',
 		group: ['trigger'],
 		version: 1,
 		description:
@@ -55,7 +55,14 @@ export class LiveConnectProxyTrigger implements INodeType {
 		],
 		properties: [
 			{
-				displayName: 'Channel ID',
+				displayName:
+					'Este trigger registra automáticamente el webhook del canal en LiveConnect al activar el workflow y lo elimina al desactivarlo. LiveConnect permite UN solo webhook por canal: no actives dos workflows con el mismo ID de canal. Ejemplo listo para importar: <b>examples/08-mensajes-proxy-trigger.json</b> del repositorio.',
+				name: 'notice',
+				type: 'notice',
+				default: '',
+			},
+			{
+				displayName: 'ID del Canal',
 				name: 'id_canal',
 				type: 'number',
 				required: true,
@@ -63,7 +70,7 @@ export class LiveConnectProxyTrigger implements INodeType {
 				description: 'ID del canal cuyas notificaciones del proxy disparan el workflow',
 			},
 			{
-				displayName: 'Secret',
+				displayName: 'Secreto',
 				name: 'secret',
 				type: 'string',
 				typeOptions: { password: true },
@@ -72,12 +79,12 @@ export class LiveConnectProxyTrigger implements INodeType {
 					'Secreto que LiveConnect envía en cada notificación del webhook. Dejar vacío para generar uno automáticamente al activar el workflow.',
 			},
 			{
-				displayName: 'Simplify',
+				displayName: 'Simplificar',
 				name: 'simple',
 				type: 'boolean',
 				default: true,
 				description:
-					'Whether to return a simplified version of the response instead of the raw data',
+					'Si se activa, entrega el evento simplificado (mensaje, sessionId, contacto…) en lugar del payload crudo',
 			},
 		],
 	};

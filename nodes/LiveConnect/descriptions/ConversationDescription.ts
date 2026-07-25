@@ -4,7 +4,7 @@ import { handleLcResponse } from '../GenericFunctions';
 
 export const conversationOperations: INodeProperties[] = [
 	{
-		displayName: 'Operation',
+		displayName: 'Operación',
 		name: 'operation',
 		type: 'options',
 		noDataExpression: true,
@@ -15,9 +15,9 @@ export const conversationOperations: INodeProperties[] = [
 		},
 		options: [
 			{
-				name: 'Create',
+				name: 'Crear',
 				value: 'create',
-				action: 'Create a conversation',
+				action: 'Crear una conversaci n',
 				description:
 					'Abre una conversación en el canal indicado. Si ya existe una conversación activa con el contacto, no la duplica: devuelve la existente y agrega al usuario como participante.',
 				routing: {
@@ -35,7 +35,7 @@ export const conversationFields: INodeProperties[] = [
 	//         conversation: create
 	// ----------------------------------
 	{
-		displayName: 'Channel ID',
+		displayName: 'ID del Canal',
 		name: 'id_canal',
 		type: 'number',
 		required: true,
@@ -52,7 +52,7 @@ export const conversationFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Contact',
+		displayName: 'Contacto',
 		name: 'contacto',
 		type: 'json',
 		required: true,
@@ -74,7 +74,7 @@ export const conversationFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'User',
+		displayName: 'Usuario',
 		name: 'usuario',
 		type: 'json',
 		required: true,
@@ -95,10 +95,10 @@ export const conversationFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Additional Fields',
+		displayName: 'Campos Adicionales',
 		name: 'additionalFields',
 		type: 'collection',
-		placeholder: 'Add Field',
+		placeholder: 'Agregar Campo',
 		default: {},
 		displayOptions: {
 			show: {
@@ -108,7 +108,7 @@ export const conversationFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Template',
+				displayName: 'Plantilla',
 				name: 'template',
 				type: 'json',
 				default: '{}',
@@ -122,7 +122,7 @@ export const conversationFields: INodeProperties[] = [
 				},
 			},
 			{
-				displayName: 'Text',
+				displayName: 'Texto',
 				name: 'texto',
 				type: 'string',
 				typeOptions: { rows: 3 },

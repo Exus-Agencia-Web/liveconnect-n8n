@@ -11,7 +11,7 @@ export class LiveConnectCallbackTrigger implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'LiveConnect Callback Trigger',
 		name: 'liveConnectCallbackTrigger',
-		icon: 'file:liveconnect.svg',
+		icon: 'file:liveconnect2.svg',
 		group: ['trigger'],
 		version: 1,
 		description: 'Recibe los callbacks del chatbot (Flowbot) de LiveConnect',
@@ -33,7 +33,14 @@ export class LiveConnectCallbackTrigger implements INodeType {
 		],
 		properties: [
 			{
-				displayName: 'Secret',
+				displayName:
+					'Activa el workflow y pega la URL de <b>producción</b> de este webhook en la acción de callback de tu Flowbot. LiveConnect espera una respuesta síncrona con la forma <code>{ "status": 1, "status_message": "Ok", "data": { "actions": [...] } }</code> — constrúyela y devuélvela con un nodo <b>Respond to Webhook</b>, cerrando SIEMPRE con una acción <code>input</code> (vacía sirve) salvo que delegues a un humano. Ejemplo listo para importar: <b>examples/07-chatbot-callback-trigger.json</b> del repositorio.',
+				name: 'notice',
+				type: 'notice',
+				default: '',
+			},
+			{
+				displayName: 'Secreto',
 				name: 'secret',
 				type: 'string',
 				typeOptions: { password: true },
@@ -42,26 +49,26 @@ export class LiveConnectCallbackTrigger implements INodeType {
 					'Secreto configurado en el Flowbot. Si se deja vacío, no se valida el secret de las notificaciones entrantes.',
 			},
 			{
-				displayName: 'Response Mode',
+				displayName: 'Modo de Respuesta',
 				name: 'responseMode',
 				type: 'options',
 				options: [
 					{
-						name: 'Immediately',
+						name: 'Al Terminar el Último Nodo',
+						value: 'lastNode',
+						description:
+							'Responde con el JSON del primer item del último nodo, que debe ser el envelope de actions',
+					},
+					{
+						name: 'Inmediatamente',
 						value: 'onReceived',
 						description: 'Responde de inmediato; el Flowbot no recibe actions',
 					},
 					{
-						name: 'Using Respond to Webhook Node',
+						name: 'Usando el Nodo Respond to Webhook',
 						value: 'responseNode',
 						description:
 							'La respuesta la construye un nodo Respond to Webhook con el envelope de actions (recomendado)',
-					},
-					{
-						name: 'When Last Node Finishes',
-						value: 'lastNode',
-						description:
-							'Responde con el JSON del primer item del último nodo, que debe ser el envelope de actions',
 					},
 				],
 				default: 'responseNode',
@@ -69,12 +76,12 @@ export class LiveConnectCallbackTrigger implements INodeType {
 					'Cuándo y cómo responder al callback. LiveConnect espera una respuesta síncrona con la forma { "status": 1, "status_message": "Ok", "data": { "actions": [...] } }.',
 			},
 			{
-				displayName: 'Simplify',
+				displayName: 'Simplificar',
 				name: 'simple',
 				type: 'boolean',
 				default: true,
 				description:
-					'Whether to return a simplified version of the response instead of the raw data',
+					'Si se activa, entrega el evento simplificado (mensaje, sessionId, esPrimerTurno, hayAgenteHumano…) en lugar del payload crudo',
 			},
 		],
 	};

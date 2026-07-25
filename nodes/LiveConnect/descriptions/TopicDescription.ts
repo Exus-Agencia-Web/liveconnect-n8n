@@ -4,7 +4,7 @@ import { handleLcResponse } from '../GenericFunctions';
 
 export const topicOperations: INodeProperties[] = [
 	{
-		displayName: 'Operation',
+		displayName: 'Operación',
 		name: 'operation',
 		type: 'options',
 		noDataExpression: true,
@@ -15,9 +15,19 @@ export const topicOperations: INodeProperties[] = [
 		},
 		options: [
 			{
-				name: 'Create',
+				name: 'Actualizar',
+				value: 'update',
+				action: 'Actualizar un t pico',
+				description: 'Actualiza los campos de una memoria existente',
+				routing: {
+					request: { method: 'POST', url: '/assistant/edtTopic' },
+					output: { postReceive: [handleLcResponse] },
+				},
+			},
+			{
+				name: 'Crear',
 				value: 'create',
-				action: 'Create a topic',
+				action: 'Crear un t pico',
 				description: 'Crea un tópico (memoria) asociado a un asistente',
 				routing: {
 					request: { method: 'POST', url: '/assistant/addTopic' },
@@ -25,22 +35,12 @@ export const topicOperations: INodeProperties[] = [
 				},
 			},
 			{
-				name: 'Get Many',
+				name: 'Obtener Varios',
 				value: 'getMany',
-				action: 'Get many topics',
+				action: 'Obtener varios t picos',
 				description: 'Lista los tópicos (memorias) de los asistentes de la cuenta',
 				routing: {
 					request: { method: 'GET', url: '/assistant/listTopic' },
-					output: { postReceive: [handleLcResponse] },
-				},
-			},
-			{
-				name: 'Update',
-				value: 'update',
-				action: 'Update a topic',
-				description: 'Actualiza los campos de una memoria existente',
-				routing: {
-					request: { method: 'POST', url: '/assistant/edtTopic' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
@@ -54,7 +54,7 @@ export const topicFields: INodeProperties[] = [
 	//         topic: create
 	// ----------------------------------
 	{
-		displayName: 'Name',
+		displayName: 'Nombre',
 		name: 'nombre',
 		type: 'string',
 		required: true,
@@ -71,10 +71,10 @@ export const topicFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Additional Fields',
+		displayName: 'Campos Adicionales',
 		name: 'additionalFields',
 		type: 'collection',
-		placeholder: 'Add Field',
+		placeholder: 'Agregar Campo',
 		default: {},
 		displayOptions: {
 			show: {
@@ -84,15 +84,7 @@ export const topicFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Assistant ID',
-				name: 'id_assistant',
-				type: 'number',
-				default: 0,
-				description: 'ID del asistente dueño del tópico',
-				routing: { send: { type: 'body', property: 'id_assistant' } },
-			},
-			{
-				displayName: 'Details',
+				displayName: 'Detalles',
 				name: 'detalles',
 				type: 'string',
 				default: '',
@@ -100,12 +92,20 @@ export const topicFields: INodeProperties[] = [
 				routing: { send: { type: 'body', property: 'detalles' } },
 			},
 			{
-				displayName: 'Group',
+				displayName: 'Grupo',
 				name: 'grupo',
 				type: 'string',
 				default: '',
 				description: 'Grupo del tópico',
 				routing: { send: { type: 'body', property: 'grupo' } },
+			},
+			{
+				displayName: 'ID del Asistente',
+				name: 'id_assistant',
+				type: 'number',
+				default: 0,
+				description: 'ID del asistente dueño del tópico',
+				routing: { send: { type: 'body', property: 'id_assistant' } },
 			},
 		],
 	},
@@ -114,10 +114,10 @@ export const topicFields: INodeProperties[] = [
 	//         topic: getMany
 	// ----------------------------------
 	{
-		displayName: 'Filters',
+		displayName: 'Filtros',
 		name: 'filters',
 		type: 'collection',
-		placeholder: 'Add Filter',
+		placeholder: 'Agregar Filtro',
 		default: {},
 		displayOptions: {
 			show: {
@@ -127,7 +127,7 @@ export const topicFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Assistant ID',
+				displayName: 'ID del Asistente',
 				name: 'id_assistant',
 				type: 'number',
 				default: 0,
@@ -135,7 +135,7 @@ export const topicFields: INodeProperties[] = [
 				routing: { send: { type: 'query', property: 'id_assistant' } },
 			},
 			{
-				displayName: 'Topic ID',
+				displayName: 'ID del Tópico',
 				name: 'id',
 				type: 'number',
 				default: 0,
@@ -149,7 +149,7 @@ export const topicFields: INodeProperties[] = [
 	//         topic: update
 	// ----------------------------------
 	{
-		displayName: 'Topic ID',
+		displayName: 'ID del Tópico',
 		name: 'id',
 		type: 'number',
 		required: true,
@@ -166,10 +166,10 @@ export const topicFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Update Fields',
+		displayName: 'Campos a Actualizar',
 		name: 'updateFields',
 		type: 'collection',
-		placeholder: 'Add Field',
+		placeholder: 'Agregar Campo',
 		default: {},
 		displayOptions: {
 			show: {
@@ -179,15 +179,7 @@ export const topicFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Assistant ID',
-				name: 'id_assistant',
-				type: 'number',
-				default: 0,
-				description: 'ID del asistente dueño del tópico',
-				routing: { send: { type: 'body', property: 'id_assistant' } },
-			},
-			{
-				displayName: 'Details',
+				displayName: 'Detalles',
 				name: 'detalles',
 				type: 'string',
 				default: '',
@@ -195,7 +187,7 @@ export const topicFields: INodeProperties[] = [
 				routing: { send: { type: 'body', property: 'detalles' } },
 			},
 			{
-				displayName: 'Group',
+				displayName: 'Grupo',
 				name: 'grupo',
 				type: 'string',
 				default: '',
@@ -203,7 +195,15 @@ export const topicFields: INodeProperties[] = [
 				routing: { send: { type: 'body', property: 'grupo' } },
 			},
 			{
-				displayName: 'Name',
+				displayName: 'ID del Asistente',
+				name: 'id_assistant',
+				type: 'number',
+				default: 0,
+				description: 'ID del asistente dueño del tópico',
+				routing: { send: { type: 'body', property: 'id_assistant' } },
+			},
+			{
+				displayName: 'Nombre',
 				name: 'nombre',
 				type: 'string',
 				default: '',

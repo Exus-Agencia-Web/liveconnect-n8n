@@ -4,7 +4,7 @@ import { handleLcResponse } from '../GenericFunctions';
 
 export const groupOperations: INodeProperties[] = [
 	{
-		displayName: 'Operation',
+		displayName: 'Operación',
 		name: 'operation',
 		type: 'options',
 		noDataExpression: true,
@@ -15,9 +15,9 @@ export const groupOperations: INodeProperties[] = [
 		},
 		options: [
 			{
-				name: 'Get Many',
+				name: 'Obtener Varios',
 				value: 'getMany',
-				action: 'Get many groups',
+				action: 'Obtener varios grupos',
 				description: 'Lista los grupos de agentes configurados en la cuenta, con filtros opcionales',
 				routing: {
 					request: { method: 'GET', url: '/groups/list' },
@@ -34,10 +34,10 @@ export const groupFields: INodeProperties[] = [
 	//         group: getMany
 	// ----------------------------------
 	{
-		displayName: 'Filters',
+		displayName: 'Filtros',
 		name: 'filters',
 		type: 'collection',
-		placeholder: 'Add Filter',
+		placeholder: 'Agregar Filtro',
 		default: {},
 		displayOptions: {
 			show: {
@@ -47,19 +47,19 @@ export const groupFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Archived',
+				displayName: 'Archivado',
 				name: 'archivado',
 				type: 'options',
 				options: [
 					{ name: 'No', value: 0 },
-					{ name: 'Yes', value: 1 },
+					{ name: 'Sí', value: 1 },
 				],
 				default: 0,
 				description: 'Filtra por grupos archivados',
 				routing: { send: { type: 'query', property: 'archivado' } },
 			},
 			{
-				displayName: 'Group ID',
+				displayName: 'ID del Grupo',
 				name: 'id',
 				type: 'number',
 				default: 0,
@@ -67,12 +67,12 @@ export const groupFields: INodeProperties[] = [
 				routing: { send: { type: 'query', property: 'id' } },
 			},
 			{
-				displayName: 'Public',
+				displayName: 'Público',
 				name: 'publico',
 				type: 'options',
 				options: [
 					{ name: 'No', value: 0 },
-					{ name: 'Yes', value: 1 },
+					{ name: 'Sí', value: 1 },
 				],
 				default: 1,
 				description: 'Filtra por grupos públicos',

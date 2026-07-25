@@ -4,7 +4,7 @@ import { handleLcResponse } from '../GenericFunctions';
 
 export const dealOperations: INodeProperties[] = [
 	{
-		displayName: 'Operation',
+		displayName: 'Operación',
 		name: 'operation',
 		type: 'options',
 		noDataExpression: true,
@@ -15,34 +15,34 @@ export const dealOperations: INodeProperties[] = [
 		},
 		options: [
 			{
-				name: 'Archive',
+				name: 'Actualizar',
+				value: 'update',
+				action: 'Actualizar una negociaci n',
+				description:
+					'Actualiza solo los campos presentes (patch parcial). Los campos personalizados se fusionan con los valores existentes.',
+				routing: {
+					request: { method: 'POST', url: '/crm/editDeal' },
+					output: { postReceive: [handleLcResponse] },
+				},
+			},
+			{
+				name: 'Archivar',
 				value: 'archive',
-				action: 'Archive a deal',
-				description: 'Marca el deal como archivado (eliminación lógica)',
+				action: 'Archivar una negociaci n',
+				description: 'Marca la negociación como archivada (eliminación lógica)',
 				routing: {
 					request: { method: 'POST', url: '/crm/archiveDeal' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
 			{
-				name: 'Create',
+				name: 'Crear',
 				value: 'create',
-				action: 'Create a deal',
+				action: 'Crear una negociaci n',
 				description:
-					'Crea un deal en el pipeline y etapa indicados. Valida que la etapa pertenezca al pipeline y que el usuario tenga acceso al pipeline.',
+					'Crea una negociación en el pipeline y etapa indicados. Valida que la etapa pertenezca al pipeline y que el usuario tenga acceso al pipeline.',
 				routing: {
 					request: { method: 'POST', url: '/crm/addDeal' },
-					output: { postReceive: [handleLcResponse] },
-				},
-			},
-			{
-				name: 'Update',
-				value: 'update',
-				action: 'Update a deal',
-				description:
-					'Actualiza solo los campos presentes (patch parcial). Los campos personalizados se fusionan con los valores existentes.',
-				routing: {
-					request: { method: 'POST', url: '/crm/editDeal' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
@@ -56,12 +56,12 @@ export const dealFields: INodeProperties[] = [
 	//         deal: archive
 	// ----------------------------------
 	{
-		displayName: 'Deal ID',
+		displayName: 'ID de la Negociación',
 		name: 'id',
 		type: 'number',
 		required: true,
 		default: 0,
-		description: 'Consecutivo del deal a archivar',
+		description: 'Consecutivo de la negociación a archivar',
 		displayOptions: {
 			show: {
 				resource: ['deal'],
@@ -73,10 +73,10 @@ export const dealFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Additional Fields',
+		displayName: 'Campos Adicionales',
 		name: 'additionalFields',
 		type: 'collection',
-		placeholder: 'Add Field',
+		placeholder: 'Agregar Campo',
 		default: {},
 		displayOptions: {
 			show: {
@@ -86,11 +86,11 @@ export const dealFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Internal Deal ID',
+				displayName: 'ID Interno de la Negociación',
 				name: 'id_interno',
 				type: 'number',
 				default: 0,
-				description: 'ID interno del deal (alternativa a Deal ID/consecutivo)',
+				description: 'ID interno de la negociación (alternativa a ID de la Negociación/consecutivo)',
 				routing: { send: { type: 'body', property: 'id_interno' } },
 			},
 		],
@@ -100,12 +100,12 @@ export const dealFields: INodeProperties[] = [
 	//         deal: create
 	// ----------------------------------
 	{
-		displayName: 'Name',
+		displayName: 'Nombre',
 		name: 'nombre',
 		type: 'string',
 		required: true,
 		default: '',
-		description: 'Nombre del deal',
+		description: 'Nombre de la negociación',
 		displayOptions: {
 			show: {
 				resource: ['deal'],
@@ -117,12 +117,12 @@ export const dealFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Pipeline ID',
+		displayName: 'ID del Pipeline',
 		name: 'id_pipeline',
 		type: 'number',
 		required: true,
 		default: 0,
-		description: 'ID del pipeline donde se crea el deal',
+		description: 'ID del pipeline donde se crea la negociación',
 		displayOptions: {
 			show: {
 				resource: ['deal'],
@@ -134,7 +134,7 @@ export const dealFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Pipeline Stage ID',
+		displayName: 'ID de la Etapa del Pipeline',
 		name: 'id_etapa_pipeline',
 		type: 'number',
 		required: true,
@@ -151,12 +151,12 @@ export const dealFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Owner ID',
+		displayName: 'ID del Responsable',
 		name: 'id_responsable',
 		type: 'number',
 		required: true,
 		default: 0,
-		description: 'ID del usuario responsable (owner) del deal',
+		description: 'ID del usuario responsable (owner) de la negociación',
 		displayOptions: {
 			show: {
 				resource: ['deal'],
@@ -168,12 +168,12 @@ export const dealFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Value',
+		displayName: 'Valor',
 		name: 'valor',
 		type: 'number',
 		required: true,
 		default: 0,
-		description: 'Valor monetario del deal',
+		description: 'Valor monetario de la negociación',
 		displayOptions: {
 			show: {
 				resource: ['deal'],
@@ -185,12 +185,12 @@ export const dealFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Currency',
+		displayName: 'Moneda',
 		name: 'moneda',
 		type: 'string',
 		required: true,
 		default: '',
-		description: 'Moneda del deal (por ejemplo COP, USD)',
+		description: 'Moneda de la negociación (por ejemplo COP, USD)',
 		displayOptions: {
 			show: {
 				resource: ['deal'],
@@ -202,7 +202,7 @@ export const dealFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Lead Origin ID',
+		displayName: 'ID del Origen de Lead',
 		name: 'origen_lead',
 		type: 'number',
 		required: true,
@@ -219,13 +219,13 @@ export const dealFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Description',
+		displayName: 'Descripción',
 		name: 'descripcion',
 		type: 'string',
 		required: true,
 		typeOptions: { rows: 3 },
 		default: '',
-		description: 'Descripción del deal',
+		description: 'Descripción de la negociación',
 		displayOptions: {
 			show: {
 				resource: ['deal'],
@@ -237,10 +237,10 @@ export const dealFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Additional Fields',
+		displayName: 'Campos Adicionales',
 		name: 'additionalFields',
 		type: 'collection',
-		placeholder: 'Add Field',
+		placeholder: 'Agregar Campo',
 		default: {},
 		displayOptions: {
 			show: {
@@ -250,52 +250,15 @@ export const dealFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Business Type',
-				name: 'tipo_negocio',
-				type: 'options',
-				options: [
-					{ name: 'Nuevo', value: 'nuevo' },
-					{ name: 'Renovación', value: 'renovacion' },
-					{ name: 'Upsell', value: 'upsell' },
-				],
-				default: 'nuevo',
-				description: 'Tipo de negocio del deal',
-				routing: { send: { type: 'body', property: 'tipo_negocio' } },
-			},
-			{
-				displayName: 'Campaign',
+				displayName: 'Campaña',
 				name: 'campana',
 				type: 'string',
 				default: '',
-				description: 'Campaña asociada al deal',
+				description: 'Campaña asociada a la negociación',
 				routing: { send: { type: 'body', property: 'campana' } },
 			},
 			{
-				displayName: 'Company ID',
-				name: 'id_empresa',
-				type: 'number',
-				default: 0,
-				description: 'ID de la empresa asociada al deal',
-				routing: { send: { type: 'body', property: 'id_empresa' } },
-			},
-			{
-				displayName: 'Competitor',
-				name: 'competidor',
-				type: 'string',
-				default: '',
-				description: 'Competidor asociado al deal',
-				routing: { send: { type: 'body', property: 'competidor' } },
-			},
-			{
-				displayName: 'Contact ID',
-				name: 'id_contacto',
-				type: 'number',
-				default: 0,
-				description: 'ID del contacto asociado al deal',
-				routing: { send: { type: 'body', property: 'id_contacto' } },
-			},
-			{
-				displayName: 'Custom Fields',
+				displayName: 'Campos Personalizados',
 				name: 'custom_fields',
 				type: 'json',
 				default: '{}',
@@ -309,16 +272,32 @@ export const dealFields: INodeProperties[] = [
 				},
 			},
 			{
-				displayName: 'Estimated Close Date',
+				displayName: 'Competidor',
+				name: 'competidor',
+				type: 'string',
+				default: '',
+				description: 'Competidor asociado a la negociación',
+				routing: { send: { type: 'body', property: 'competidor' } },
+			},
+			{
+				displayName: 'Fecha Estimada de Cierre',
 				name: 'fecha_cierre_estimada',
 				type: 'string',
 				default: '',
 				placeholder: 'YYYY-MM-DD',
-				description: 'Fecha estimada de cierre del deal',
+				description: 'Fecha estimada de cierre de la negociación',
 				routing: { send: { type: 'body', property: 'fecha_cierre_estimada' } },
 			},
 			{
-				displayName: 'Lead Channel ID',
+				displayName: 'ID de la Empresa',
+				name: 'id_empresa',
+				type: 'number',
+				default: 0,
+				description: 'ID de la empresa asociada a la negociación',
+				routing: { send: { type: 'body', property: 'id_empresa' } },
+			},
+			{
+				displayName: 'ID del Canal de Lead',
 				name: 'canal_origen',
 				type: 'number',
 				default: 0,
@@ -326,7 +305,15 @@ export const dealFields: INodeProperties[] = [
 				routing: { send: { type: 'body', property: 'canal_origen' } },
 			},
 			{
-				displayName: 'Probability',
+				displayName: 'ID del Contacto',
+				name: 'id_contacto',
+				type: 'number',
+				default: 0,
+				description: 'ID del contacto asociado a la negociación',
+				routing: { send: { type: 'body', property: 'id_contacto' } },
+			},
+			{
+				displayName: 'Probabilidad',
 				name: 'probabilidad',
 				type: 'number',
 				default: 0,
@@ -334,15 +321,15 @@ export const dealFields: INodeProperties[] = [
 				routing: { send: { type: 'body', property: 'probabilidad' } },
 			},
 			{
-				displayName: 'Product of Interest',
+				displayName: 'Producto de Interés',
 				name: 'producto_interes',
 				type: 'string',
 				default: '',
-				description: 'Producto de interés del deal',
+				description: 'Producto de interés de la negociación',
 				routing: { send: { type: 'body', property: 'producto_interes' } },
 			},
 			{
-				displayName: 'Temperature',
+				displayName: 'Temperatura',
 				name: 'temperatura',
 				type: 'options',
 				options: [
@@ -354,6 +341,19 @@ export const dealFields: INodeProperties[] = [
 				description: 'Temperatura del lead',
 				routing: { send: { type: 'body', property: 'temperatura' } },
 			},
+			{
+				displayName: 'Tipo de Negocio',
+				name: 'tipo_negocio',
+				type: 'options',
+				options: [
+					{ name: 'Nuevo', value: 'nuevo' },
+					{ name: 'Renovación', value: 'renovacion' },
+					{ name: 'Upsell', value: 'upsell' },
+				],
+				default: 'nuevo',
+				description: 'Tipo de negocio de la negociación',
+				routing: { send: { type: 'body', property: 'tipo_negocio' } },
+			},
 		],
 	},
 
@@ -361,12 +361,12 @@ export const dealFields: INodeProperties[] = [
 	//         deal: update
 	// ----------------------------------
 	{
-		displayName: 'Deal ID',
+		displayName: 'ID de la Negociación',
 		name: 'id',
 		type: 'number',
 		required: true,
 		default: 0,
-		description: 'Consecutivo del deal a editar',
+		description: 'Consecutivo de la negociación a editar',
 		displayOptions: {
 			show: {
 				resource: ['deal'],
@@ -378,12 +378,12 @@ export const dealFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Owner ID',
+		displayName: 'ID del Responsable',
 		name: 'id_responsable',
 		type: 'number',
 		required: true,
 		default: 0,
-		description: 'ID del usuario responsable (owner) del deal',
+		description: 'ID del usuario responsable (owner) de la negociación',
 		displayOptions: {
 			show: {
 				resource: ['deal'],
@@ -395,10 +395,10 @@ export const dealFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Update Fields',
+		displayName: 'Campos a Actualizar',
 		name: 'updateFields',
 		type: 'collection',
-		placeholder: 'Add Field',
+		placeholder: 'Agregar Campo',
 		default: {},
 		displayOptions: {
 			show: {
@@ -408,60 +408,15 @@ export const dealFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Business Type',
-				name: 'tipo_negocio',
-				type: 'options',
-				options: [
-					{ name: 'Nuevo', value: 'nuevo' },
-					{ name: 'Renovación', value: 'renovacion' },
-					{ name: 'Upsell', value: 'upsell' },
-				],
-				default: 'nuevo',
-				description: 'Tipo de negocio del deal',
-				routing: { send: { type: 'body', property: 'tipo_negocio' } },
-			},
-			{
-				displayName: 'Campaign',
+				displayName: 'Campaña',
 				name: 'campana',
 				type: 'string',
 				default: '',
-				description: 'Campaña asociada al deal',
+				description: 'Campaña asociada a la negociación',
 				routing: { send: { type: 'body', property: 'campana' } },
 			},
 			{
-				displayName: 'Company ID',
-				name: 'id_empresa',
-				type: 'number',
-				default: 0,
-				description: 'ID de la empresa asociada al deal',
-				routing: { send: { type: 'body', property: 'id_empresa' } },
-			},
-			{
-				displayName: 'Competitor',
-				name: 'competidor',
-				type: 'string',
-				default: '',
-				description: 'Competidor asociado al deal',
-				routing: { send: { type: 'body', property: 'competidor' } },
-			},
-			{
-				displayName: 'Contact ID',
-				name: 'id_contacto',
-				type: 'number',
-				default: 0,
-				description: 'ID del contacto asociado al deal',
-				routing: { send: { type: 'body', property: 'id_contacto' } },
-			},
-			{
-				displayName: 'Currency',
-				name: 'moneda',
-				type: 'string',
-				default: '',
-				description: 'Moneda del deal (por ejemplo COP, USD)',
-				routing: { send: { type: 'body', property: 'moneda' } },
-			},
-			{
-				displayName: 'Custom Fields',
+				displayName: 'Campos Personalizados',
 				name: 'custom_fields',
 				type: 'json',
 				default: '{}',
@@ -475,33 +430,49 @@ export const dealFields: INodeProperties[] = [
 				},
 			},
 			{
-				displayName: 'Description',
+				displayName: 'Competidor',
+				name: 'competidor',
+				type: 'string',
+				default: '',
+				description: 'Competidor asociado a la negociación',
+				routing: { send: { type: 'body', property: 'competidor' } },
+			},
+			{
+				displayName: 'Descripción',
 				name: 'descripcion',
 				type: 'string',
 				typeOptions: { rows: 3 },
 				default: '',
-				description: 'Descripción del deal',
+				description: 'Descripción de la negociación',
 				routing: { send: { type: 'body', property: 'descripcion' } },
 			},
 			{
-				displayName: 'Estimated Close Date',
+				displayName: 'Fecha Estimada de Cierre',
 				name: 'fecha_cierre_estimada',
 				type: 'string',
 				default: '',
 				placeholder: 'YYYY-MM-DD',
-				description: 'Fecha estimada de cierre del deal',
+				description: 'Fecha estimada de cierre de la negociación',
 				routing: { send: { type: 'body', property: 'fecha_cierre_estimada' } },
 			},
 			{
-				displayName: 'Internal Deal ID',
-				name: 'id_interno',
+				displayName: 'ID de la Empresa',
+				name: 'id_empresa',
 				type: 'number',
 				default: 0,
-				description: 'ID interno del deal (alternativa a Deal ID/consecutivo)',
-				routing: { send: { type: 'body', property: 'id_interno' } },
+				description: 'ID de la empresa asociada a la negociación',
+				routing: { send: { type: 'body', property: 'id_empresa' } },
 			},
 			{
-				displayName: 'Lead Channel ID',
+				displayName: 'ID de la Etapa del Pipeline',
+				name: 'id_etapa_pipeline',
+				type: 'number',
+				default: 0,
+				description: 'ID de la etapa del pipeline. Si cambia a una etapa de pérdida, requiere ID del Motivo de Pérdida.',
+				routing: { send: { type: 'body', property: 'id_etapa_pipeline' } },
+			},
+			{
+				displayName: 'ID del Canal de Lead',
 				name: 'canal_origen',
 				type: 'number',
 				default: 0,
@@ -509,31 +480,15 @@ export const dealFields: INodeProperties[] = [
 				routing: { send: { type: 'body', property: 'canal_origen' } },
 			},
 			{
-				displayName: 'Lead Origin ID',
-				name: 'origen_lead',
+				displayName: 'ID del Contacto',
+				name: 'id_contacto',
 				type: 'number',
 				default: 0,
-				description: 'ID del origen del lead',
-				routing: { send: { type: 'body', property: 'origen_lead' } },
+				description: 'ID del contacto asociado a la negociación',
+				routing: { send: { type: 'body', property: 'id_contacto' } },
 			},
 			{
-				displayName: 'Lead Score',
-				name: 'score_lead',
-				type: 'number',
-				default: 0,
-				description: 'Puntaje del lead',
-				routing: { send: { type: 'body', property: 'score_lead' } },
-			},
-			{
-				displayName: 'Loss Notes',
-				name: 'notas_perdida',
-				type: 'string',
-				default: '',
-				description: 'Notas de la pérdida del deal',
-				routing: { send: { type: 'body', property: 'notas_perdida' } },
-			},
-			{
-				displayName: 'Loss Reason ID',
+				displayName: 'ID del Motivo de Pérdida',
 				name: 'id_motivo_perdida',
 				type: 'number',
 				default: 0,
@@ -541,39 +496,55 @@ export const dealFields: INodeProperties[] = [
 				routing: { send: { type: 'body', property: 'id_motivo_perdida' } },
 			},
 			{
-				displayName: 'Name',
-				name: 'nombre',
-				type: 'string',
-				default: '',
-				description: 'Nombre del deal',
-				routing: { send: { type: 'body', property: 'nombre' } },
+				displayName: 'ID del Origen de Lead',
+				name: 'origen_lead',
+				type: 'number',
+				default: 0,
+				description: 'ID del origen del lead',
+				routing: { send: { type: 'body', property: 'origen_lead' } },
 			},
 			{
-				displayName: 'Next Activity',
-				name: 'proxima_actividad',
-				type: 'string',
-				default: '',
-				description: 'Próxima actividad del deal',
-				routing: { send: { type: 'body', property: 'proxima_actividad' } },
-			},
-			{
-				displayName: 'Pipeline ID',
+				displayName: 'ID del Pipeline',
 				name: 'id_pipeline',
 				type: 'number',
 				default: 0,
-				description: 'ID del pipeline del deal',
+				description: 'ID del pipeline de la negociación',
 				routing: { send: { type: 'body', property: 'id_pipeline' } },
 			},
 			{
-				displayName: 'Pipeline Stage ID',
-				name: 'id_etapa_pipeline',
+				displayName: 'ID Interno de la Negociación',
+				name: 'id_interno',
 				type: 'number',
 				default: 0,
-				description: 'ID de la etapa del pipeline. Si cambia a una etapa de pérdida, requiere Loss Reason ID.',
-				routing: { send: { type: 'body', property: 'id_etapa_pipeline' } },
+				description: 'ID interno de la negociación (alternativa a ID de la Negociación/consecutivo)',
+				routing: { send: { type: 'body', property: 'id_interno' } },
 			},
 			{
-				displayName: 'Probability',
+				displayName: 'Moneda',
+				name: 'moneda',
+				type: 'string',
+				default: '',
+				description: 'Moneda de la negociación (por ejemplo COP, USD)',
+				routing: { send: { type: 'body', property: 'moneda' } },
+			},
+			{
+				displayName: 'Nombre',
+				name: 'nombre',
+				type: 'string',
+				default: '',
+				description: 'Nombre de la negociación',
+				routing: { send: { type: 'body', property: 'nombre' } },
+			},
+			{
+				displayName: 'Notas de Pérdida',
+				name: 'notas_perdida',
+				type: 'string',
+				default: '',
+				description: 'Notas de la pérdida de la negociación',
+				routing: { send: { type: 'body', property: 'notas_perdida' } },
+			},
+			{
+				displayName: 'Probabilidad',
 				name: 'probabilidad',
 				type: 'number',
 				default: 0,
@@ -581,15 +552,30 @@ export const dealFields: INodeProperties[] = [
 				routing: { send: { type: 'body', property: 'probabilidad' } },
 			},
 			{
-				displayName: 'Product of Interest',
+				displayName: 'Producto de Interés',
 				name: 'producto_interes',
 				type: 'string',
 				default: '',
-				description: 'Producto de interés del deal',
+				description: 'Producto de interés de la negociación',
 				routing: { send: { type: 'body', property: 'producto_interes' } },
 			},
 			{
-				displayName: 'Temperature',
+				displayName: 'Próxima Actividad',
+				name: 'proxima_actividad',
+				type: 'string',
+				default: '',
+				description: 'Próxima actividad de la negociación',
+				routing: { send: { type: 'body', property: 'proxima_actividad' } },
+			},
+			{
+				displayName: 'Puntaje del Lead',
+				name: 'score_lead',
+				type: 'number',
+				default: 0,
+				routing: { send: { type: 'body', property: 'score_lead' } },
+			},
+			{
+				displayName: 'Temperatura',
 				name: 'temperatura',
 				type: 'options',
 				options: [
@@ -602,11 +588,24 @@ export const dealFields: INodeProperties[] = [
 				routing: { send: { type: 'body', property: 'temperatura' } },
 			},
 			{
-				displayName: 'Value',
+				displayName: 'Tipo de Negocio',
+				name: 'tipo_negocio',
+				type: 'options',
+				options: [
+					{ name: 'Nuevo', value: 'nuevo' },
+					{ name: 'Renovación', value: 'renovacion' },
+					{ name: 'Upsell', value: 'upsell' },
+				],
+				default: 'nuevo',
+				description: 'Tipo de negocio de la negociación',
+				routing: { send: { type: 'body', property: 'tipo_negocio' } },
+			},
+			{
+				displayName: 'Valor',
 				name: 'valor',
 				type: 'number',
 				default: 0,
-				description: 'Valor monetario del deal',
+				description: 'Valor monetario de la negociación',
 				routing: { send: { type: 'body', property: 'valor' } },
 			},
 		],

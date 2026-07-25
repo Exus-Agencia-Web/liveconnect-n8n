@@ -46,6 +46,20 @@ module.exports = {
 				'n8n-nodes-base/node-execute-block-missing-continue-on-fail': 'off',
 				'n8n-nodes-base/node-resource-description-filename-against-convention': 'off',
 				'n8n-nodes-base/node-param-fixed-collection-type-unsorted-items': 'off',
+				// UI del nodo en ESPAÑOL: se desactivan las reglas que exigen
+				// literales de texto en inglés (la estructura sigue validada).
+				'n8n-nodes-base/node-param-description-boolean-without-whether': 'off',
+				'n8n-nodes-base/node-param-display-name-wrong-for-simplify': 'off',
+				'n8n-nodes-base/node-param-description-wrong-for-simplify': 'off',
+				'n8n-nodes-base/node-param-option-name-wrong-for-get-many': 'off',
+				'n8n-nodes-base/node-param-description-wrong-for-limit': 'off',
+				'n8n-nodes-base/node-param-display-name-wrong-for-update-fields': 'off',
+				'n8n-nodes-base/node-param-description-wrong-for-dynamic-options': 'off',
+				'n8n-nodes-base/node-param-description-line-break-html-tag': 'off',
+				// El Title Case inglés capitaliza preposiciones españolas ("ID Del Canal"):
+				// en español los labels usan "ID del Canal" — regla incompatible.
+				'n8n-nodes-base/node-param-display-name-miscased': 'off',
+				'n8n-nodes-base/node-param-option-name-containing-star': 'off',
 			},
 		},
 	],

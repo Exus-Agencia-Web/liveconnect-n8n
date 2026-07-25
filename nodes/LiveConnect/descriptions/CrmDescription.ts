@@ -4,7 +4,7 @@ import { handleLcResponse } from '../GenericFunctions';
 
 export const crmOperations: INodeProperties[] = [
 	{
-		displayName: 'Operation',
+		displayName: 'Operación',
 		name: 'operation',
 		type: 'options',
 		noDataExpression: true,
@@ -15,9 +15,9 @@ export const crmOperations: INodeProperties[] = [
 		},
 		options: [
 			{
-				name: 'Get Lead Channels',
+				name: 'Obtener Canales de Lead',
 				value: 'getLeadChannels',
-				action: 'Get lead channels',
+				action: 'Obtener canales de lead',
 				description:
 					'Catálogo de canales de origen de lead activos de la cuenta autenticada. Sin parámetros.',
 				routing: {
@@ -26,9 +26,19 @@ export const crmOperations: INodeProperties[] = [
 				},
 			},
 			{
-				name: 'Get Lead Origins',
+				name: 'Obtener Etapas',
+				value: 'getStages',
+				action: 'Obtener etapas',
+				description: 'Etapas activas del pipeline indicado, ordenadas por posición',
+				routing: {
+					request: { method: 'POST', url: '/crm/getStages' },
+					output: { postReceive: [handleLcResponse] },
+				},
+			},
+			{
+				name: 'Obtener Orígenes de Lead',
 				value: 'getLeadOrigins',
-				action: 'Get lead origins',
+				action: 'Obtener or genes de lead',
 				description:
 					'Catálogo de orígenes de lead activos de la cuenta autenticada. Sin parámetros.',
 				routing: {
@@ -37,22 +47,12 @@ export const crmOperations: INodeProperties[] = [
 				},
 			},
 			{
-				name: 'Get Pipelines',
+				name: 'Obtener Pipelines',
 				value: 'getPipelines',
-				action: 'Get pipelines',
+				action: 'Obtener pipelines',
 				description: 'Catálogo de pipelines activos de la cuenta autenticada. Sin parámetros.',
 				routing: {
 					request: { method: 'POST', url: '/crm/getPipelines' },
-					output: { postReceive: [handleLcResponse] },
-				},
-			},
-			{
-				name: 'Get Stages',
-				value: 'getStages',
-				action: 'Get stages',
-				description: 'Etapas activas del pipeline indicado, ordenadas por posición',
-				routing: {
-					request: { method: 'POST', url: '/crm/getStages' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
@@ -66,7 +66,7 @@ export const crmFields: INodeProperties[] = [
 	//         crm: getStages
 	// ----------------------------------
 	{
-		displayName: 'Pipeline ID',
+		displayName: 'ID del Pipeline',
 		name: 'id_pipeline',
 		type: 'number',
 		required: true,

@@ -18,7 +18,7 @@ export class LiveConnectApi implements ICredentialType {
 
 	properties: INodeProperties[] = [
 		{
-			displayName: 'Account Key (cKey)',
+			displayName: 'Clave de Cuenta (cKey)',
 			name: 'cKey',
 			type: 'string',
 			typeOptions: { password: true },
@@ -27,7 +27,7 @@ export class LiveConnectApi implements ICredentialType {
 			description: 'Hash de la cuenta LiveConnect',
 		},
 		{
-			displayName: 'Private Key',
+			displayName: 'Clave Privada (privateKey)',
 			name: 'privateKey',
 			type: 'string',
 			typeOptions: { password: true },

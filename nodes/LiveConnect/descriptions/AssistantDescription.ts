@@ -4,7 +4,7 @@ import { handleLcResponse } from '../GenericFunctions';
 
 export const assistantOperations: INodeProperties[] = [
 	{
-		displayName: 'Operation',
+		displayName: 'Operación',
 		name: 'operation',
 		type: 'options',
 		noDataExpression: true,
@@ -15,9 +15,19 @@ export const assistantOperations: INodeProperties[] = [
 		},
 		options: [
 			{
-				name: 'Create',
+				name: 'Actualizar',
+				value: 'update',
+				action: 'Actualizar un asistente',
+				description: 'Actualiza el nombre y/o las reglas de un asistente existente',
+				routing: {
+					request: { method: 'POST', url: '/assistant/edtAssistant' },
+					output: { postReceive: [handleLcResponse] },
+				},
+			},
+			{
+				name: 'Crear',
 				value: 'create',
-				action: 'Create an assistant',
+				action: 'Crear un asistente',
 				description: 'Crea un asistente de IA en la cuenta',
 				routing: {
 					request: { method: 'POST', url: '/assistant/addAssistant' },
@@ -25,22 +35,12 @@ export const assistantOperations: INodeProperties[] = [
 				},
 			},
 			{
-				name: 'Get Many',
+				name: 'Obtener Varios',
 				value: 'getMany',
-				action: 'Get many assistants',
+				action: 'Obtener varios asistentes',
 				description: 'Lista los asistentes de IA de la cuenta, opcionalmente filtrados por ID',
 				routing: {
 					request: { method: 'GET', url: '/assistant/listAssistant' },
-					output: { postReceive: [handleLcResponse] },
-				},
-			},
-			{
-				name: 'Update',
-				value: 'update',
-				action: 'Update an assistant',
-				description: 'Actualiza el nombre y/o las reglas de un asistente existente',
-				routing: {
-					request: { method: 'POST', url: '/assistant/edtAssistant' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
@@ -54,7 +54,7 @@ export const assistantFields: INodeProperties[] = [
 	//         assistant: create
 	// ----------------------------------
 	{
-		displayName: 'Name',
+		displayName: 'Nombre',
 		name: 'nombre',
 		type: 'string',
 		required: true,
@@ -71,10 +71,10 @@ export const assistantFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Additional Fields',
+		displayName: 'Campos Adicionales',
 		name: 'additionalFields',
 		type: 'collection',
-		placeholder: 'Add Field',
+		placeholder: 'Agregar Campo',
 		default: {},
 		displayOptions: {
 			show: {
@@ -84,7 +84,7 @@ export const assistantFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Brain Template ID',
+				displayName: 'ID de la Plantilla de Cerebro',
 				name: 'brainSelected',
 				type: 'number',
 				default: 0,
@@ -92,11 +92,11 @@ export const assistantFields: INodeProperties[] = [
 				routing: { send: { type: 'body', property: 'brainSelected' } },
 			},
 			{
-				displayName: 'Memory',
+				displayName: 'Memoria',
 				name: 'memory',
 				type: 'json',
 				default: '{}',
-				description: 'Memoria inicial a asignar (ignorada cuando el tipo es Skip Initial Memory)',
+				description: 'Memoria inicial a asignar (ignorada cuando el tipo es Omitir Memoria Inicial)',
 				routing: {
 					send: {
 						type: 'body',
@@ -106,16 +106,16 @@ export const assistantFields: INodeProperties[] = [
 				},
 			},
 			{
-				displayName: 'Type',
+				displayName: 'Tipo',
 				name: 'type',
 				type: 'options',
 				options: [
-					{ name: 'Standard', value: 0 },
-					{ name: 'Skip Initial Memory', value: 1 },
+					{ name: 'Estándar', value: 0 },
+					{ name: 'Omitir Memoria Inicial', value: 1 },
 				],
 				default: 0,
 				description:
-					'Tipo de creación del asistente. Skip Initial Memory fuerza la creación sin asignar memorias iniciales.',
+					'Tipo de creación del asistente. Omitir Memoria Inicial fuerza la creación sin asignar memorias iniciales.',
 				routing: { send: { type: 'body', property: 'type' } },
 			},
 		],
@@ -125,10 +125,10 @@ export const assistantFields: INodeProperties[] = [
 	//         assistant: getMany
 	// ----------------------------------
 	{
-		displayName: 'Filters',
+		displayName: 'Filtros',
 		name: 'filters',
 		type: 'collection',
-		placeholder: 'Add Filter',
+		placeholder: 'Agregar Filtro',
 		default: {},
 		displayOptions: {
 			show: {
@@ -138,7 +138,7 @@ export const assistantFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Assistant ID',
+				displayName: 'ID del Asistente',
 				name: 'id',
 				type: 'number',
 				default: 0,
@@ -152,7 +152,7 @@ export const assistantFields: INodeProperties[] = [
 	//         assistant: update
 	// ----------------------------------
 	{
-		displayName: 'Assistant ID',
+		displayName: 'ID del Asistente',
 		name: 'id',
 		type: 'number',
 		required: true,
@@ -169,10 +169,10 @@ export const assistantFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Update Fields',
+		displayName: 'Campos a Actualizar',
 		name: 'updateFields',
 		type: 'collection',
-		placeholder: 'Add Field',
+		placeholder: 'Agregar Campo',
 		default: {},
 		displayOptions: {
 			show: {
@@ -182,7 +182,7 @@ export const assistantFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Name',
+				displayName: 'Nombre',
 				name: 'nombre',
 				type: 'string',
 				default: '',
@@ -190,7 +190,7 @@ export const assistantFields: INodeProperties[] = [
 				routing: { send: { type: 'body', property: 'nombre' } },
 			},
 			{
-				displayName: 'Rules',
+				displayName: 'Reglas',
 				name: 'reglas',
 				type: 'json',
 				default: '{}',

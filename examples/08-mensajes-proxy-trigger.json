@@ -1,0 +1,96 @@
+{
+	"name": "LiveConnect 08 — Mensajes entrantes con Proxy Trigger",
+	"nodes": [
+		{
+			"parameters": {
+				"content": "## Recibir mensajes del proxy con el trigger nativo\n\nEl **LiveConnect Proxy Trigger** (v0.2.0+) registra el webhook del canal automáticamente al activar el workflow y lo elimina al desactivarlo. Sin configuración manual de webhooks.\n\n**Configura:**\n1. `ID del Canal`: el canal a escuchar (`Canal · Obtener Varios`).\n2. `Secreto`: déjalo vacío — se genera y valida solo.\n3. Activa el workflow (el registro se hace en ese momento).\n\n⚠️ Un solo webhook por canal: no actives dos workflows con el mismo canal.\n\nEl payload exacto de las notificaciones del proxy puede variar: ejecuta una prueba real y ajusta el IF/respuesta a lo que llegue (el trigger entrega `raw` siempre).",
+				"height": 380,
+				"width": 460
+			},
+			"id": "b8000000-0000-4000-8000-000000000001",
+			"name": "Instrucciones",
+			"type": "n8n-nodes-base.stickyNote",
+			"typeVersion": 1,
+			"position": [0, -240]
+		},
+		{
+			"parameters": {
+				"id_canal": 0,
+				"secret": "",
+				"simple": true
+			},
+			"id": "b8000000-0000-4000-8000-000000000002",
+			"name": "LiveConnect Proxy Trigger",
+			"type": "n8n-nodes-liveconnect.liveConnectProxyTrigger",
+			"typeVersion": 1,
+			"position": [540, 60],
+			"webhookId": "liveconnect-proxy-demo"
+		},
+		{
+			"parameters": {
+				"conditions": {
+					"options": {
+						"caseSensitive": true,
+						"leftValue": "",
+						"typeValidation": "loose",
+						"version": 2
+					},
+					"conditions": [
+						{
+							"leftValue": "={{ $json.mensaje }}",
+							"rightValue": "",
+							"operator": { "type": "string", "operation": "notEmpty", "singleValue": true }
+						},
+						{
+							"leftValue": "={{ $json.id_conversacion }}",
+							"rightValue": "",
+							"operator": { "type": "string", "operation": "notEmpty", "singleValue": true }
+						}
+					],
+					"combinator": "and"
+				},
+				"options": {}
+			},
+			"id": "b8000000-0000-4000-8000-000000000003",
+			"name": "¿Mensaje con conversación?",
+			"type": "n8n-nodes-base.if",
+			"typeVersion": 2.2,
+			"position": [760, 60]
+		},
+		{
+			"parameters": {
+				"resource": "proxy",
+				"operation": "sendMessage",
+				"id_conversacion": "={{ $json.id_conversacion }}",
+				"mensaje": "=Recibimos tu mensaje: \"{{ $json.mensaje }}\". Un asesor te responderá en breve. 🙌"
+			},
+			"id": "b8000000-0000-4000-8000-000000000004",
+			"name": "Auto-respuesta",
+			"type": "n8n-nodes-liveconnect.liveConnect",
+			"typeVersion": 1,
+			"position": [1000, 40]
+		},
+		{
+			"parameters": {},
+			"id": "b8000000-0000-4000-8000-000000000005",
+			"name": "Ignorar (sin mensaje)",
+			"type": "n8n-nodes-base.noOp",
+			"typeVersion": 1,
+			"position": [1000, 220]
+		}
+	],
+	"connections": {
+		"LiveConnect Proxy Trigger": {
+			"main": [[{ "node": "¿Mensaje con conversación?", "type": "main", "index": 0 }]]
+		},
+		"¿Mensaje con conversación?": {
+			"main": [
+				[{ "node": "Auto-respuesta", "type": "main", "index": 0 }],
+				[{ "node": "Ignorar (sin mensaje)", "type": "main", "index": 0 }]
+			]
+		}
+	},
+	"settings": { "executionOrder": "v1" },
+	"pinData": {},
+	"meta": { "templateCredsSetupCompleted": false }
+}

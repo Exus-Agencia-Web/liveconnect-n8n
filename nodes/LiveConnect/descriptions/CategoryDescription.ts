@@ -4,7 +4,7 @@ import { handleLcResponse } from '../GenericFunctions';
 
 export const categoryOperations: INodeProperties[] = [
 	{
-		displayName: 'Operation',
+		displayName: 'Operación',
 		name: 'operation',
 		type: 'options',
 		noDataExpression: true,
@@ -15,9 +15,19 @@ export const categoryOperations: INodeProperties[] = [
 		},
 		options: [
 			{
-				name: 'Create',
+				name: 'Actualizar',
+				value: 'update',
+				action: 'Actualizar una categor a',
+				description: 'Actualiza los campos enviados de una categoría existente',
+				routing: {
+					request: { method: 'POST', url: '/catalogue/edtCategory' },
+					output: { postReceive: [handleLcResponse] },
+				},
+			},
+			{
+				name: 'Crear',
 				value: 'create',
-				action: 'Create a category',
+				action: 'Crear una categor a',
 				description: 'Agrega una categoría al catálogo de la cuenta',
 				routing: {
 					request: { method: 'POST', url: '/catalogue/addCategory' },
@@ -25,22 +35,12 @@ export const categoryOperations: INodeProperties[] = [
 				},
 			},
 			{
-				name: 'Get Many',
+				name: 'Obtener Varios',
 				value: 'getMany',
-				action: 'Get many categories',
+				action: 'Obtener varias categor as',
 				description: 'Lista las categorías del catálogo de la cuenta, opcionalmente filtradas por ID',
 				routing: {
 					request: { method: 'GET', url: '/catalogue/listCategories' },
-					output: { postReceive: [handleLcResponse] },
-				},
-			},
-			{
-				name: 'Update',
-				value: 'update',
-				action: 'Update a category',
-				description: 'Actualiza los campos enviados de una categoría existente',
-				routing: {
-					request: { method: 'POST', url: '/catalogue/edtCategory' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
@@ -54,7 +54,7 @@ export const categoryFields: INodeProperties[] = [
 	//         category: create
 	// ----------------------------------
 	{
-		displayName: 'Name',
+		displayName: 'Nombre',
 		name: 'nombre',
 		type: 'string',
 		required: true,
@@ -75,10 +75,10 @@ export const categoryFields: INodeProperties[] = [
 	//         category: getMany
 	// ----------------------------------
 	{
-		displayName: 'Filters',
+		displayName: 'Filtros',
 		name: 'filters',
 		type: 'collection',
-		placeholder: 'Add Filter',
+		placeholder: 'Agregar Filtro',
 		default: {},
 		displayOptions: {
 			show: {
@@ -88,7 +88,7 @@ export const categoryFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Category ID',
+				displayName: 'ID de la Categoría',
 				name: 'id',
 				type: 'number',
 				default: 0,
@@ -102,7 +102,7 @@ export const categoryFields: INodeProperties[] = [
 	//         category: update
 	// ----------------------------------
 	{
-		displayName: 'Category ID',
+		displayName: 'ID de la Categoría',
 		name: 'id',
 		type: 'number',
 		required: true,
@@ -119,7 +119,7 @@ export const categoryFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Name',
+		displayName: 'Nombre',
 		name: 'nombre',
 		type: 'string',
 		required: true,
@@ -136,10 +136,10 @@ export const categoryFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Update Fields',
+		displayName: 'Campos a Actualizar',
 		name: 'updateFields',
 		type: 'collection',
-		placeholder: 'Add Field',
+		placeholder: 'Agregar Campo',
 		default: {},
 		displayOptions: {
 			show: {
@@ -149,20 +149,20 @@ export const categoryFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Order',
-				name: 'orden',
-				type: 'number',
-				default: 0,
-				description: 'Orden de la categoría',
-				routing: { send: { type: 'body', property: 'orden' } },
-			},
-			{
-				displayName: 'Photo',
+				displayName: 'Foto',
 				name: 'foto',
 				type: 'string',
 				default: '',
 				description: 'URL de la foto de la categoría',
 				routing: { send: { type: 'body', property: 'foto' } },
+			},
+			{
+				displayName: 'Orden',
+				name: 'orden',
+				type: 'number',
+				default: 0,
+				description: 'Orden de la categoría',
+				routing: { send: { type: 'body', property: 'orden' } },
 			},
 		],
 	},
