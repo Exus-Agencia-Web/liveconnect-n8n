@@ -108,6 +108,63 @@ await test('countPlaceholders cuenta variables reales', () => {
 	assert.equal(tf.countPlaceholders('Con espacios {{ 2 }}'), 2);
 });
 
+// --- estructura JSON editable (formato actual) ---
+
+await test('buildTemplateExample: estructura estilo Meta con los ejemplos', () => {
+	assert.deepEqual(tf.buildTemplateExample(PLANTILLA), {
+		header: { type: 'image', url: 'https://cdn.test/foto.jpg' },
+		body: ['Ana', '12 de mayo'],
+		buttons: [{ index: 0, type: 'url', parameter: 'https://test.co/c/999' }],
+	});
+});
+
+await test('buildTemplateExample: encabezado de texto y variables sin ejemplo', () => {
+	assert.deepEqual(
+		tf.buildTemplateExample({
+			components: [
+				{ type: 'HEADER', format: 'TEXT', text: 'Pedido {{1}}', example: { header_text: ['A-123'] } },
+				{ type: 'BODY', text: 'Hola {{1}} y {{2}}' },
+			],
+		}),
+		{ header: { type: 'text', variables: ['A-123'] }, body: ['', ''] },
+	);
+});
+
+await test('buildTemplateExample: plantilla sin variables → objeto vacío', () => {
+	assert.deepEqual(tf.buildTemplateExample({ components: [{ type: 'BODY', text: 'Gracias.' }] }), {});
+});
+
+await test('templateExampleToBody: traduce a las propiedades del API', () => {
+	assert.deepEqual(
+		tf.templateExampleToBody({
+			header: { type: 'image', url: 'https://cdn.test/f.jpg' },
+			body: ['Ana'],
+			buttons: [{ index: 0, type: 'url', parameter: 'https://x.co/1' }],
+		}),
+		{
+			variables: ['Ana'],
+			url_imagen_encabezado: 'https://cdn.test/f.jpg',
+			buttons: [{ index: 0, type: 'url', parameter: 'https://x.co/1' }],
+		},
+	);
+
+	// Encabezado de texto → variables_encabezado
+	assert.deepEqual(tf.templateExampleToBody({ header: { type: 'text', variables: ['A-1'] } }), {
+		variables_encabezado: ['A-1'],
+	});
+
+	// Video y documento a su propiedad
+	assert.deepEqual(tf.templateExampleToBody({ header: { type: 'video', url: 'https://v.mp4' } }), {
+		url_video_encabezado: 'https://v.mp4',
+	});
+	assert.deepEqual(tf.templateExampleToBody({ header: { type: 'document', url: 'https://d.pdf' } }), {
+		url_documento_encabezado: 'https://d.pdf',
+	});
+
+	// Estructura vacía → body vacío
+	assert.deepEqual(tf.templateExampleToBody({}), {});
+});
+
 // --- reparto al body (preSend) ---
 function executeCtx({ datos, body = {} }) {
 	return {
@@ -116,7 +173,59 @@ function executeCtx({ datos, body = {} }) {
 	};
 }
 
-await test('preSend: reparte variables, encabezado y botones en el body', async () => {
+await test('preSend: JSON de la plantilla (string) → propiedades del body', async () => {
+	const ctx = executeCtx({
+		datos: {
+			mappingMode: 'defineBelow',
+			value: {
+				datos: JSON.stringify({
+					header: { type: 'image', url: 'https://cdn.test/foto.jpg' },
+					body: ['Ana', '12 de mayo'],
+					buttons: [{ index: 0, type: 'url', parameter: 'https://test.co/c/999' }],
+				}),
+			},
+		},
+	});
+	const out = await applyTemplateData.call(ctx, { body: { id_canal: 1 } });
+	assert.deepEqual(out.body.variables, ['Ana', '12 de mayo']);
+	assert.equal(out.body.url_imagen_encabezado, 'https://cdn.test/foto.jpg');
+	assert.deepEqual(out.body.buttons, [{ index: 0, type: 'url', parameter: 'https://test.co/c/999' }]);
+	assert.equal(out.body.id_canal, 1);
+});
+
+await test('preSend: JSON ya parseado (objeto) también funciona', async () => {
+	const ctx = executeCtx({
+		datos: { value: { datos: { body: ['Ana'] } } },
+	});
+	const out = await applyTemplateData.call(ctx, { body: {} });
+	assert.deepEqual(out.body.variables, ['Ana']);
+});
+
+await test('preSend: JSON inválido → error claro en español', async () => {
+	const ctx = executeCtx({ datos: { value: { datos: '{ body: [ roto' } } });
+	await assert.rejects(
+		() => applyTemplateData.call(ctx, { body: {} }),
+		/no es un JSON válido/,
+	);
+});
+
+await test('preSend: JSON vacío no toca el body', async () => {
+	for (const datos of ['', '   ']) {
+		const ctx = executeCtx({ datos: { value: { datos } } });
+		const out = await applyTemplateData.call(ctx, { body: { id_canal: 1 } });
+		assert.deepEqual(out.body, { id_canal: 1 });
+	}
+});
+
+await test('preSend: Campos Adicionales ganan sobre el JSON', async () => {
+	const ctx = executeCtx({
+		datos: { value: { datos: JSON.stringify({ body: ['Ejemplo'] }) } },
+	});
+	const out = await applyTemplateData.call(ctx, { body: { variables: ['MIO'] } });
+	assert.deepEqual(out.body.variables, ['MIO']);
+});
+
+await test('preSend [compatibilidad v0.6.0]: reparte variables, encabezado y botones', async () => {
 	const ctx = executeCtx({
 		datos: {
 			mappingMode: 'defineBelow',
@@ -204,7 +313,29 @@ await test('getTemplateFields devuelve lista vacía sin canal o plantilla', asyn
 	assert.deepEqual(await lo.getTemplateFields.call(ctx), { fields: [] });
 });
 
-await test('getTemplateFields consulta getTemplate y mapea los campos', async () => {
+await test('getTemplateFields devuelve UN campo object con el JSON prellenado', async () => {
+	const params = { resource: 'waba', operation: 'sendTemplate', id_canal: 4695, id_plantilla: 'tpl_1' };
+	const ctx = {
+		getNode: () => ({ name: 'test' }),
+		getCurrentNodeParameter: (path) => params[path],
+		getCredentials: async () => ({}),
+		helpers: {
+			httpRequest: async () => ({ status: 1, data: { token: 'T' } }),
+			httpRequestWithAuthentication: async () => ({ status: 1, data: PLANTILLA }),
+		},
+	};
+	const { fields } = await lo.getTemplateFields.call(ctx);
+	assert.equal(fields.length, 1);
+	assert.equal(fields[0].id, 'datos');
+	assert.equal(fields[0].type, 'object', 'type object → n8n lo renderiza como editor JSON');
+	assert.deepEqual(JSON.parse(fields[0].defaultValue), {
+		header: { type: 'image', url: 'https://cdn.test/foto.jpg' },
+		body: ['Ana', '12 de mayo'],
+		buttons: [{ index: 0, type: 'url', parameter: 'https://test.co/c/999' }],
+	});
+});
+
+await test('getTemplateFields consulta getTemplate con el canal y la plantilla', async () => {
 	const calls = [];
 	const params = { resource: 'waba', operation: 'sendTemplate', id_canal: 4695, id_plantilla: 'tpl_1' };
 	const ctx = {
@@ -222,10 +353,7 @@ await test('getTemplateFields consulta getTemplate y mapea los campos', async ()
 	const { fields } = await lo.getTemplateFields.call(ctx);
 	assert.ok(calls[0].url.endsWith('/direct/waba/getTemplate'));
 	assert.deepEqual(calls[0].body, { id_canal: 4695, id: 'tpl_1' });
-	assert.deepEqual(
-		fields.map((f) => f.id),
-		['header_media_IMAGE', 'body_1', 'body_2', 'button_1'],
-	);
+	assert.equal(fields.length, 1);
 });
 
 console.log(`\n${passed} pruebas de humo de plantillas OK`);

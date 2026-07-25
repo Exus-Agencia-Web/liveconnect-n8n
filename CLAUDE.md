@@ -121,14 +121,21 @@ Mapeo: `id_canal`→getChannels · `id_grupo`/`id_team`/`id_to_delegate`→getGr
 
 **Refresco de selectores dependientes**: sin `typeOptions.loadOptionsDependsOn` las opciones quedan cacheadas y no se recargan al cambiar el campo del que dependen. Se declara con **ruta relativa `&`** (`['&id_canal']`, `['&id_pipeline']`), que resuelve al campo hermano y por eso sirve igual top-level que dentro de una colección (`node-parameters/path-utils.js:22`).
 
-## Plantillas WABA: campo "Datos de la Plantilla" (v0.6.0)
+## Plantillas WABA: campo "Contenido de la Plantilla" (v0.7.0)
 
-`type: 'resourceMapper'` (`resourceMapperMethod: getTemplateFields`) que muestra las variables de la plantilla elegida **precargadas con los `example` de Meta** y editables. `ResourceMapperField.defaultValue` es lo que prellena (interfaces.d.ts:2321 · ResourceMapper.vue:93).
+`type: 'resourceMapper'` (`resourceMapperMethod: getTemplateFields`) que devuelve **UN único campo** `id: 'datos'`, `type: 'object'` con `defaultValue` = la estructura JSON de la plantilla. Truco clave: un `ResourceMapperField` de tipo `object` se renderiza como **editor JSON** (`MappingFields.vue:267-273` mapea object/array → `json`), y `defaultValue` es lo que lo prellena (interfaces.d.ts:2321 · ResourceMapper.vue:93). Así se logra "un campo JSON que se llena solo", que n8n no permite en un `type: 'json'` normal.
 
-- `TemplateFields.ts` parsea los `components` crudos de Meta: BODY/HEADER TEXT → una variable por cada `{{n}}` **detectado en el texto** (no depende de que haya `example`, así nunca falta un dato obligatorio); HEADER IMAGE/VIDEO/DOCUMENT → un campo de URL cuyo **ID lleva el formato** (`header_media_IMAGE`) para no adivinarlo luego por la extensión; BUTTONS → un campo por botón con parámetro dinámico (URL con `{{n}}` o COPY_CODE). Carruseles (`cards`) NO soportados aún.
-- Los valores llegan al body por un **preSend** (`applyTemplateData`), no por `routing.send`: un solo campo alimenta varias propiedades (`variables`, `variables_encabezado`, `url_*_encabezado`, `buttons`). **Lo que el usuario escriba en Campos Adicionales gana** sobre lo precargado.
-- IDs ordenables por sufijo numérico (`body_1`…`body_10`); el comparador manda los IDs sin número al final para no volverse inconsistente.
-- El formato de `buttons` en el body no está documentado en el spec: se envía `{index, parameter}` como mejor esfuerzo y el campo `buttons` (json) permite sobrescribirlo.
+Estructura generada (estilo Meta, solo las claves que la plantilla usa):
+```jsonc
+{ "header": { "type": "image", "url": "…" },      // o { "type": "text", "variables": [...] }
+  "body": ["Ana", "12 de mayo"],
+  "buttons": [{ "index": 0, "type": "url", "parameter": "…" }] }
+```
+
+- `TemplateFields.ts` parsea los `components` crudos de Meta: las variables se detectan por los `{{n}}` **del texto** (no dependen de que haya `example`, así nunca falta un dato obligatorio); HEADER IMAGE/VIDEO/DOCUMENT → `header.url`; BUTTONS con parámetro dinámico (URL con `{{n}}` o COPY_CODE). Carruseles (`cards`) NO soportados aún.
+- `templateExampleToBody` traduce esa estructura a las propiedades reales (`variables`, `variables_encabezado`, `url_*_encabezado`, `buttons`) y la aplica un **preSend** (`applyTemplateData`), no `routing.send`: un solo campo alimenta varias propiedades. **Lo que el usuario escriba en Campos Adicionales gana** sobre lo precargado.
+- `buildTemplateLayout` + `splitTemplateValues` (un campo por variable, IDs `body_1`/`header_media_IMAGE`/`button_1`) se conservan **solo** como ruta de compatibilidad para nodos configurados con v0.6.0.
+- El formato de `buttons` en el body no está documentado en el spec: se envía lo que trae el JSON (`{index, type, parameter}`) como mejor esfuerzo y el campo `buttons` de Campos Adicionales permite sobrescribirlo.
 
 ## Gotchas de build/publicación
 

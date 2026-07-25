@@ -6,7 +6,7 @@ import type {
 } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
 
-import { buildTemplateLayout } from './TemplateFields';
+import { buildTemplateExample, TEMPLATE_PAYLOAD_FIELD } from './TemplateFields';
 
 import type { LcTokenContext } from './GenericFunctions';
 import {
@@ -407,7 +407,23 @@ export async function getTemplateFields(
 		return { fields: [] };
 	}
 
-	return { fields: buildTemplateLayout(template).fields };
+	// Un único campo `object`: n8n lo renderiza como editor JSON (MappingFields.vue),
+	// así que el usuario ve y edita toda la estructura de la plantilla de una vez.
+	const ejemplo = buildTemplateExample(template);
+	return {
+		fields: [
+			{
+				id: TEMPLATE_PAYLOAD_FIELD,
+				displayName: 'Contenido de la Plantilla',
+				type: 'object',
+				required: false,
+				display: true,
+				defaultMatch: false,
+				canBeUsedToMatch: false,
+				defaultValue: JSON.stringify(ejemplo, null, 2),
+			},
+		],
+	};
 }
 
 /** Métodos listos para el bloque `methods.loadOptions` de cada nodo. */

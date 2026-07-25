@@ -12,6 +12,9 @@ import type { IDataObject, ResourceMapperField } from 'n8n-workflow';
  *   button_1, button_2…  → parámetro dinámico de cada botón
  */
 
+/** ID del campo único que contiene la estructura JSON de la plantilla. */
+export const TEMPLATE_PAYLOAD_FIELD = 'datos';
+
 export const TEMPLATE_FIELD_PREFIX = {
 	body: 'body_',
 	header: 'header_',
@@ -250,4 +253,106 @@ export function headerUrlProperty(formato: HeaderFormat): string | undefined {
 	if (formato === 'VIDEO') return 'url_video_encabezado';
 	if (formato === 'DOCUMENT') return 'url_documento_encabezado';
 	return undefined;
+}
+
+/* ------------------------------------------------------------------ *
+ * Estructura editable de la plantilla (formato estilo Meta)
+ * ------------------------------------------------------------------ */
+
+export interface TemplateExampleHeader {
+	type: 'text' | 'image' | 'video' | 'document';
+	/** Variables del encabezado de texto. */
+	variables?: string[];
+	/** URL del medio (imagen, video o documento). */
+	url?: string;
+}
+
+export interface TemplateExampleButton {
+	index: number;
+	type: string;
+	parameter: string;
+}
+
+export interface TemplateExample {
+	header?: TemplateExampleHeader;
+	body?: string[];
+	buttons?: TemplateExampleButton[];
+}
+
+/**
+ * Estructura que la plantilla necesita para enviarse, con los ejemplos de Meta como
+ * valores. Solo incluye las claves que esa plantilla usa: lo que se ve es exactamente
+ * lo que hay que rellenar.
+ */
+export function buildTemplateExample(template: IDataObject): TemplateExample {
+	const { fields, headerFormat, buttons } = buildTemplateLayout(template);
+	const valorDe = (id: string): string => {
+		const campo = fields.find((f) => f.id === id);
+		const valor = campo?.defaultValue;
+		return typeof valor === 'string' ? valor : '';
+	};
+
+	const ejemplo: TemplateExample = {};
+
+	// Encabezado: variables de texto o URL del medio.
+	const variablesEncabezado = fields
+		.filter((f) => f.id.startsWith(TEMPLATE_FIELD_PREFIX.header) && !f.id.startsWith(TEMPLATE_FIELD_PREFIX.headerMedia))
+		.map((f) => (typeof f.defaultValue === 'string' ? f.defaultValue : ''));
+	if (headerFormat === 'TEXT' && variablesEncabezado.length > 0) {
+		ejemplo.header = { type: 'text', variables: variablesEncabezado };
+	} else if (headerFormat === 'IMAGE' || headerFormat === 'VIDEO' || headerFormat === 'DOCUMENT') {
+		ejemplo.header = {
+			type: headerFormat.toLowerCase() as TemplateExampleHeader['type'],
+			url: valorDe(`${TEMPLATE_FIELD_PREFIX.headerMedia}_${headerFormat}`),
+		};
+	}
+
+	const variablesCuerpo = fields
+		.filter((f) => f.id.startsWith(TEMPLATE_FIELD_PREFIX.body))
+		.map((f) => (typeof f.defaultValue === 'string' ? f.defaultValue : ''));
+	if (variablesCuerpo.length > 0) ejemplo.body = variablesCuerpo;
+
+	const botones = fields
+		.filter((f) => f.id.startsWith(TEMPLATE_FIELD_PREFIX.button))
+		.map((f) => {
+			const indice = Number(f.id.slice(TEMPLATE_FIELD_PREFIX.button.length));
+			const definicion = buttons[indice - 1] ?? {};
+			const tipo = typeof definicion.type === 'string' ? definicion.type.toLowerCase() : 'url';
+			return {
+				index: indice - 1,
+				type: tipo,
+				parameter: typeof f.defaultValue === 'string' ? f.defaultValue : '',
+			};
+		});
+	if (botones.length > 0) ejemplo.buttons = botones;
+
+	return ejemplo;
+}
+
+/** Traduce la estructura editable a las propiedades que espera el cuerpo de la petición. */
+export function templateExampleToBody(example: TemplateExample): IDataObject {
+	const body: IDataObject = {};
+
+	if (Array.isArray(example.body) && example.body.length > 0) {
+		body.variables = example.body.map((valor) => String(valor ?? ''));
+	}
+
+	const header = example.header;
+	if (header !== undefined && header !== null) {
+		const tipo = (header.type ?? '').toString().toUpperCase();
+		if (tipo === 'TEXT' && Array.isArray(header.variables) && header.variables.length > 0) {
+			body.variables_encabezado = header.variables.map((valor) => String(valor ?? ''));
+		}
+		const url = typeof header.url === 'string' ? header.url.trim() : '';
+		if (url !== '') {
+			const propiedad = headerUrlProperty(tipo as HeaderFormat) ?? 'url_imagen_encabezado';
+			body[propiedad] = url;
+		}
+	}
+
+	if (Array.isArray(example.buttons) && example.buttons.length > 0) {
+		body.buttons = example.buttons as unknown as IDataObject[];
+	}
+
+	return body;
 }

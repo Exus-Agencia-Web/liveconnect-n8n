@@ -357,13 +357,13 @@ export const wabaFields: INodeProperties[] = [
 			value: null,
 		},
 		description:
-			'Variables de la plantilla, precargadas con los ejemplos que trae de Meta. Edítalas antes de enviar; los carruseles no están soportados todavía.',
+			'Estructura que la plantilla necesita (encabezado, variables del cuerpo y botones), precargada con los ejemplos que trae de Meta. Edita el JSON antes de enviar; admite expresiones de n8n en cualquier valor. Los carruseles no están soportados todavía.',
 		typeOptions: {
 			loadOptionsDependsOn: ['&id_canal', '&id_plantilla'],
 			resourceMapper: {
 				resourceMapperMethod: 'getTemplateFields',
 				mode: 'add',
-				fieldWords: { singular: 'dato', plural: 'datos' },
+				fieldWords: { singular: 'contenido', plural: 'contenidos' },
 				addAllFields: true,
 				multiKeyMatch: false,
 				supportAutoMap: false,

@@ -10,8 +10,13 @@ import type {
 } from 'n8n-workflow';
 import { NodeApiError, NodeOperationError } from 'n8n-workflow';
 
-import type { HeaderFormat } from './TemplateFields';
-import { headerUrlProperty, splitTemplateValues } from './TemplateFields';
+import type { HeaderFormat, TemplateExample } from './TemplateFields';
+import {
+	headerUrlProperty,
+	splitTemplateValues,
+	TEMPLATE_PAYLOAD_FIELD,
+	templateExampleToBody,
+} from './TemplateFields';
 
 export const LIVECONNECT_BASE_URL = 'https://api.liveconnect.chat/prod';
 export const LIVECONNECT_TOKEN_HEADER = 'PageGearToken';
@@ -318,6 +323,39 @@ export async function applyTemplateData(
 	}
 
 	const body = { ...((bodyActual as IDataObject | undefined) ?? {}) };
+
+	// Formato actual: un único campo JSON con la estructura de la plantilla.
+	if (valores[TEMPLATE_PAYLOAD_FIELD] !== undefined) {
+		const crudo = valores[TEMPLATE_PAYLOAD_FIELD];
+		let estructura: TemplateExample;
+		if (typeof crudo === 'string') {
+			const texto = crudo.trim();
+			if (texto === '') return requestOptions;
+			try {
+				estructura = JSON.parse(texto) as TemplateExample;
+			} catch (error) {
+				throw new NodeOperationError(
+					this.getNode(),
+					'El contenido de la plantilla no es un JSON válido',
+					{
+						description: `Revisa la estructura del campo "Contenido de la Plantilla". Detalle: ${(error as Error).message}`,
+					},
+				);
+			}
+		} else if (typeof crudo === 'object' && crudo !== null) {
+			estructura = crudo as TemplateExample;
+		} else {
+			return requestOptions;
+		}
+
+		// Lo que el usuario escribió en Campos Adicionales tiene prioridad.
+		for (const [propiedad, valor] of Object.entries(templateExampleToBody(estructura))) {
+			if (body[propiedad] === undefined) body[propiedad] = valor;
+		}
+		return { ...requestOptions, body };
+	}
+
+	// Compatibilidad con los nodos configurados en v0.6.0 (un campo por variable).
 	const { variables, variablesEncabezado, urlEncabezado, formatoEncabezado, botones } =
 		splitTemplateValues(valores);
 
