@@ -17,7 +17,7 @@ export const historyOperations: INodeProperties[] = [
 			{
 				name: 'Obtener Anexos',
 				value: 'getAttachments',
-				action: 'Obtener los anexos de una conversaci n',
+				action: 'Obtener los anexos de una conversación',
 				description: 'Lista los anexos (archivos) de una conversación',
 				routing: {
 					request: { method: 'POST', url: '/history/attachments' },
@@ -27,7 +27,7 @@ export const historyOperations: INodeProperties[] = [
 			{
 				name: 'Obtener Conversación',
 				value: 'getConversation',
-				action: 'Obtener una conversaci n',
+				action: 'Obtener una conversación',
 				description: 'Retorna una conversación junto con sus mensajes, anexos y participantes',
 				routing: {
 					request: { method: 'POST', url: '/history/conversation' },
@@ -37,7 +37,7 @@ export const historyOperations: INodeProperties[] = [
 			{
 				name: 'Obtener Mensajes',
 				value: 'getMessages',
-				action: 'Obtener los mensajes de una conversaci n',
+				action: 'Obtener los mensajes de una conversación',
 				description: 'Lista los mensajes de una conversación',
 				routing: {
 					request: { method: 'POST', url: '/history/messages' },
@@ -47,7 +47,7 @@ export const historyOperations: INodeProperties[] = [
 			{
 				name: 'Obtener Participantes',
 				value: 'getParticipants',
-				action: 'Obtener los participantes de una conversaci n',
+				action: 'Obtener los participantes de una conversación',
 				description: 'Lista los participantes (agentes) de una conversación',
 				routing: {
 					request: { method: 'POST', url: '/history/participants' },

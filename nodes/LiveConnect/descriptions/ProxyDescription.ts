@@ -68,7 +68,7 @@ export const proxyOperations: INodeProperties[] = [
 			{
 				name: 'Enviar Respuesta Rápida',
 				value: 'sendQuickAnswer',
-				action: 'Enviar una respuesta r pida',
+				action: 'Enviar una respuesta rápida',
 				description: 'Busca la respuesta rápida por su ID, reemplaza sus variables y la envía (texto y/o archivo adjunto) a la conversación indicada',
 				routing: {
 					request: { method: 'POST', url: '/proxy/sendQuickAnswer' },
@@ -78,7 +78,7 @@ export const proxyOperations: INodeProperties[] = [
 			{
 				name: 'Transferir',
 				value: 'transfer',
-				action: 'Transferir una conversaci n',
+				action: 'Transferir una conversación',
 				description:
 					'Con estado 1 marca la conversación como transferida al proxy (crea la conversación en LiveConnect y, si se envía mensaje, el primer mensaje) y establece el tiempo de vida según la configuración de la cuenta. Con cualquier otro valor libera la transferencia.',
 				routing: {

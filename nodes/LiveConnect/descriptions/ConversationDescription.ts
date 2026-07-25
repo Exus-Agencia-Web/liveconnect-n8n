@@ -17,7 +17,7 @@ export const conversationOperations: INodeProperties[] = [
 			{
 				name: 'Crear',
 				value: 'create',
-				action: 'Crear una conversaci n',
+				action: 'Crear una conversación',
 				description:
 					'Abre una conversación en el canal indicado. Si ya existe una conversación activa con el contacto, no la duplica: devuelve la existente y agrega al usuario como participante.',
 				routing: {

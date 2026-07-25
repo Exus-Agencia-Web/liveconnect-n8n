@@ -17,7 +17,7 @@ export const automationOperations: INodeProperties[] = [
 			{
 				name: 'Actualizar',
 				value: 'update',
-				action: 'Actualizar una automatizaci n',
+				action: 'Actualizar una automatización',
 				description:
 					'Solo permite editar automatizaciones en estado pendiente. Para tipo mensaje edita el texto, la fecha, el canal, la plantilla o los adjuntos; para tipo correo edita Datos del Correo Electrónico y/o la fecha.',
 				routing: {
@@ -28,7 +28,7 @@ export const automationOperations: INodeProperties[] = [
 			{
 				name: 'Crear',
 				value: 'create',
-				action: 'Crear una automatizaci n',
+				action: 'Crear una automatización',
 				description:
 					'Programa una automatización pendiente para un contacto. Si es de tipo mensaje requiere Número de Teléfono, ID del Canal y Mensaje (o ID de la Plantilla en canales WABA); si es de tipo correo requiere Datos del Correo Electrónico.',
 				routing: {
@@ -39,7 +39,7 @@ export const automationOperations: INodeProperties[] = [
 			{
 				name: 'Eliminar',
 				value: 'delete',
-				action: 'Eliminar una automatizaci n',
+				action: 'Eliminar una automatización',
 				description: 'Solo permite cancelar automatizaciones en estado pendiente',
 				routing: {
 					request: { method: 'POST', url: '/crm/deleteAutomation' },

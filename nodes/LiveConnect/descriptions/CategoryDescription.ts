@@ -17,7 +17,7 @@ export const categoryOperations: INodeProperties[] = [
 			{
 				name: 'Actualizar',
 				value: 'update',
-				action: 'Actualizar una categor a',
+				action: 'Actualizar una categoría',
 				description: 'Actualiza los campos enviados de una categoría existente',
 				routing: {
 					request: { method: 'POST', url: '/catalogue/edtCategory' },
@@ -27,7 +27,7 @@ export const categoryOperations: INodeProperties[] = [
 			{
 				name: 'Crear',
 				value: 'create',
-				action: 'Crear una categor a',
+				action: 'Crear una categoría',
 				description: 'Agrega una categoría al catálogo de la cuenta',
 				routing: {
 					request: { method: 'POST', url: '/catalogue/addCategory' },
@@ -37,7 +37,7 @@ export const categoryOperations: INodeProperties[] = [
 			{
 				name: 'Obtener Varios',
 				value: 'getMany',
-				action: 'Obtener varias categor as',
+				action: 'Obtener varias categorías',
 				description: 'Lista las categorías del catálogo de la cuenta, opcionalmente filtradas por ID',
 				routing: {
 					request: { method: 'GET', url: '/catalogue/listCategories' },

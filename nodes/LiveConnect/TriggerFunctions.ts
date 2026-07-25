@@ -2,7 +2,12 @@ import { createHash, randomUUID, timingSafeEqual } from 'crypto';
 
 import type { IDataObject, IHookFunctions, IWebhookFunctions } from 'n8n-workflow';
 
-import { LIVECONNECT_BASE_URL } from './GenericFunctions';
+import type { LcTokenContext } from './GenericFunctions';
+import {
+	ensureFreshToken,
+	LIVECONNECT_BASE_URL,
+	LIVECONNECT_TOKEN_HEADER,
+} from './GenericFunctions';
 
 /** Envelope estándar del API: { status, status_message, data }. status < 0 = error aun con HTTP 200. */
 export interface LcEnvelope {
@@ -17,10 +22,14 @@ export async function lcHookRequest(
 	endpoint: string,
 	body: IDataObject,
 ): Promise<LcEnvelope> {
+	// Los webhookMethods tampoco pasan por el preSend del nodo: se siembra un token
+	// vigente para no registrar/eliminar webhooks con un JWT ya vencido.
+	const token = await ensureFreshToken(this as unknown as LcTokenContext);
 	return (await this.helpers.httpRequestWithAuthentication.call(this, 'liveConnectApi', {
 		method: 'POST',
 		url: `${LIVECONNECT_BASE_URL}${endpoint}`,
 		body,
+		...(token !== undefined ? { headers: { [LIVECONNECT_TOKEN_HEADER]: token } } : {}),
 		json: true,
 	})) as LcEnvelope;
 }

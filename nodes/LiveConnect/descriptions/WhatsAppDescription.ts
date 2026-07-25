@@ -39,7 +39,7 @@ export const whatsAppOperations: INodeProperties[] = [
 			{
 				name: 'Enviar Respuesta Rápida',
 				value: 'sendQuickAnswer',
-				action: 'Enviar una respuesta r pida',
+				action: 'Enviar una respuesta rápida',
 				description:
 					'Envía una respuesta rápida al número destino, reemplazando las variables indicadas en el texto. Si la respuesta rápida tiene archivo adjunto, lo envía además del texto.',
 				routing: {
@@ -50,7 +50,7 @@ export const whatsAppOperations: INodeProperties[] = [
 			{
 				name: 'Verificar Número',
 				value: 'checkNumber',
-				action: 'Verificar un n mero',
+				action: 'Verificar un número',
 				description:
 					'Verifica, contra el canal WhatsApp QR indicado, si el número destino es un usuario válido de WhatsApp',
 				routing: {

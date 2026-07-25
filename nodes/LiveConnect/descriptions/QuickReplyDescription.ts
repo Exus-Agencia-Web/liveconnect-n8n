@@ -17,7 +17,7 @@ export const quickReplyOperations: INodeProperties[] = [
 			{
 				name: 'Actualizar',
 				value: 'update',
-				action: 'Actualizar una respuesta r pida',
+				action: 'Actualizar una respuesta rápida',
 				description:
 					'Actualiza una respuesta rápida existente de la cuenta autenticada. Rechaza el cambio si el nuevo par grupo/atajo ya está en uso por otra respuesta rápida.',
 				routing: {
@@ -28,7 +28,7 @@ export const quickReplyOperations: INodeProperties[] = [
 			{
 				name: 'Crear',
 				value: 'create',
-				action: 'Crear una respuesta r pida',
+				action: 'Crear una respuesta rápida',
 				description:
 					'Crea un atajo de respuesta rápida en la cuenta autenticada. Rechaza el alta si ya existe un atajo con el mismo nombre dentro del mismo grupo.',
 				routing: {

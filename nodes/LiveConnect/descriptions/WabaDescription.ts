@@ -28,7 +28,7 @@ export const wabaOperations: INodeProperties[] = [
 			{
 				name: 'Enviar Respuesta Rápida',
 				value: 'sendQuickAnswer',
-				action: 'Enviar una respuesta r pida',
+				action: 'Enviar una respuesta rápida',
 				description:
 					'Envía una respuesta rápida (texto y/o archivo adjunto) al número destino, sustituyendo {clave} en el texto por las variables indicadas',
 				routing: {

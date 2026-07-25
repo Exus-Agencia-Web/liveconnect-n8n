@@ -63,6 +63,10 @@ module.exports = {
 				// Los selectores dinámicos exigen el literal inglés "Name or ID"; aquí los
 				// labels van en español ("ID del Canal") con la nota sobre expresiones.
 				'n8n-nodes-base/node-param-display-name-wrong-for-dynamic-options': 'off',
+				// CRÍTICO: su autofix pasa el `action` por la librería `sentence-case`, que
+				// ELIMINA los diacríticos ("respuesta rápida" → "respuesta r pida"). No
+				// reactivar mientras la UI esté en español.
+				'n8n-nodes-base/node-param-operation-option-action-miscased': 'off',
 			},
 		},
 	],

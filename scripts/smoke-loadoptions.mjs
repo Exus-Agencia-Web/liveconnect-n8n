@@ -10,14 +10,22 @@ const require = createRequire(import.meta.url);
 const lo = require('../dist/nodes/LiveConnect/LoadOptions.js');
 
 /** Mock de ILoadOptionsFunctions. */
-function ctxFor({ response, params = {}, fail } = {}) {
+function ctxFor({ response, params = {}, fail, credentials = {}, mint } = {}) {
 	const calls = [];
+	const mints = [];
 	return {
 		calls,
+		mints,
 		ctx: {
 			getNode: () => ({ name: 'LiveConnect', type: 'liveConnect', typeVersion: 1 }),
 			getCurrentNodeParameter: (path) => params[path],
+			// lcList renueva el token antes de consultar (los selectores no pasan por el preSend).
+			getCredentials: async () => credentials,
 			helpers: {
+				httpRequest: async (opts) => {
+					mints.push(opts);
+					return mint ?? { status: 1, data: { token: 'TOKEN-LO' } };
+				},
 				httpRequestWithAuthentication: async function (cred, opts) {
 					calls.push({ cred, ...opts });
 					if (fail) throw fail;
@@ -155,6 +163,26 @@ await test('data no-array o vacía → lista vacía, sin reventar', async () => 
 		const { ctx } = ctxFor({ response: { status: 1, data } });
 		assert.deepEqual(await lo.getGroups.call(ctx), []);
 	}
+});
+
+await test('el selector renueva el token vencido antes de consultar (bug del -403)', async () => {
+	const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
+	const expirado = `${b64({ alg: 'HS256' })}.${b64({ exp: Math.floor(Date.now() / 1000) - 10 })}.firma`;
+	const { ctx, calls, mints } = ctxFor({
+		response: { status: 1, data: [{ id: 1, nombre: 'Canal' }] },
+		credentials: { cKey: 'cuenta-selector', privateKey: 'PK', sessionToken: expirado },
+	});
+	await lo.getChannels.call(ctx);
+	assert.equal(mints.length, 1, 'debe emitir un token nuevo');
+	assert.equal(calls[0].headers.PageGearToken, 'TOKEN-LO', 'debe sembrar el token fresco');
+});
+
+await test('status -403 del selector → mensaje de token expirado', async () => {
+	const { ctx } = ctxFor({
+		response: { status: -403, status_message: 'Token no valido!' },
+		credentials: { cKey: 'cuenta-403-selector', privateKey: 'PK', sessionToken: 'x' },
+	});
+	await assert.rejects(() => lo.getUsers.call(ctx), /token de sesión de LiveConnect expiró/);
 });
 
 await test('fallo de red / credencial ausente → mensaje accionable', async () => {

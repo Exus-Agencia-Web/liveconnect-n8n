@@ -119,9 +119,19 @@ export function extractSessionToken(response: LcTokenResponse): string {
 	return token;
 }
 
+/**
+ * Contexto mínimo para renovar el token. Lo cumplen IExecuteSingleFunctions,
+ * ILoadOptionsFunctions e IHookFunctions, que son las tres rutas que hablan con el API.
+ */
+export interface LcTokenContext {
+	getNode: IExecuteSingleFunctions['getNode'];
+	getCredentials: (type: string) => Promise<IDataObject>;
+	helpers: { httpRequest: IExecuteSingleFunctions['helpers']['httpRequest'] };
+}
+
 /** Emite un token nuevo. Deduplica las emisiones concurrentes de la misma cuenta. */
 async function mintSessionToken(
-	this: IExecuteSingleFunctions,
+	this: LcTokenContext,
 	key: string,
 	cKey: string,
 	privateKey: string,
@@ -213,16 +223,38 @@ export async function refreshTokenIfExpired(
 	this: IExecuteSingleFunctions,
 	requestOptions: IHttpRequestOptions,
 ): Promise<IHttpRequestOptions> {
-	const credentials = await this.getCredentials<{
-		cKey?: string;
-		privateKey?: string;
-		sessionToken?: string;
-	}>(LIVECONNECT_CREDENTIALS_NAME);
+	const token = await ensureFreshToken(this as unknown as LcTokenContext);
+	if (token === undefined) return requestOptions;
+
+	return {
+		...requestOptions,
+		headers: { ...requestOptions.headers, [LIVECONNECT_TOKEN_HEADER]: token },
+	};
+}
+
+/**
+ * Devuelve un token de sesión vigente para la cuenta de la credencial, renovándolo si
+ * hace falta. `undefined` cuando no hay credenciales que usar (deja el flujo normal).
+ *
+ * La usan las tres rutas que llaman al API: el preSend del nodo declarativo, los
+ * selectores dinámicos (LoadOptions) y los webhookMethods de los triggers. Estas dos
+ * últimas NO pasan por el preSend, así que sin esto usarían el token rancio de la
+ * credencial y fallarían con status -403.
+ */
+export async function ensureFreshToken(ctx: LcTokenContext): Promise<string | undefined> {
+	let credentials: { cKey?: string; privateKey?: string; sessionToken?: string };
+	try {
+		credentials = (await ctx.getCredentials(LIVECONNECT_CREDENTIALS_NAME)) as typeof credentials;
+	} catch {
+		// Credencial no configurada (es opcional en el nodo de respuesta al callback):
+		// se deja que la llamada siga y sea n8n quien reporte el error real.
+		return undefined;
+	}
 
 	const cKey = credentials.cKey ?? '';
 	const privateKey = credentials.privateKey ?? '';
 	// Sin keys no hay nada que renovar: sigue el flujo normal de n8n.
-	if (cKey === '' || privateKey === '') return requestOptions;
+	if (cKey === '' || privateKey === '') return undefined;
 
 	const key = accountKey(cKey);
 	const state = stateFor(key);
@@ -241,17 +273,17 @@ export async function refreshTokenIfExpired(
 		state.burned.has(sha256(candidate)) ||
 		(expiry !== undefined && expiry - TOKEN_SKEW_SECONDS <= nowSeconds);
 
-	const token = needsRefresh ? await mintSessionToken.call(this, key, cKey, privateKey) : candidate;
+	const token = needsRefresh ? await mintSessionToken.call(ctx, key, cKey, privateKey) : candidate;
 	state.lastSent = token;
+	return token;
+}
 
-	// Si el token vigente ES el de la credencial, no hace falta sembrarlo: authenticate
-	// lo pondría igual.
-	if (token === credentials.sessionToken) return requestOptions;
-
-	return {
-		...requestOptions,
-		headers: { ...requestOptions.headers, [LIVECONNECT_TOKEN_HEADER]: token },
+/** Quema el token de la cuenta tras un rechazo del API. Reexportado para las otras rutas. */
+export async function burnTokenForContext(ctx: LcTokenContext): Promise<void> {
+	const credentials = (await ctx.getCredentials(LIVECONNECT_CREDENTIALS_NAME)) as {
+		cKey?: string;
 	};
+	if (credentials.cKey) burnCurrentToken(credentials.cKey);
 }
 
 /**

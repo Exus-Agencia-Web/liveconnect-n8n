@@ -241,17 +241,32 @@ await test('proxy usa secret autogenerado de staticData', async () => {
 });
 
 // --- proxy: webhookMethods con API mockeada ---
-function hookCtx({ params, staticData = {}, responses = [], webhookUrl = 'https://n8n.test/webhook/abc' }) {
+function hookCtx({
+	params,
+	staticData = {},
+	responses = [],
+	webhookUrl = 'https://n8n.test/webhook/abc',
+	credentials = {},
+	mint,
+}) {
 	const calls = [];
+	const mints = [];
 	return {
 		calls,
+		mints,
 		staticData,
 		ctx: {
 			getNodeParameter: (name, fallback) => params[name] ?? fallback,
 			getNodeWebhookUrl: () => webhookUrl,
 			getWorkflowStaticData: () => staticData,
 			getNode: () => ({ name: 'test' }),
+			// lcHookRequest consulta credenciales para renovar el token si hace falta.
+			getCredentials: async () => credentials,
 			helpers: {
+				httpRequest: async (options) => {
+					mints.push(options);
+					return mint ?? { status: 1, data: { token: 'TOKEN-HOOK' } };
+				},
 				httpRequestWithAuthentication: async function (_cred, options) {
 					calls.push(options);
 					const r = responses.shift();
@@ -314,6 +329,20 @@ await test('create con secret vacío genera hex(32), persiste y registra', async
 await test('create con status<0 lanza NodeApiError', async () => {
 	const h = hookCtx({ params: { id_canal: 67095, secret: 'x' }, responses: [{ status: -2, status_message: 'canal inválido' }] });
 	await assert.rejects(() => hooks.create.call(h.ctx), /canal inválido/);
+});
+
+await test('los hooks siembran un token vigente cuando hay credenciales', async () => {
+	const expirado = `${Buffer.from(JSON.stringify({ alg: 'HS256' })).toString('base64url')}.${Buffer.from(
+		JSON.stringify({ exp: Math.floor(Date.now() / 1000) - 10 }),
+	).toString('base64url')}.firma`;
+	const h = hookCtx({
+		params: { id_canal: 67095, secret: 's3cr3t' },
+		credentials: { cKey: 'cuenta-hook', privateKey: 'PK', sessionToken: expirado },
+		responses: [{ status: 1, data: { webhook: URL_OK, secret: 's3cr3t', TTL: futureTTL } }],
+	});
+	await hooks.checkExists.call(h.ctx);
+	assert.equal(h.mints.length, 1, 'debe emitir un token nuevo');
+	assert.equal(h.calls[0].headers?.PageGearToken, 'TOKEN-HOOK');
 });
 
 await test('delete manda estado 0 y limpia staticData solo si el borrado remoto fue confirmado', async () => {

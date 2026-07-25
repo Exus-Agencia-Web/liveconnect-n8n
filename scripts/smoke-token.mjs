@@ -61,8 +61,16 @@ await test('extractSessionToken rechaza el JWT anónimo de las respuestas con st
 	assert.equal(extractSessionToken({ status: 1, data: 'C' }), 'C');
 });
 
-await test('token vigente → no emite y no siembra header', async () => {
-	const { ctx, calls } = ctxFor({ cKey: 'cuenta-vigente', sessionToken: jwt(now() + 600) });
+await test('token vigente → no emite y reutiliza el mismo token', async () => {
+	const vigente = jwt(now() + 600);
+	const { ctx, calls } = ctxFor({ cKey: 'cuenta-vigente', sessionToken: vigente });
+	const out = await refreshTokenIfExpired.call(ctx, { url: '/x', headers: {} });
+	assert.equal(calls.length, 0, 'no debe pedir un token nuevo');
+	assert.equal(out.headers.PageGearToken, vigente);
+});
+
+await test('sin credenciales → no siembra header ni emite', async () => {
+	const { ctx, calls } = ctxFor({ cKey: '', sessionToken: '' });
 	const out = await refreshTokenIfExpired.call(ctx, { url: '/x', headers: {} });
 	assert.equal(calls.length, 0);
 	assert.equal(out.headers?.PageGearToken, undefined);

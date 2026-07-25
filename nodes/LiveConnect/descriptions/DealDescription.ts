@@ -17,7 +17,7 @@ export const dealOperations: INodeProperties[] = [
 			{
 				name: 'Actualizar',
 				value: 'update',
-				action: 'Actualizar una negociaci n',
+				action: 'Actualizar una negociación',
 				description:
 					'Actualiza solo los campos presentes (patch parcial). Los campos personalizados se fusionan con los valores existentes.',
 				routing: {
@@ -28,7 +28,7 @@ export const dealOperations: INodeProperties[] = [
 			{
 				name: 'Archivar',
 				value: 'archive',
-				action: 'Archivar una negociaci n',
+				action: 'Archivar una negociación',
 				description: 'Marca la negociación como archivada (eliminación lógica)',
 				routing: {
 					request: { method: 'POST', url: '/crm/archiveDeal' },
@@ -38,7 +38,7 @@ export const dealOperations: INodeProperties[] = [
 			{
 				name: 'Crear',
 				value: 'create',
-				action: 'Crear una negociaci n',
+				action: 'Crear una negociación',
 				description:
 					'Crea una negociación en el pipeline y etapa indicados. Valida que la etapa pertenezca al pipeline y que el usuario tenga acceso al pipeline.',
 				routing: {

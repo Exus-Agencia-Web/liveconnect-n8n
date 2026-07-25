@@ -17,7 +17,7 @@ export const topicOperations: INodeProperties[] = [
 			{
 				name: 'Actualizar',
 				value: 'update',
-				action: 'Actualizar un t pico',
+				action: 'Actualizar un tópico',
 				description: 'Actualiza los campos de una memoria existente',
 				routing: {
 					request: { method: 'POST', url: '/assistant/edtTopic' },
@@ -27,7 +27,7 @@ export const topicOperations: INodeProperties[] = [
 			{
 				name: 'Crear',
 				value: 'create',
-				action: 'Crear un t pico',
+				action: 'Crear un tópico',
 				description: 'Crea un tópico (memoria) asociado a un asistente',
 				routing: {
 					request: { method: 'POST', url: '/assistant/addTopic' },
@@ -37,7 +37,7 @@ export const topicOperations: INodeProperties[] = [
 			{
 				name: 'Obtener Varios',
 				value: 'getMany',
-				action: 'Obtener varios t picos',
+				action: 'Obtener varios tópicos',
 				description: 'Lista los tópicos (memorias) de los asistentes de la cuenta',
 				routing: {
 					request: { method: 'GET', url: '/assistant/listTopic' },

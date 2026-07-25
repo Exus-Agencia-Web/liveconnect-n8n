@@ -38,7 +38,7 @@ export const crmOperations: INodeProperties[] = [
 			{
 				name: 'Obtener Orígenes de Lead',
 				value: 'getLeadOrigins',
-				action: 'Obtener or genes de lead',
+				action: 'Obtener orígenes de lead',
 				description:
 					'Catálogo de orígenes de lead activos de la cuenta autenticada. Sin parámetros.',
 				routing: {

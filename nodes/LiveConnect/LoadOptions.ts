@@ -1,7 +1,14 @@
 import type { IDataObject, ILoadOptionsFunctions, INodePropertyOptions } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
 
-import { LIVECONNECT_BASE_URL, LIVECONNECT_CREDENTIALS_NAME } from './GenericFunctions';
+import type { LcTokenContext } from './GenericFunctions';
+import {
+	burnTokenForContext,
+	ensureFreshToken,
+	LIVECONNECT_BASE_URL,
+	LIVECONNECT_CREDENTIALS_NAME,
+	LIVECONNECT_TOKEN_HEADER,
+} from './GenericFunctions';
 
 /**
  * Llama un endpoint de listado del API para alimentar un selector.
@@ -15,6 +22,12 @@ async function lcList(
 ): Promise<IDataObject[]> {
 	let response: { status?: number; status_message?: string; data?: unknown };
 
+	// Los selectores NO pasan por el preSend del nodo, así que el token de la credencial
+	// puede estar vencido (el API lo reporta como HTTP 200 con status -403). Se siembra
+	// uno vigente; `authenticate` respeta el header ya presente.
+	const tokenContext = ctx as unknown as LcTokenContext;
+	const token = await ensureFreshToken(tokenContext);
+
 	try {
 		response = (await ctx.helpers.httpRequestWithAuthentication.call(
 			ctx,
@@ -23,6 +36,7 @@ async function lcList(
 				method,
 				url: `${LIVECONNECT_BASE_URL}${endpoint}`,
 				...(body !== undefined ? { body } : {}),
+				...(token !== undefined ? { headers: { [LIVECONNECT_TOKEN_HEADER]: token } } : {}),
 				json: true,
 			},
 		)) as typeof response;
@@ -39,6 +53,20 @@ async function lcList(
 	}
 
 	if (typeof response.status === 'number' && response.status < 0) {
+		if (response.status === -403) {
+			// Token rechazado pese a la renovación: se quema para que el siguiente intento
+			// emita uno nuevo en vez de repetir el mismo error.
+			await burnTokenForContext(tokenContext);
+			throw new NodeOperationError(
+				ctx.getNode(),
+				'El token de sesión de LiveConnect expiró al cargar la lista',
+				{
+					description:
+						'Vuelve a abrir el desplegable: el nodo emitirá un token nuevo. Si el error se repite, ' +
+						'revisa la cKey y la clave privada de la credencial "LiveConnect API".',
+				},
+			);
+		}
 		throw new NodeOperationError(
 			ctx.getNode(),
 			`LiveConnect no devolvió la lista: ${response.status_message ?? 'error'} (status ${response.status})`,

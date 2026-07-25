@@ -8,7 +8,9 @@ https://cdn.liveconnect.chat/liveconnect/public-openapi.json
 
 Todo cambio al nodo debe derivarse de ese spec. No inventar campos ni endpoints.
 
-**UI en ESPAÑOL** (desde v0.3.0): displayName, labels de options, actions, descriptions y placeholders van en español ("ID del Canal", "Obtener Varios", "Campos Adicionales"); los `name`/`value` internos NO cambian nunca (snake_case del API / camelCase). Preposiciones y artículos en minúscula dentro de labels ("ID del Canal", NO "ID Del Canal"). Las reglas ESLint que exigen literales en inglés (Simplify/limit/Get Many/Whether/Title Case) están desactivadas en `.eslintrc.js` con comentario. Options siempre reordenadas alfabéticamente por el texto español. Ícono: `liveconnect2.svg` (renombrado desde liveconnect.svg para reventar la caché de n8n/navegador — si se cambia el ícono otra vez, renombrar de nuevo el archivo).
+**UI en ESPAÑOL** (desde v0.3.0): displayName, labels de options, actions, descriptions y placeholders van en español ("ID del Canal", "Obtener Varios", "Campos Adicionales"); los `name`/`value` internos NO cambian nunca (snake_case del API / camelCase). Preposiciones y artículos en minúscula dentro de labels ("ID del Canal", NO "ID Del Canal"). Las reglas ESLint que exigen literales en inglés (Simplify/limit/Get Many/Whether/Title Case) están desactivadas en `.eslintrc.js` con comentario.
+
+⚠️ **`node-param-operation-option-action-miscased` debe seguir DESACTIVADA**: su autofix pasa cada `action` por la librería `sentence-case`, que **elimina los diacríticos** — así se rompieron los 25 actions con tilde en v0.3.0 ("Enviar una respuesta rápida" → "Enviar una respuesta r pida", visible en el panel de acciones de n8n). Tras cualquier `npm run lintfix`, comprobar: `grep -rho "action: '[^']*'" nodes/LiveConnect/descriptions/*.ts | grep -cE "[áéíóúñ]"` debe dar 25. Options siempre reordenadas alfabéticamente por el texto español. Ícono: `liveconnect2.svg` (renombrado desde liveconnect.svg para reventar la caché de n8n/navegador — si se cambia el ícono otra vez, renombrar de nuevo el archivo).
 
 ## Arquitectura
 
