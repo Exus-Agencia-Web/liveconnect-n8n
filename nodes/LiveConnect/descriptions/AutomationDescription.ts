@@ -164,17 +164,21 @@ export const automationFields: INodeProperties[] = [
 			{
 				displayName: 'ID de la Plantilla',
 				name: 'id_plantilla',
-				type: 'string',
+				type: 'options',
+				typeOptions: { loadOptionsMethod: 'getWabaTemplates' },
 				default: '',
-				description: 'Requerido si Tipo es mensaje y el canal es WABA/WABA Meta',
+				description:
+					'Requerido si Tipo es mensaje y el canal es WABA/WABA Meta. Elige de la lista o especifica un ID con una expresión.',
 				routing: { send: { type: 'body', property: 'id_plantilla' } },
 			},
 			{
 				displayName: 'ID del Canal',
 				name: 'id_canal',
-				type: 'number',
-				default: 0,
-				description: 'Requerido si Tipo es mensaje',
+				type: 'options',
+				typeOptions: { loadOptionsMethod: 'getChannels' },
+				default: '',
+				description:
+					'Requerido si Tipo es mensaje. Elige de la lista o especifica un ID con una expresión.',
 				routing: { send: { type: 'body', property: 'id_canal' } },
 			},
 			{
@@ -313,17 +317,21 @@ export const automationFields: INodeProperties[] = [
 			{
 				displayName: 'ID de la Plantilla',
 				name: 'id_plantilla',
-				type: 'string',
+				type: 'options',
+				typeOptions: { loadOptionsMethod: 'getWabaTemplates' },
 				default: '',
-				description: 'Solo aplica si Tipo es mensaje y el canal es WABA/WABA Meta',
+				description:
+					'Solo aplica si Tipo es mensaje y el canal es WABA/WABA Meta. Elige de la lista o especifica un ID con una expresión.',
 				routing: { send: { type: 'body', property: 'id_plantilla' } },
 			},
 			{
 				displayName: 'ID del Canal',
 				name: 'id_canal',
-				type: 'number',
-				default: 0,
-				description: 'Solo aplica si Tipo es mensaje',
+				type: 'options',
+				typeOptions: { loadOptionsMethod: 'getChannels' },
+				default: '',
+				description:
+					'Solo aplica si Tipo es mensaje. Elige de la lista o especifica un ID con una expresión.',
 				routing: { send: { type: 'body', property: 'id_canal' } },
 			},
 			{

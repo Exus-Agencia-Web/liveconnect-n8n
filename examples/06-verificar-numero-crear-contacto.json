@@ -31,7 +31,7 @@
 			"parameters": {
 				"resource": "whatsapp",
 				"operation": "checkNumber",
-				"id_canal": 0,
+				"id_canal": "",
 				"numero": "={{ $json.body.celular }}"
 			},
 			"id": "b6000000-0000-4000-8000-000000000003",
@@ -85,7 +85,7 @@
 			"parameters": {
 				"resource": "conversation",
 				"operation": "create",
-				"id_canal": 0,
+				"id_canal": "",
 				"contacto": "={{ { \"id\": $json.id } }}",
 				"usuario": "={{ { \"id_equipo\": 0 } }}",
 				"additionalFields": {}

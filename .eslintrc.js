@@ -60,6 +60,9 @@ module.exports = {
 				// en español los labels usan "ID del Canal" — regla incompatible.
 				'n8n-nodes-base/node-param-display-name-miscased': 'off',
 				'n8n-nodes-base/node-param-option-name-containing-star': 'off',
+				// Los selectores dinámicos exigen el literal inglés "Name or ID"; aquí los
+				// labels van en español ("ID del Canal") con la nota sobre expresiones.
+				'n8n-nodes-base/node-param-display-name-wrong-for-dynamic-options': 'off',
 			},
 		},
 	],

@@ -206,9 +206,11 @@ export const historyFields: INodeProperties[] = [
 			{
 				displayName: 'ID del Canal',
 				name: 'id_canal',
-				type: 'number',
-				default: 0,
-				description: 'Filtra por canal',
+				type: 'options',
+				typeOptions: { loadOptionsMethod: 'getChannels' },
+				default: '',
+				description:
+					'Filtra por canal. Elige de la lista o especifica un ID con una expresión.',
 				routing: { send: { type: 'body', property: 'id_canal' } },
 			},
 			{
@@ -222,17 +224,21 @@ export const historyFields: INodeProperties[] = [
 			{
 				displayName: 'ID del Grupo',
 				name: 'id_grupo',
-				type: 'number',
-				default: 0,
-				description: 'Filtra por equipo/grupo',
+				type: 'options',
+				typeOptions: { loadOptionsMethod: 'getGroups' },
+				default: '',
+				description:
+					'Filtra por equipo/grupo. Elige de la lista o especifica un ID con una expresión.',
 				routing: { send: { type: 'body', property: 'id_grupo' } },
 			},
 			{
 				displayName: 'ID del Usuario',
 				name: 'id_usuario',
-				type: 'number',
-				default: 0,
-				description: 'Filtra por agente asignado',
+				type: 'options',
+				typeOptions: { loadOptionsMethod: 'getUsers' },
+				default: '',
+				description:
+					'Filtra por agente asignado. Elige de la lista o especifica un ID con una expresión.',
 				routing: { send: { type: 'body', property: 'id_usuario' } },
 			},
 			{

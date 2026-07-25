@@ -74,6 +74,10 @@ Si prefieres construirla a mano, este es el envelope (devuélvelo con un nodo *R
 
 Regla de oro: **cierra siempre con una acción `input`** (vacía sirve) — sin ella LiveConnect abandona el callback y no vuelve a llamar. Única excepción: cuando delegas a un humano (`userDelegate`/`teamDelegate`). Tipos de action soportados: `sendText`, `sendImage`, `sendFile`, `addTag`, `userDelegate`, `teamDelegate`, `addVar`, `setVar`, `input`, `updateContact`. Ver el ejemplo [`examples/07-chatbot-callback-trigger.json`](examples/07-chatbot-callback-trigger.json).
 
+## Selectores dinámicos
+
+Los campos de ID (canal, equipo, agente, pipeline, etapa, origen de lead, categoría, asistente, plantilla WABA) son **listas desplegables** que se cargan desde tu propia cuenta de LiveConnect: no hace falta buscar los IDs a mano. Las etapas se filtran por el pipeline elegido y las plantillas por el canal WABA elegido. Si prefieres pasar un ID desde otro nodo, usa el modo expresión del campo.
+
 ## Respuesta del API
 
 LiveConnect responde siempre `{ status, status_message, data }` (`status > 0` éxito, `status < 0` error):

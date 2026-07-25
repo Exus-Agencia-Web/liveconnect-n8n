@@ -102,9 +102,11 @@ export const topicFields: INodeProperties[] = [
 			{
 				displayName: 'ID del Asistente',
 				name: 'id_assistant',
-				type: 'number',
-				default: 0,
-				description: 'ID del asistente dueño del tópico',
+				type: 'options',
+				typeOptions: { loadOptionsMethod: 'getAssistants' },
+				default: '',
+				description:
+					'ID del asistente dueño del tópico. Elige de la lista o especifica un ID con una expresión.',
 				routing: { send: { type: 'body', property: 'id_assistant' } },
 			},
 		],
@@ -129,9 +131,11 @@ export const topicFields: INodeProperties[] = [
 			{
 				displayName: 'ID del Asistente',
 				name: 'id_assistant',
-				type: 'number',
-				default: 0,
-				description: 'Filtra por asistente dueño del tópico',
+				type: 'options',
+				typeOptions: { loadOptionsMethod: 'getAssistants' },
+				default: '',
+				description:
+					'Filtra por asistente dueño del tópico. Elige de la lista o especifica un ID con una expresión.',
 				routing: { send: { type: 'query', property: 'id_assistant' } },
 			},
 			{
@@ -197,9 +201,11 @@ export const topicFields: INodeProperties[] = [
 			{
 				displayName: 'ID del Asistente',
 				name: 'id_assistant',
-				type: 'number',
-				default: 0,
-				description: 'ID del asistente dueño del tópico',
+				type: 'options',
+				typeOptions: { loadOptionsMethod: 'getAssistants' },
+				default: '',
+				description:
+					'ID del asistente dueño del tópico. Elige de la lista o especifica un ID con una expresión.',
 				routing: { send: { type: 'body', property: 'id_assistant' } },
 			},
 			{

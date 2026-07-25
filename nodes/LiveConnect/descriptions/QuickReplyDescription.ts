@@ -121,9 +121,11 @@ export const quickReplyFields: INodeProperties[] = [
 			{
 				displayName: 'ID del Supervisor',
 				name: 'idSupervisor',
-				type: 'number',
-				default: 0,
-				description: 'ID del usuario creador (se guarda como id_creador)',
+				type: 'options',
+				typeOptions: { loadOptionsMethod: 'getUsers' },
+				default: '',
+				description:
+					'ID del usuario creador (se guarda como id_creador). Elige de la lista o especifica un ID con una expresión.',
 				routing: { send: { type: 'body', property: 'idSupervisor' } },
 			},
 			{
@@ -197,9 +199,11 @@ export const quickReplyFields: INodeProperties[] = [
 			{
 				displayName: 'ID del Editor',
 				name: 'id_usuario',
-				type: 'number',
-				default: 0,
-				description: 'ID del usuario que edita',
+				type: 'options',
+				typeOptions: { loadOptionsMethod: 'getUsers' },
+				default: '',
+				description:
+					'ID del usuario que edita. Elige de la lista o especifica un ID con una expresión.',
 				routing: { send: { type: 'body', property: 'id_usuario' } },
 			},
 			{

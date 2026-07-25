@@ -39,6 +39,8 @@ type TokenState = {
 const tokenStates = new Map<string, TokenState>();
 /** Emisiones en vuelo: N ítems concurrentes hacen UNA sola llamada a /account/token. */
 const inFlightMints = new Map<string, Promise<string>>();
+/** Tope de cuentas en caché: evita crecimiento indefinido en instancias multi-credencial. */
+const MAX_CACHED_ACCOUNTS = 50;
 
 function sha256(value: string): string {
 	return createHash('sha256').update(value).digest('hex');
@@ -51,6 +53,11 @@ function accountKey(cKey: string): string {
 function stateFor(key: string): TokenState {
 	const existing = tokenStates.get(key);
 	if (existing !== undefined) return existing;
+	if (tokenStates.size >= MAX_CACHED_ACCOUNTS) {
+		// Map conserva el orden de inserción: se descarta la cuenta más antigua.
+		const oldest = tokenStates.keys().next();
+		if (!oldest.done) tokenStates.delete(oldest.value);
+	}
 	const created: TokenState = { burned: new Set<string>() };
 	tokenStates.set(key, created);
 	return created;
@@ -175,7 +182,14 @@ async function mintSessionToken(
 	}
 }
 
-/** Marca el token vigente como inservible tras un -403 del API (capa reactiva). */
+/**
+ * Marca el token vigente como inservible tras un -403 del API (capa reactiva).
+ *
+ * Se quema `lastSent` (el último token puesto en el cable para esa cuenta). Con varios
+ * ítems concurrentes podría quemarse un token recién emitido en vez del rechazado: el
+ * peor caso es una emisión extra, nunca una falla, porque `mintSessionToken` limpia la
+ * lista de quemados al emitir.
+ */
 function burnCurrentToken(cKey: string): void {
 	const state = tokenStates.get(accountKey(cKey));
 	if (state === undefined) return;

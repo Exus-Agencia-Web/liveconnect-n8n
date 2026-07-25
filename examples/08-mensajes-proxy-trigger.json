@@ -15,7 +15,7 @@
 		},
 		{
 			"parameters": {
-				"id_canal": 0,
+				"id_canal": "",
 				"secret": "",
 				"simple": true
 			},

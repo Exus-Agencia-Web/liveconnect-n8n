@@ -8,8 +8,14 @@ import type {
 import { NodeOperationError } from 'n8n-workflow';
 
 import { applyClosingRule, buildEnvelope, toAction } from './ActionsFunctions';
+import { getGroups, getUsers } from './LoadOptions';
 
 export class LiveConnectCallbackResponse implements INodeType {
+	// Selectores de agente y equipo para las acciones de delegación.
+	methods = {
+		loadOptions: { getGroups, getUsers },
+	};
+
 	description: INodeTypeDescription = {
 		displayName: 'LiveConnect Respuesta al Callback',
 		name: 'liveConnectCallbackResponse',
@@ -23,6 +29,14 @@ export class LiveConnectCallbackResponse implements INodeType {
 		},
 		inputs: ['main'],
 		outputs: ['main'],
+		// Credencial opcional: solo se usa para poblar los selectores de agente y equipo.
+		// El nodo funciona sin ella (no llama al API para construir la respuesta).
+		credentials: [
+			{
+				name: 'liveConnectApi',
+				required: false,
+			},
+		],
 		properties: [
 			{
 				displayName:
@@ -133,10 +147,12 @@ export class LiveConnectCallbackResponse implements INodeType {
 							{
 								displayName: 'ID del Usuario',
 								name: 'id_user',
-								type: 'number',
-								default: 0,
+								type: 'options',
+								typeOptions: { loadOptionsMethod: 'getUsers' },
+								default: '',
 								displayOptions: { show: { tipo: ['userDelegate'] } },
-								description: 'ID entero del agente al que se delega (Usuario · Obtener Varios)',
+								description:
+									'Agente al que se delega. Elige de la lista o especifica un ID con una expresión.',
 							},
 							{
 								displayName: 'Nombre del Usuario',
@@ -158,10 +174,12 @@ export class LiveConnectCallbackResponse implements INodeType {
 							{
 								displayName: 'ID del Equipo',
 								name: 'id_team',
-								type: 'number',
-								default: 0,
+								type: 'options',
+								typeOptions: { loadOptionsMethod: 'getGroups' },
+								default: '',
 								displayOptions: { show: { tipo: ['teamDelegate'] } },
-								description: 'ID entero del equipo al que se delega (Grupo · Obtener Varios)',
+								description:
+									'Equipo al que se delega. Elige de la lista o especifica un ID con una expresión.',
 							},
 							{
 								displayName: 'Nombre de la Variable',

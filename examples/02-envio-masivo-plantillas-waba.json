@@ -46,9 +46,9 @@
 			"parameters": {
 				"resource": "waba",
 				"operation": "sendTemplate",
-				"id_canal": 0,
+				"id_canal": "",
 				"numero": "={{ $json.numero }}",
-				"id_plantilla": 0,
+				"id_plantilla": "",
 				"additionalFields": {
 					"variables": "={{ $json.variables }}"
 				}

@@ -70,10 +70,12 @@ export const wabaFields: INodeProperties[] = [
 	{
 		displayName: 'ID del Canal',
 		name: 'id_canal',
-		type: 'number',
+		type: 'options',
+		typeOptions: { loadOptionsMethod: 'getChannels' },
 		required: true,
-		default: 0,
-		description: 'ID del canal WABA de la cuenta',
+		default: '',
+		description:
+			'ID del canal WABA de la cuenta. Elige de la lista o especifica un ID con una expresión.',
 		displayOptions: {
 			show: {
 				resource: ['waba'],
@@ -152,10 +154,12 @@ export const wabaFields: INodeProperties[] = [
 	{
 		displayName: 'ID del Canal',
 		name: 'id_canal',
-		type: 'number',
+		type: 'options',
+		typeOptions: { loadOptionsMethod: 'getChannels' },
 		required: true,
-		default: 0,
-		description: 'ID del canal WABA de la cuenta',
+		default: '',
+		description:
+			'ID del canal WABA de la cuenta. Elige de la lista o especifica un ID con una expresión.',
 		displayOptions: {
 			show: {
 				resource: ['waba'],
@@ -205,10 +209,12 @@ export const wabaFields: INodeProperties[] = [
 	{
 		displayName: 'ID del Canal',
 		name: 'id_canal',
-		type: 'number',
+		type: 'options',
+		typeOptions: { loadOptionsMethod: 'getChannels' },
 		required: true,
-		default: 0,
-		description: 'ID del canal WABA de la cuenta',
+		default: '',
+		description:
+			'ID del canal WABA de la cuenta. Elige de la lista o especifica un ID con una expresión.',
 		displayOptions: {
 			show: {
 				resource: ['waba'],
@@ -289,10 +295,12 @@ export const wabaFields: INodeProperties[] = [
 	{
 		displayName: 'ID del Canal',
 		name: 'id_canal',
-		type: 'number',
+		type: 'options',
+		typeOptions: { loadOptionsMethod: 'getChannels' },
 		required: true,
-		default: 0,
-		description: 'ID del canal WABA de la cuenta',
+		default: '',
+		description:
+			'ID del canal WABA de la cuenta. Elige de la lista o especifica un ID con una expresión.',
 		displayOptions: {
 			show: {
 				resource: ['waba'],
@@ -323,10 +331,12 @@ export const wabaFields: INodeProperties[] = [
 	{
 		displayName: 'ID de la Plantilla',
 		name: 'id_plantilla',
-		type: 'string',
+		type: 'options',
+		typeOptions: { loadOptionsMethod: 'getWabaTemplates' },
 		required: true,
 		default: '',
-		description: 'ID o nombre de la plantilla a enviar',
+		description:
+			'ID o nombre de la plantilla a enviar. Elige de la lista o especifica un ID con una expresión.',
 		displayOptions: {
 			show: {
 				resource: ['waba'],
@@ -367,9 +377,11 @@ export const wabaFields: INodeProperties[] = [
 			{
 				displayName: 'ID del Equipo a Delegar',
 				name: 'id_to_delegate',
-				type: 'number',
-				default: 0,
-				description: 'ID del equipo al que delegar el seguimiento de la plantilla enviada',
+				type: 'options',
+				typeOptions: { loadOptionsMethod: 'getGroups' },
+				default: '',
+				description:
+					'ID del equipo al que delegar el seguimiento de la plantilla enviada. Elige de la lista o especifica un ID con una expresión.',
 				routing: { send: { type: 'body', property: 'id_to_delegate' } },
 			},
 			{

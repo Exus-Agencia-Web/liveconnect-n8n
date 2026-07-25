@@ -183,9 +183,11 @@ export const productFields: INodeProperties[] = [
 			{
 				displayName: 'ID de la Categoría',
 				name: 'id_categoria',
-				type: 'number',
-				default: 0,
-				description: 'ID de la categoría del producto',
+				type: 'options',
+				typeOptions: { loadOptionsMethod: 'getCategories' },
+				default: '',
+				description:
+					'ID de la categoría del producto. Elige de la lista o especifica un ID con una expresión.',
 				routing: { send: { type: 'body', property: 'id_categoria' } },
 			},
 			{

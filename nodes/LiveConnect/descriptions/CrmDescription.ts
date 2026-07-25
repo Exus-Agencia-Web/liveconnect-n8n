@@ -68,10 +68,12 @@ export const crmFields: INodeProperties[] = [
 	{
 		displayName: 'ID del Pipeline',
 		name: 'id_pipeline',
-		type: 'number',
+		type: 'options',
+		typeOptions: { loadOptionsMethod: 'getPipelines' },
 		required: true,
-		default: 0,
-		description: 'ID del pipeline del que se listan las etapas',
+		default: '',
+		description:
+			'ID del pipeline del que se listan las etapas. Elige de la lista o especifica un ID con una expresión.',
 		displayOptions: {
 			show: {
 				resource: ['crm'],

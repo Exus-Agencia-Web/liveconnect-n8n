@@ -133,9 +133,11 @@ export const dealTaskFields: INodeProperties[] = [
 			{
 				displayName: 'ID del Usuario Asignado',
 				name: 'id_usuario',
-				type: 'number',
-				default: 0,
-				description: 'Usuario asignado; por defecto el responsable de la negociación',
+				type: 'options',
+				typeOptions: { loadOptionsMethod: 'getUsers' },
+				default: '',
+				description:
+					'Usuario asignado; por defecto el responsable de la negociación. Elige de la lista o especifica un ID con una expresión.',
 				routing: { send: { type: 'body', property: 'id_usuario' } },
 			},
 			{
@@ -215,17 +217,21 @@ export const dealTaskFields: INodeProperties[] = [
 			{
 				displayName: 'ID del Asignado',
 				name: 'id_asignado',
-				type: 'number',
-				default: 0,
-				description: 'Alias del ID del Usuario Asignado para reasignar la tarea',
+				type: 'options',
+				typeOptions: { loadOptionsMethod: 'getUsers' },
+				default: '',
+				description:
+					'Alias del ID del Usuario Asignado para reasignar la tarea. Elige de la lista o especifica un ID con una expresión.',
 				routing: { send: { type: 'body', property: 'id_asignado' } },
 			},
 			{
 				displayName: 'ID del Usuario Asignado',
 				name: 'id_usuario',
-				type: 'number',
-				default: 0,
-				description: 'Reasigna la tarea a este usuario (alias: id_asignado)',
+				type: 'options',
+				typeOptions: { loadOptionsMethod: 'getUsers' },
+				default: '',
+				description:
+					'Reasigna la tarea a este usuario (alias: id_asignado). Elige de la lista o especifica un ID con una expresión.',
 				routing: { send: { type: 'body', property: 'id_usuario' } },
 			},
 			{

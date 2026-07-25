@@ -11,6 +11,7 @@ import type {
 } from 'n8n-workflow';
 import { NodeApiError } from 'n8n-workflow';
 
+import { getChannels } from './LoadOptions';
 import type { LcEnvelope } from './TriggerFunctions';
 import {
 	asObject,
@@ -26,6 +27,10 @@ function effectiveSecret(param: string, staticData: IDataObject): string {
 }
 
 export class LiveConnectProxyTrigger implements INodeType {
+	methods = {
+		loadOptions: { getChannels },
+	};
+
 	description: INodeTypeDescription = {
 		displayName: 'LiveConnect Proxy Trigger',
 		name: 'liveConnectProxyTrigger',
@@ -64,10 +69,12 @@ export class LiveConnectProxyTrigger implements INodeType {
 			{
 				displayName: 'ID del Canal',
 				name: 'id_canal',
-				type: 'number',
+				type: 'options',
+				typeOptions: { loadOptionsMethod: 'getChannels' },
 				required: true,
-				default: 0,
-				description: 'ID del canal cuyas notificaciones del proxy disparan el workflow',
+				default: '',
+				description:
+					'Canal cuyas notificaciones del proxy disparan el workflow. Elige de la lista o especifica un ID con una expresión.',
 			},
 			{
 				displayName: 'Secreto',

@@ -1,6 +1,7 @@
 import type { INodeType, INodeTypeDescription } from 'n8n-workflow';
 
 import { LIVECONNECT_BASE_URL, refreshTokenIfExpired } from './GenericFunctions';
+import { liveConnectLoadOptions } from './LoadOptions';
 import {
 	assistantFields,
 	assistantOperations,
@@ -41,6 +42,11 @@ import {
 } from './descriptions';
 
 export class LiveConnect implements INodeType {
+	// Selectores dinámicos: alimentan los campos de ID con los endpoints de listado.
+	methods = {
+		loadOptions: liveConnectLoadOptions,
+	};
+
 	description: INodeTypeDescription = {
 		displayName: 'LiveConnect',
 		name: 'liveConnect',

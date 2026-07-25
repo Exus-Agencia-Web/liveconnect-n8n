@@ -119,10 +119,12 @@ export const dealFields: INodeProperties[] = [
 	{
 		displayName: 'ID del Pipeline',
 		name: 'id_pipeline',
-		type: 'number',
+		type: 'options',
+		typeOptions: { loadOptionsMethod: 'getPipelines' },
 		required: true,
-		default: 0,
-		description: 'ID del pipeline donde se crea la negociación',
+		default: '',
+		description:
+			'ID del pipeline donde se crea la negociación. Elige de la lista o especifica un ID con una expresión.',
 		displayOptions: {
 			show: {
 				resource: ['deal'],
@@ -136,10 +138,12 @@ export const dealFields: INodeProperties[] = [
 	{
 		displayName: 'ID de la Etapa del Pipeline',
 		name: 'id_etapa_pipeline',
-		type: 'number',
+		type: 'options',
+		typeOptions: { loadOptionsMethod: 'getStages' },
 		required: true,
-		default: 0,
-		description: 'ID de la etapa del pipeline. Debe pertenecer al pipeline indicado.',
+		default: '',
+		description:
+			'ID de la etapa del pipeline. Debe pertenecer al pipeline indicado. Elige de la lista o especifica un ID con una expresión.',
 		displayOptions: {
 			show: {
 				resource: ['deal'],
@@ -153,10 +157,12 @@ export const dealFields: INodeProperties[] = [
 	{
 		displayName: 'ID del Responsable',
 		name: 'id_responsable',
-		type: 'number',
+		type: 'options',
+		typeOptions: { loadOptionsMethod: 'getUsers' },
 		required: true,
-		default: 0,
-		description: 'ID del usuario responsable (owner) de la negociación',
+		default: '',
+		description:
+			'ID del usuario responsable (owner) de la negociación. Elige de la lista o especifica un ID con una expresión.',
 		displayOptions: {
 			show: {
 				resource: ['deal'],
@@ -204,10 +210,12 @@ export const dealFields: INodeProperties[] = [
 	{
 		displayName: 'ID del Origen de Lead',
 		name: 'origen_lead',
-		type: 'number',
+		type: 'options',
+		typeOptions: { loadOptionsMethod: 'getLeadOrigins' },
 		required: true,
-		default: 0,
-		description: 'ID del origen del lead',
+		default: '',
+		description:
+			'ID del origen del lead. Elige de la lista o especifica un ID con una expresión.',
 		displayOptions: {
 			show: {
 				resource: ['deal'],
@@ -299,9 +307,11 @@ export const dealFields: INodeProperties[] = [
 			{
 				displayName: 'ID del Canal de Lead',
 				name: 'canal_origen',
-				type: 'number',
-				default: 0,
-				description: 'ID del canal de origen del lead',
+				type: 'options',
+				typeOptions: { loadOptionsMethod: 'getLeadChannels' },
+				default: '',
+				description:
+					'ID del canal de origen del lead. Elige de la lista o especifica un ID con una expresión.',
 				routing: { send: { type: 'body', property: 'canal_origen' } },
 			},
 			{
@@ -380,10 +390,12 @@ export const dealFields: INodeProperties[] = [
 	{
 		displayName: 'ID del Responsable',
 		name: 'id_responsable',
-		type: 'number',
+		type: 'options',
+		typeOptions: { loadOptionsMethod: 'getUsers' },
 		required: true,
-		default: 0,
-		description: 'ID del usuario responsable (owner) de la negociación',
+		default: '',
+		description:
+			'ID del usuario responsable (owner) de la negociación. Elige de la lista o especifica un ID con una expresión.',
 		displayOptions: {
 			show: {
 				resource: ['deal'],
@@ -466,17 +478,21 @@ export const dealFields: INodeProperties[] = [
 			{
 				displayName: 'ID de la Etapa del Pipeline',
 				name: 'id_etapa_pipeline',
-				type: 'number',
-				default: 0,
-				description: 'ID de la etapa del pipeline. Si cambia a una etapa de pérdida, requiere ID del Motivo de Pérdida.',
+				type: 'options',
+				typeOptions: { loadOptionsMethod: 'getStages' },
+				default: '',
+				description:
+					'ID de la etapa del pipeline. Si cambia a una etapa de pérdida, requiere ID del Motivo de Pérdida. Elige de la lista o especifica un ID con una expresión.',
 				routing: { send: { type: 'body', property: 'id_etapa_pipeline' } },
 			},
 			{
 				displayName: 'ID del Canal de Lead',
 				name: 'canal_origen',
-				type: 'number',
-				default: 0,
-				description: 'ID del canal de origen del lead',
+				type: 'options',
+				typeOptions: { loadOptionsMethod: 'getLeadChannels' },
+				default: '',
+				description:
+					'ID del canal de origen del lead. Elige de la lista o especifica un ID con una expresión.',
 				routing: { send: { type: 'body', property: 'canal_origen' } },
 			},
 			{
@@ -498,17 +514,21 @@ export const dealFields: INodeProperties[] = [
 			{
 				displayName: 'ID del Origen de Lead',
 				name: 'origen_lead',
-				type: 'number',
-				default: 0,
-				description: 'ID del origen del lead',
+				type: 'options',
+				typeOptions: { loadOptionsMethod: 'getLeadOrigins' },
+				default: '',
+				description:
+					'ID del origen del lead. Elige de la lista o especifica un ID con una expresión.',
 				routing: { send: { type: 'body', property: 'origen_lead' } },
 			},
 			{
 				displayName: 'ID del Pipeline',
 				name: 'id_pipeline',
-				type: 'number',
-				default: 0,
-				description: 'ID del pipeline de la negociación',
+				type: 'options',
+				typeOptions: { loadOptionsMethod: 'getPipelines' },
+				default: '',
+				description:
+					'ID del pipeline de la negociación. Elige de la lista o especifica un ID con una expresión.',
 				routing: { send: { type: 'body', property: 'id_pipeline' } },
 			},
 			{

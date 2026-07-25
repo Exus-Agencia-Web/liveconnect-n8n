@@ -98,10 +98,12 @@ export const proxyFields: INodeProperties[] = [
 	{
 		displayName: 'ID del Canal',
 		name: 'id_canal',
-		type: 'number',
+		type: 'options',
+		typeOptions: { loadOptionsMethod: 'getChannels' },
 		required: true,
-		default: 0,
-		description: 'ID del canal de la cuenta',
+		default: '',
+		description:
+			'ID del canal de la cuenta. Elige de la lista o especifica un ID con una expresión.',
 		displayOptions: {
 			show: {
 				resource: ['proxy'],
@@ -294,10 +296,12 @@ export const proxyFields: INodeProperties[] = [
 	{
 		displayName: 'ID del Canal',
 		name: 'id_canal',
-		type: 'number',
+		type: 'options',
+		typeOptions: { loadOptionsMethod: 'getChannels' },
 		required: true,
-		default: 0,
-		description: 'ID del canal de la cuenta',
+		default: '',
+		description:
+			'ID del canal de la cuenta. Elige de la lista o especifica un ID con una expresión.',
 		displayOptions: {
 			show: {
 				resource: ['proxy'],
@@ -450,17 +454,21 @@ export const proxyFields: INodeProperties[] = [
 			{
 				displayName: 'ID del Canal',
 				name: 'id_canal',
-				type: 'number',
-				default: 0,
-				description: 'ID del canal (requerido al transferir la conversación al proxy)',
+				type: 'options',
+				typeOptions: { loadOptionsMethod: 'getChannels' },
+				default: '',
+				description:
+					'ID del canal (requerido al transferir la conversación al proxy). Elige de la lista o especifica un ID con una expresión.',
 				routing: { send: { type: 'body', property: 'id_canal' } },
 			},
 			{
 				displayName: 'ID del Grupo',
 				name: 'id_grupo',
-				type: 'number',
-				default: 0,
-				description: 'ID del grupo de agentes a asignar',
+				type: 'options',
+				typeOptions: { loadOptionsMethod: 'getGroups' },
+				default: '',
+				description:
+					'ID del grupo de agentes a asignar. Elige de la lista o especifica un ID con una expresión.',
 				routing: { send: { type: 'body', property: 'id_grupo' } },
 			},
 			{

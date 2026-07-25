@@ -70,10 +70,12 @@ export const whatsAppFields: INodeProperties[] = [
 	{
 		displayName: 'ID del Canal',
 		name: 'id_canal',
-		type: 'number',
+		type: 'options',
+		typeOptions: { loadOptionsMethod: 'getChannels' },
 		required: true,
-		default: 0,
-		description: 'ID del canal WhatsApp QR (tabla wa_instances)',
+		default: '',
+		description:
+			'ID del canal WhatsApp QR (tabla wa_instances). Elige de la lista o especifica un ID con una expresión.',
 		displayOptions: {
 			show: {
 				resource: ['whatsapp'],
@@ -108,10 +110,12 @@ export const whatsAppFields: INodeProperties[] = [
 	{
 		displayName: 'ID del Canal',
 		name: 'id_canal',
-		type: 'number',
+		type: 'options',
+		typeOptions: { loadOptionsMethod: 'getChannels' },
 		required: true,
-		default: 0,
-		description: 'ID del canal WhatsApp QR (tabla wa_instances)',
+		default: '',
+		description:
+			'ID del canal WhatsApp QR (tabla wa_instances). Elige de la lista o especifica un ID con una expresión.',
 		displayOptions: {
 			show: {
 				resource: ['whatsapp'],
@@ -202,10 +206,12 @@ export const whatsAppFields: INodeProperties[] = [
 	{
 		displayName: 'ID del Canal',
 		name: 'id_canal',
-		type: 'number',
+		type: 'options',
+		typeOptions: { loadOptionsMethod: 'getChannels' },
 		required: true,
-		default: 0,
-		description: 'ID del canal WhatsApp QR (tabla wa_instances)',
+		default: '',
+		description:
+			'ID del canal WhatsApp QR (tabla wa_instances). Elige de la lista o especifica un ID con una expresión.',
 		displayOptions: {
 			show: {
 				resource: ['whatsapp'],
@@ -281,10 +287,12 @@ export const whatsAppFields: INodeProperties[] = [
 	{
 		displayName: 'ID del Canal',
 		name: 'id_canal',
-		type: 'number',
+		type: 'options',
+		typeOptions: { loadOptionsMethod: 'getChannels' },
 		required: true,
-		default: 0,
-		description: 'ID del canal WhatsApp QR (tabla wa_instances)',
+		default: '',
+		description:
+			'ID del canal WhatsApp QR (tabla wa_instances). Elige de la lista o especifica un ID con una expresión.',
 		displayOptions: {
 			show: {
 				resource: ['whatsapp'],

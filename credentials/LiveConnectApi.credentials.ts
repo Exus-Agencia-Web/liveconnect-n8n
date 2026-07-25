@@ -88,7 +88,13 @@ export class LiveConnectApi implements ICredentialType {
 		const headers = { ...requestOptions.headers };
 		const seeded = headers[LIVECONNECT_TOKEN_HEADER];
 		if (typeof seeded !== 'string' || seeded === '') {
-			headers[LIVECONNECT_TOKEN_HEADER] = (credentials.sessionToken as string) ?? '';
+			const sessionToken = credentials.sessionToken;
+			// Header vacío = petición sin autenticar con ruido; mejor omitirlo.
+			if (typeof sessionToken === 'string' && sessionToken !== '') {
+				headers[LIVECONNECT_TOKEN_HEADER] = sessionToken;
+			} else {
+				delete headers[LIVECONNECT_TOKEN_HEADER];
+			}
 		}
 		return { ...requestOptions, headers };
 	};

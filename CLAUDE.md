@@ -17,6 +17,7 @@ credentials/LiveConnectApi.credentials.ts   # auth: cKey+privateKey → JWT (pre
 nodes/LiveConnect/
   LiveConnect.node.ts                       # nodo principal: selector de resource + spread de descripciones
   GenericFunctions.ts                       # LIVECONNECT_BASE_URL + handleLcResponse (postReceive compartido)
+  LoadOptions.ts                            # selectores dinámicos (10 métodos loadOptions)
   TriggerFunctions.ts                       # helpers de triggers: secret, sessionId, simplify, lcHookRequest
   ActionsFunctions.ts                       # helpers del constructor de actions: toAction, applyClosingRule, buildEnvelope
   LiveConnectProxyTrigger.node.ts           # trigger: notificaciones del proxy (registra webhook vía API)
@@ -105,6 +106,14 @@ ESLint de triggers (el plugin los detecta por archivo `*Trigger.node.ts`): name/
   (el `!== null` es obligatorio: `typeof null === "object"`).
 - Listados = "Get Many" (`value: 'getMany'`); `limit` con `typeOptions: { minValue: 1 }`, default 50 y description exacta `Max number of results to return`; opciones ordenadas alfabéticamente; IDs siempre "… ID".
 - En descriptions no escribir referencias tipo `tabla.id` — la regla `node-param-description-miscased-id` las rompe; usar "(tabla X)".
+
+## Selectores dinámicos (v0.5.0)
+
+Los campos de ID con endpoint de listado son desplegables: `type: 'options'` + `typeOptions: { loadOptionsMethod: '<método>' }` + `default: ''`, **sin tocar `name` ni `routing.send`** (el valor sigue siendo el ID plano → compatible con workflows anteriores). Los métodos viven en `LoadOptions.ts` y se registran con `methods = { loadOptions }` en los nodos.
+
+Mapeo: `id_canal`→getChannels · `id_grupo`/`id_team`/`id_to_delegate`→getGroups · `id_usuario`/`id_responsable`/`id_asignado`/`idSupervisor`/`id_user`→getUsers · `id_pipeline`→getPipelines · `id_etapa_pipeline`→getStages (depende de `id_pipeline`) · `origen_lead`→getLeadOrigins · `canal_origen`→getLeadChannels · `id_categoria`→getCategories · `id_assistant`→getAssistants · `id_plantilla`→getWabaTemplates (depende de `id_canal`; su ID es string).
+
+**Sin selector por falta de endpoint en el spec**: `id_tag`, `etiquetas`, `id_respuesta`, `id_empresa`, `id_contacto`, `id_deal`. Las dependencias se resuelven con `getCurrentNodeParameter` probando la ruta top-level y las de las colecciones. La regla `node-param-display-name-wrong-for-dynamic-options` está desactivada (exige el literal inglés "Name or ID").
 
 ## Gotchas de build/publicación
 
