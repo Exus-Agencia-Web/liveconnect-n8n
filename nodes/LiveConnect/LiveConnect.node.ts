@@ -1,6 +1,6 @@
 import type { INodeType, INodeTypeDescription } from 'n8n-workflow';
 
-import { LIVECONNECT_BASE_URL } from './GenericFunctions';
+import { LIVECONNECT_BASE_URL, refreshTokenIfExpired } from './GenericFunctions';
 import {
 	assistantFields,
 	assistantOperations,
@@ -74,6 +74,12 @@ export class LiveConnect implements INodeType {
 				name: 'resource',
 				type: 'options',
 				noDataExpression: true,
+				// preSend global: `resource` siempre está visible y es la primera propiedad,
+				// así que su preSend corre en todas las operaciones y antes que cualquier
+				// otro. Sin `property` no envía nada al body ni al query.
+				routing: {
+					send: { preSend: [refreshTokenIfExpired] },
+				},
 				options: [
 					{ name: 'Asistente', value: 'assistant' },
 					{ name: 'Automatización CRM', value: 'automation' },

@@ -1,6 +1,6 @@
 {
 	"name": "n8n-nodes-liveconnect",
-	"version": "0.4.0",
+	"version": "0.4.1",
 	"description": "n8n community node for the LiveConnect API (omnichannel messaging + CRM): contacts, conversations, WhatsApp QR & Business API, CRM deals, catalog, AI assistants and more",
 	"keywords": [
 		"n8n-community-node-package",
@@ -35,7 +35,7 @@
 		"lint": "eslint nodes credentials package.json",
 		"lintfix": "eslint nodes credentials package.json --fix",
 		"verify": "node scripts/verify-spec.mjs",
-		"smoke": "node scripts/smoke-triggers.mjs && node scripts/smoke-response.mjs",
+		"smoke": "node scripts/smoke-triggers.mjs && node scripts/smoke-response.mjs && node scripts/smoke-token.mjs",
 		"prepublishOnly": "npm run build && eslint -c .eslintrc.prepublish.js nodes credentials package.json"
 	},
 	"files": [

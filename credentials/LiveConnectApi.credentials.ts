@@ -1,5 +1,5 @@
 import type {
-	IAuthenticateGeneric,
+	IAuthenticate,
 	ICredentialDataDecryptedObject,
 	ICredentialTestRequest,
 	ICredentialType,
@@ -7,7 +7,12 @@ import type {
 	INodeProperties,
 } from 'n8n-workflow';
 
-import { LIVECONNECT_BASE_URL } from '../nodes/LiveConnect/GenericFunctions';
+import type { LcTokenResponse } from '../nodes/LiveConnect/GenericFunctions';
+import {
+	extractSessionToken,
+	LIVECONNECT_BASE_URL,
+	LIVECONNECT_TOKEN_HEADER,
+} from '../nodes/LiveConnect/GenericFunctions';
 
 export class LiveConnectApi implements ICredentialType {
 	name = 'liveConnectApi';
@@ -50,12 +55,7 @@ export class LiveConnectApi implements ICredentialType {
 	// responde 200 con `status < 0` y un JWT anónimo que NO sirve como sesión.
 	// n8n re-ejecuta esto automáticamente ante un 401 (sessionToken es `expirable`).
 	async preAuthentication(this: IHttpRequestHelper, credentials: ICredentialDataDecryptedObject) {
-		let response: {
-			status?: number;
-			status_message?: string;
-			data?: { token?: string } | string;
-			PageGearToken?: string;
-		};
+		let response: LcTokenResponse;
 
 		try {
 			response = (await this.helpers.httpRequest({
@@ -67,7 +67,7 @@ export class LiveConnectApi implements ICredentialType {
 				},
 				json: true,
 				timeout: 10000,
-			})) as typeof response;
+			})) as LcTokenResponse;
 		} catch (error) {
 			throw new Error(
 				'LiveConnect rechazó las credenciales (¿cKey o privateKey inválidos?). Respuesta del API: ' +
@@ -75,34 +75,22 @@ export class LiveConnectApi implements ICredentialType {
 			);
 		}
 
-		if (typeof response.status === 'number' && response.status < 0) {
-			throw new Error(
-				`LiveConnect devolvió un error de autenticación (status ${response.status}): ` +
-					(response.status_message ?? 'sin mensaje'),
-			);
-		}
-
-		const token =
-			typeof response.data === 'string'
-				? response.data
-				: (response.data?.token ?? response.PageGearToken ?? undefined);
-
-		if (!token) {
-			throw new Error(
-				'LiveConnect no devolvió un token de sesión en data.token ni en PageGearToken. Verifica cKey y privateKey.',
-			);
-		}
-
-		return { sessionToken: token };
+		// Valida status < 0 antes de leer el token (el API devuelve un JWT anónimo
+		// inservible junto a las respuestas de error).
+		return { sessionToken: extractSessionToken(response) };
 	}
 
-	authenticate: IAuthenticateGeneric = {
-		type: 'generic',
-		properties: {
-			headers: {
-				PageGearToken: '={{$credentials.sessionToken}}',
-			},
-		},
+	// Forma de FUNCIÓN (no IAuthenticateGeneric) a propósito: n8n aplica `authenticate`
+	// DESPUÉS de los preSend del routing, y la forma genérica pisa el header sin
+	// condición. `refreshTokenIfExpired` siembra aquí un token recién emitido cuando el
+	// de la credencial ya venció; si no hay nada sembrado se usa el de la credencial.
+	authenticate: IAuthenticate = async (credentials, requestOptions) => {
+		const headers = { ...requestOptions.headers };
+		const seeded = headers[LIVECONNECT_TOKEN_HEADER];
+		if (typeof seeded !== 'string' || seeded === '') {
+			headers[LIVECONNECT_TOKEN_HEADER] = (credentials.sessionToken as string) ?? '';
+		}
+		return { ...requestOptions, headers };
 	};
 
 	test: ICredentialTestRequest = {
@@ -111,5 +99,25 @@ export class LiveConnectApi implements ICredentialType {
 			url: '/channels/list',
 			method: 'GET',
 		},
+		// El tester de n8n solo falla ante HTTP no-2xx; LiveConnect responde 200 con
+		// status negativo, así que sin estas reglas diría "Connection successful!".
+		rules: [
+			{
+				type: 'responseSuccessBody',
+				properties: {
+					key: 'status',
+					value: -403,
+					message: 'Token de sesión inválido: revisa la cKey y la clave privada',
+				},
+			},
+			{
+				type: 'responseSuccessBody',
+				properties: {
+					key: 'status',
+					value: -2,
+					message: 'Faltan la cKey o la clave privada en la credencial',
+				},
+			},
+		],
 	};
 }

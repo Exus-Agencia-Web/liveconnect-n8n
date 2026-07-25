@@ -57,7 +57,15 @@ ESLint de triggers (el plugin los detecta por archivo `*Trigger.node.ts`): name/
 ## API LiveConnect — comportamiento real (verificado, no todo está en el spec)
 
 1. **Envelope**: siempre `{ status, status_message, data }`. `status < 0` = error **aun con HTTP 200**. `handleLcResponse` lanza `NodeApiError` en ese caso y desanida `data` (salvo que el toggle global `fullResponse` esté activo).
-2. **Token**: `POST /account/token {cKey, privateKey}`. El JWT de sesión llega en `data.token` **o en el campo raíz `PageGearToken` del body** (el schema `AccountToken` del spec no lo documenta). Viaja en el header `PageGearToken`. Dura ~10 min; n8n lo renueva solo ante 401 (`sessionToken` es `expirable`).
+2. **Token**: `POST /account/token {cKey, privateKey}`. El JWT de sesión llega en `data.token` **o en el campo raíz `PageGearToken` del body** (el schema `AccountToken` del spec no lo documenta). Viaja en el header `PageGearToken` y dura ~10 min.
+
+   **Ciclo de vida del token (v0.4.1) — leer antes de tocar la credencial.** LiveConnect reporta el token vencido como **HTTP 200 con `status:-403`**, y n8n solo re-ejecuta `preAuthentication` ante un **401 real** (core: `credentials-helper.ts` `credentialsExpired` ← `request-helper-functions.ts`, catch de 401). Ese 401 nunca llega → el `sessionToken` guardado queda muerto. Solución en dos capas, en `GenericFunctions.ts`:
+   - **Proactiva**: `refreshTokenIfExpired` (preSend colgado de la propiedad `resource` de `LiveConnect.node.ts`, que siempre está visible → cubre las 58 operaciones sin tocar descriptions) decodifica el `exp` del JWT y renueva 60 s antes. Caché en memoria por `sha256(cKey)` + `Map` de promesas en vuelo (RoutingNode lanza los ítems con `Promise.allSettled`, así que sin dedupe habría N emisiones).
+   - **Reactiva**: `handleLcResponse` con `status === -403` **quema** el token en caché para que el siguiente request renueve aunque el `exp` no sea legible. **NO** falsear `httpCode: 401` ahí: el postReceive corre fuera del try/catch que dispara la renovación de n8n, así que no renovaría nada.
+
+   **`authenticate` es una FUNCIÓN, no `IAuthenticateGeneric`** — y debe seguir siéndolo: n8n aplica la autenticación DESPUÉS de los preSend y la forma genérica sobrescribe el header sin condición, con lo que el token fresco sembrado por el preSend se perdería. La función respeta el `PageGearToken` ya presente y solo cae al `sessionToken` de la credencial si no hay ninguno.
+
+   El `test` de la credencial lleva `rules` de tipo `responseSuccessBody` para `-403` y `-2`: sin ellas el botón "Probar conexión" dice "Connection successful!" aunque el API haya devuelto un error (el tester solo falla ante HTTP no-2xx).
 3. **Trampas del token**: con keys faltantes el API responde HTTP 200 con `status:-2` **y un JWT anónimo** en `PageGearToken` que no sirve como sesión — por eso `preAuthentication` valida `status < 0` ANTES de extraer token. Con cKey/privateKey inválidos responde **404 en texto plano**.
 4. **Archivos**: se envían por **URL pública** (`url` en el body), nunca como binarios.
 
