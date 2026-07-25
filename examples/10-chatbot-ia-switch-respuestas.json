@@ -1,0 +1,270 @@
+{
+	"name": "LiveConnect 10 — Chatbot IA con Switch y respuestas por intención",
+	"nodes": [
+		{
+			"parameters": {
+				"content": "## Chatbot con IA que enruta por intención\n\n**Flujo:** Callback Trigger → AI Agent (GPT) que clasifica y redacta → Switch por intención → una respuesta distinta en cada rama.\n\n**Configura:**\n1. Credenciales **OpenAI** (modelo) y **LiveConnect API** (nodos de respuesta).\n2. Activa el workflow y pega su URL de producción en el callback de tu Flowbot (mismo `secret` en ambos lados).\n3. En **Hablar con un Asesor** elige tu equipo en `ID del Equipo` (el desplegable lo carga de tu cuenta).\n\n**Cómo decide:** el AI Agent devuelve JSON `{ intencion, mensaje }` gracias al Structured Output Parser. El Switch enruta por `intencion` y cada rama arma sus propias acciones.\n\n**Regla de oro:** las ramas que siguen conversando cierran con `input` (lo agrega el nodo solo). La rama que delega a un humano NO lleva `input`: el bot sale del callback a propósito.",
+				"height": 460,
+				"width": 520
+			},
+			"id": "c1000000-0000-4000-8000-000000000001",
+			"name": "Instrucciones",
+			"type": "n8n-nodes-base.stickyNote",
+			"typeVersion": 1,
+			"position": [-40, -320]
+		},
+		{
+			"parameters": {
+				"secret": "cambia-este-secreto",
+				"responseMode": "responseNode",
+				"simple": true
+			},
+			"id": "c1000000-0000-4000-8000-000000000002",
+			"name": "LiveConnect Callback Trigger",
+			"type": "n8n-nodes-liveconnect.liveConnectCallbackTrigger",
+			"typeVersion": 1,
+			"position": [180, 200],
+			"webhookId": "liveconnect-callback-switch-demo"
+		},
+		{
+			"parameters": {
+				"promptType": "define",
+				"text": "={{ $json.mensaje }}",
+				"hasOutputParser": true,
+				"options": {
+					"systemMessage": "Eres el asistente virtual de la empresa y atiendes por WhatsApp en español, con respuestas breves y cordiales.\n\nEl cliente se llama {{ $json.contacto.nombre || 'cliente' }}. {{ $json.esPrimerTurno ? 'Es su primer mensaje: salúdalo.' : '' }}\n\nClasifica su mensaje en UNA de estas intenciones y redacta la respuesta adecuada:\n- \"ventas\": pregunta por productos, planes o quiere comprar.\n- \"soporte\": tiene un problema, un reclamo o pide hablar con una persona.\n- \"agenda\": quiere agendar, reprogramar o consultar una cita.\n- \"otro\": saludos, agradecimientos o cualquier cosa que no encaje arriba.\n\nDevuelve SOLO el JSON pedido. En \"mensaje\" escribe lo que se le enviará al cliente (máximo 3 frases, sin markdown). Si la intención es \"soporte\", el mensaje debe avisar que lo transfieres con una persona del equipo."
+				}
+			},
+			"id": "c1000000-0000-4000-8000-000000000003",
+			"name": "Clasificar y redactar",
+			"type": "@n8n/n8n-nodes-langchain.agent",
+			"typeVersion": 1.9,
+			"position": [460, 180]
+		},
+		{
+			"parameters": {
+				"model": {
+					"__rl": true,
+					"value": "gpt-4o-mini",
+					"mode": "list",
+					"cachedResultName": "gpt-4o-mini"
+				},
+				"options": {}
+			},
+			"id": "c1000000-0000-4000-8000-000000000004",
+			"name": "OpenAI Chat Model",
+			"type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+			"typeVersion": 1.2,
+			"position": [340, 420]
+		},
+		{
+			"parameters": {
+				"sessionIdType": "customKey",
+				"sessionKey": "={{ $('LiveConnect Callback Trigger').first().json.sessionId }}"
+			},
+			"id": "c1000000-0000-4000-8000-000000000005",
+			"name": "Memoria por conversación",
+			"type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+			"typeVersion": 1.3,
+			"position": [500, 420]
+		},
+		{
+			"parameters": {
+				"schemaType": "fromJson",
+				"jsonSchemaExample": "{\n  \"intencion\": \"ventas\",\n  \"mensaje\": \"Con gusto te ayudo con los planes disponibles.\"\n}"
+			},
+			"id": "c1000000-0000-4000-8000-000000000006",
+			"name": "Formato de salida",
+			"type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+			"typeVersion": 1.2,
+			"position": [660, 420]
+		},
+		{
+			"parameters": {
+				"rules": {
+					"values": [
+						{
+							"conditions": {
+								"options": {
+									"caseSensitive": false,
+									"leftValue": "",
+									"typeValidation": "loose",
+									"version": 2
+								},
+								"conditions": [
+									{
+										"leftValue": "={{ $json.output.intencion }}",
+										"rightValue": "ventas",
+										"operator": { "type": "string", "operation": "equals" }
+									}
+								],
+								"combinator": "and"
+							},
+							"renameOutput": true,
+							"outputKey": "Ventas"
+						},
+						{
+							"conditions": {
+								"options": {
+									"caseSensitive": false,
+									"leftValue": "",
+									"typeValidation": "loose",
+									"version": 2
+								},
+								"conditions": [
+									{
+										"leftValue": "={{ $json.output.intencion }}",
+										"rightValue": "soporte",
+										"operator": { "type": "string", "operation": "equals" }
+									}
+								],
+								"combinator": "and"
+							},
+							"renameOutput": true,
+							"outputKey": "Soporte"
+						},
+						{
+							"conditions": {
+								"options": {
+									"caseSensitive": false,
+									"leftValue": "",
+									"typeValidation": "loose",
+									"version": 2
+								},
+								"conditions": [
+									{
+										"leftValue": "={{ $json.output.intencion }}",
+										"rightValue": "agenda",
+										"operator": { "type": "string", "operation": "equals" }
+									}
+								],
+								"combinator": "and"
+							},
+							"renameOutput": true,
+							"outputKey": "Agenda"
+						}
+					]
+				},
+				"options": {
+					"fallbackOutput": "extra",
+					"renameFallbackOutput": "Otro"
+				}
+			},
+			"id": "c1000000-0000-4000-8000-000000000007",
+			"name": "Enrutar por intención",
+			"type": "n8n-nodes-base.switch",
+			"typeVersion": 3.2,
+			"position": [820, 180]
+		},
+		{
+			"parameters": {
+				"acciones": {
+					"accion": [
+						{ "tipo": "sendText", "text": "={{ $json.output.mensaje }}" },
+						{ "tipo": "addVar", "varname": "intencion", "varvalue": "ventas" }
+					]
+				},
+				"autoInput": true,
+				"respondWebhook": true
+			},
+			"id": "c1000000-0000-4000-8000-000000000008",
+			"name": "Responder Ventas",
+			"type": "n8n-nodes-liveconnect.liveConnectCallbackResponse",
+			"typeVersion": 1,
+			"position": [1120, -40]
+		},
+		{
+			"parameters": {
+				"acciones": {
+					"accion": [
+						{ "tipo": "sendText", "text": "={{ $json.output.mensaje }}" },
+						{ "tipo": "teamDelegate", "id_team": "" }
+					]
+				},
+				"autoInput": true,
+				"respondWebhook": true
+			},
+			"id": "c1000000-0000-4000-8000-000000000009",
+			"name": "Hablar con un Asesor",
+			"type": "n8n-nodes-liveconnect.liveConnectCallbackResponse",
+			"typeVersion": 1,
+			"position": [1120, 140]
+		},
+		{
+			"parameters": {
+				"acciones": {
+					"accion": [
+						{ "tipo": "sendText", "text": "={{ $json.output.mensaje }}" },
+						{ "tipo": "addVar", "varname": "intencion", "varvalue": "agenda" },
+						{ "tipo": "input", "input": "¿Qué día y hora te quedan bien?" }
+					]
+				},
+				"autoInput": true,
+				"respondWebhook": true
+			},
+			"id": "c1000000-0000-4000-8000-00000000000a",
+			"name": "Agendar Cita",
+			"type": "n8n-nodes-liveconnect.liveConnectCallbackResponse",
+			"typeVersion": 1,
+			"position": [1120, 320]
+		},
+		{
+			"parameters": {
+				"acciones": {
+					"accion": [{ "tipo": "sendText", "text": "={{ $json.output.mensaje }}" }]
+				},
+				"autoInput": true,
+				"respondWebhook": true
+			},
+			"id": "c1000000-0000-4000-8000-00000000000b",
+			"name": "Responder General",
+			"type": "n8n-nodes-liveconnect.liveConnectCallbackResponse",
+			"typeVersion": 1,
+			"position": [1120, 500]
+		},
+		{
+			"parameters": {
+				"content": "### Cada rama arma sus propias acciones\n\n- **Ventas / General / Agenda**: envían el texto de la IA y cierran con `input` para seguir conversando (Agenda además pregunta el día).\n- **Hablar con un Asesor**: `teamDelegate` entrega la conversación a un humano. El nodo quita el `input` automáticamente porque el bot debe salir del callback.\n\nCada nodo responde el webhook él mismo: no hace falta Respond to Webhook.",
+				"height": 300,
+				"width": 380
+			},
+			"id": "c1000000-0000-4000-8000-00000000000c",
+			"name": "Notas de las ramas",
+			"type": "n8n-nodes-base.stickyNote",
+			"typeVersion": 1,
+			"position": [1540, 60]
+		}
+	],
+	"connections": {
+		"LiveConnect Callback Trigger": {
+			"main": [[{ "node": "Clasificar y redactar", "type": "main", "index": 0 }]]
+		},
+		"Clasificar y redactar": {
+			"main": [[{ "node": "Enrutar por intención", "type": "main", "index": 0 }]]
+		},
+		"OpenAI Chat Model": {
+			"ai_languageModel": [
+				[{ "node": "Clasificar y redactar", "type": "ai_languageModel", "index": 0 }]
+			]
+		},
+		"Memoria por conversación": {
+			"ai_memory": [[{ "node": "Clasificar y redactar", "type": "ai_memory", "index": 0 }]]
+		},
+		"Formato de salida": {
+			"ai_outputParser": [
+				[{ "node": "Clasificar y redactar", "type": "ai_outputParser", "index": 0 }]
+			]
+		},
+		"Enrutar por intención": {
+			"main": [
+				[{ "node": "Responder Ventas", "type": "main", "index": 0 }],
+				[{ "node": "Hablar con un Asesor", "type": "main", "index": 0 }],
+				[{ "node": "Agendar Cita", "type": "main", "index": 0 }],
+				[{ "node": "Responder General", "type": "main", "index": 0 }]
+			]
+		}
+	},
+	"settings": { "executionOrder": "v1" },
+	"pinData": {},
+	"meta": { "templateCredsSetupCompleted": false }
+}

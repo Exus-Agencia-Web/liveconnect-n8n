@@ -23,6 +23,7 @@ En n8n: **Workflow → ⋯ (menú) → Import from File** y selecciona el `.json
 | 07 | `07-chatbot-callback-trigger.json` | Chatbot con el **LiveConnect Callback Trigger** (v0.2.0+): motor de reglas que responde `data.actions` con el `input` de cierre obligatorio. |
 | 08 | `08-mensajes-proxy-trigger.json` | Mensajes entrantes con el **LiveConnect Proxy Trigger** (v0.2.0+): registro automático del webhook del canal + auto-respuesta. |
 | 09 | `09-chatbot-callback-visual.json` | Chatbot **sin código** (v0.4.0+): el nodo **LiveConnect Respuesta al Callback** arma las actions visualmente y responde el webhook él mismo. |
+| 10 | `10-chatbot-ia-switch-respuestas.json` | Chatbot completo: **Callback Trigger → AI Agent (GPT) que clasifica → Switch por intención → una respuesta distinta por rama** (ventas, soporte con delegación a un humano, agenda y general). |
 
 ## Requisito para el workflow 04 (nodo como herramienta de IA)
 
