@@ -159,11 +159,36 @@ await test('getWabaTemplates lee data.templates (respuesta anidada real del API)
 		params: { resource: 'waba', operation: 'sendTemplate', id_canal: 67095 },
 	});
 	const options = await lo.getWabaTemplates.call(con.ctx);
+	// Aprobadas primero, luego alfabético.
 	assert.deepEqual(options, [
-		{ name: 'aviso_pago (es_CO · PENDING)', value: '987654321' },
 		{ name: 'bienvenida (es)', value: '123456789' },
+		{ name: 'aviso_pago (es_CO · PENDING)', value: '987654321' },
 	]);
 	assert.deepEqual(con.calls[0].body, { id_canal: 67095 });
+});
+
+await test('plantillas sin name: usa campos alternativos o el contenido, no el UUID', async () => {
+	const { ctx } = ctxFor({
+		response: {
+			status: 1,
+			data: {
+				templates: [
+					{ id: 'uuid-1', templateName: 'recordatorio_cita', status: 'APPROVED' },
+					{ id: 'uuid-2', data: '{"name":"pago_recibido"}', status: 'APPROVED' },
+					{ id: 'uuid-3', data: 'Hola {{1}}, tu pedido ya salió', status: 'APPROVED' },
+					{ id: 'uuid-4', status: 'FAILED' },
+				],
+			},
+		},
+		params: { resource: 'waba', operation: 'sendTemplate', id_canal: 1 },
+	});
+	const options = await lo.getWabaTemplates.call(ctx);
+	assert.deepEqual(options, [
+		{ name: 'Hola {{1}}, tu pedido ya salió', value: 'uuid-3' },
+		{ name: 'pago_recibido', value: 'uuid-2' },
+		{ name: 'recordatorio_cita', value: 'uuid-1' },
+		{ name: 'ID uuid-4 (FAILED)', value: 'uuid-4' },
+	]);
 });
 
 await test('pickRows tolera array plano, objeto anidado y formas raras', async () => {

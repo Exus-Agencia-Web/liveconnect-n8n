@@ -226,24 +226,66 @@ export async function getWabaTemplates(
 		id_canal: Number(idCanal),
 	});
 
-	// El ID de una plantilla WABA es un número largo poco legible: se etiqueta con el
-	// nombre, el idioma y el estado (solo las aprobadas se pueden enviar).
+	// El ID de una plantilla WABA es un UUID ilegible y no todas las cuentas devuelven
+	// `name`, así que se busca el nombre en los campos alternativos conocidos y, como
+	// último recurso, en el contenido de la plantilla.
 	return rows
 		.filter((row) => row.id !== undefined && row.id !== null)
 		.map((row) => {
-			const nombre =
-				typeof row.name === 'string' && row.name.trim() !== '' ? row.name : `ID ${row.id}`;
-			const idioma = typeof row.language === 'string' && row.language !== '' ? row.language : '';
 			const estado = typeof row.status === 'string' ? row.status.toUpperCase() : '';
-			const detalles = [idioma, estado !== 'APPROVED' && estado !== '' ? estado : '']
+			const detalles = [
+				typeof row.language === 'string' ? row.language : '',
+				typeof row.category === 'string' ? row.category.toLowerCase() : '',
+				estado !== '' && estado !== 'APPROVED' ? estado : '',
+			]
 				.filter((part) => part !== '')
 				.join(' · ');
+			const nombre = templateLabel(row);
 			return {
 				name: detalles !== '' ? `${nombre} (${detalles})` : nombre,
 				value: row.id as string | number,
+				// Las aprobadas primero: son las únicas que se pueden enviar.
+				aprobada: estado === '' || estado === 'APPROVED',
 			};
 		})
-		.sort((a, b) => a.name.localeCompare(b.name, 'es'));
+		.sort((a, b) => {
+			if (a.aprobada !== b.aprobada) return a.aprobada ? -1 : 1;
+			return a.name.localeCompare(b.name, 'es');
+		})
+		.map(({ name, value }) => ({ name, value }));
+}
+
+/** Primer texto legible de una plantilla: nombre, alias del canal o su contenido. */
+function templateLabel(row: IDataObject): string {
+	for (const key of ['name', 'nombre', 'templateName', 'elementName', 'title', 'alias']) {
+		const value = row[key];
+		if (typeof value === 'string' && value.trim() !== '') return value.trim();
+	}
+
+	// Algunas cuentas entregan el contenido en `data` (texto plano o JSON serializado).
+	const contenido = parseTemplateBody(row.data);
+	if (contenido !== undefined) {
+		const limpio = contenido.replace(/\s+/g, ' ').trim();
+		if (limpio !== '') return limpio.length > 60 ? `${limpio.slice(0, 60)}…` : limpio;
+	}
+
+	return `ID ${String(row.id)}`;
+}
+
+function parseTemplateBody(data: unknown): string | undefined {
+	if (typeof data !== 'string' || data.trim() === '') return undefined;
+	try {
+		const parsed = JSON.parse(data) as IDataObject | string;
+		if (typeof parsed === 'string') return parsed;
+		for (const key of ['name', 'nombre', 'body', 'text', 'texto']) {
+			const value = (parsed as IDataObject)[key];
+			if (typeof value === 'string' && value.trim() !== '') return value;
+		}
+		return undefined;
+	} catch {
+		// No era JSON: se usa el texto tal cual.
+		return data;
+	}
 }
 
 /** Métodos listos para el bloque `methods.loadOptions` de cada nodo. */
