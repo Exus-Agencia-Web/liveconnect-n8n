@@ -150,6 +150,30 @@ await test('preSend: variables en orden van al cuerpo', async () => {
 	assert.equal(out.body.numero, '57300');
 });
 
+await test('preSend: envía el NOMBRE de la plantilla, no el ID largo de Meta', async () => {
+	const { ctx } = executeCtx({
+		params: {
+			id_canal: 1,
+			id_plantilla: '667058365993373_67d4976c2921a_6360',
+			variables: 'Ana, 12 de mayo',
+			url_encabezado: 'https://cdn.test/f.jpg',
+		},
+	});
+	const out = await prepareTemplateSend.call(ctx, {
+		body: { id_plantilla: '667058365993373_67d4976c2921a_6360' },
+	});
+	assert.equal(out.body.id_plantilla, 'confirmacion_cita');
+});
+
+await test('preSend: sin nombre en la plantilla se conserva el valor elegido', async () => {
+	const { ctx } = executeCtx({
+		params: { id_canal: 1, id_plantilla: 'tpl_sin_nombre' },
+		template: { components: [{ type: 'BODY', text: 'Hola' }] },
+	});
+	const out = await prepareTemplateSend.call(ctx, { body: { id_plantilla: 'tpl_sin_nombre' } });
+	assert.equal(out.body.id_plantilla, 'tpl_sin_nombre');
+});
+
 await test('preSend: faltan variables → error que dice cuántas y da el ejemplo', async () => {
 	const { ctx } = executeCtx({
 		params: { id_canal: 1, id_plantilla: 'tpl_1', variables: 'Ana', url_encabezado: 'https://x/f.jpg' },

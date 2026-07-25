@@ -377,6 +377,13 @@ export async function prepareTemplateSend(
 		return { ...requestOptions, body };
 	}
 
+	// El API acepta "id/nombre" de plantilla, pero el identificador largo de Meta
+	// (667058365993373_67d4976c2921a_6360) no siempre resuelve: se envía el NOMBRE,
+	// que es con el que trabaja el panel de LiveConnect.
+	if (typeof template.name === 'string' && template.name.trim() !== '') {
+		body.id_plantilla = template.name.trim();
+	}
+
 	const { fields, headerFormat } = buildTemplateLayout(template);
 	const camposCuerpo = fields.filter((f) => f.id.startsWith('body_'));
 	const ejemplosCuerpo = camposCuerpo.map((f) =>
@@ -451,6 +458,30 @@ export async function prepareTemplateSend(
 }
 
 /**
+ * Contexto de lo enviado, para que un error del API se pueda diagnosticar sin tener que
+ * reproducir la llamada. Hoy solo detalla el envío de plantillas, que es el que más
+ * datos combina.
+ */
+function describeRequestContext(ctx: IExecuteSingleFunctions): string {
+	try {
+		const resource = String(ctx.getNodeParameter('resource', ''));
+		const operation = String(ctx.getNodeParameter('operation', ''));
+		if (resource !== 'waba' || operation !== 'sendTemplate') return '';
+
+		const variables = parseCsv(ctx.getNodeParameter('variables', ''));
+		const partes = [
+			`plantilla: ${String(ctx.getNodeParameter('id_plantilla', '')) || '(sin elegir)'}`,
+			`canal: ${String(ctx.getNodeParameter('id_canal', '')) || '(sin elegir)'}`,
+			`número: ${String(ctx.getNodeParameter('numero', '')) || '(vacío)'}`,
+			`variables enviadas: ${variables.length}`,
+		];
+		return `. Datos del envío → ${partes.join(' · ')}. Comprueba que la plantilla esté APROBADA para ese canal y que el número incluya el código de país.`;
+	} catch {
+		return '';
+	}
+}
+
+/**
  * postReceive compartido por todas las operaciones.
  *
  * La API de LiveConnect responde siempre `{ status, status_message, data }`:
@@ -494,7 +525,7 @@ export async function handleLcResponse(
 
 		throw new NodeApiError(this.getNode(), body as JsonObject, {
 			message: (body.status_message as string) || 'LiveConnect API error',
-			description: `LiveConnect devolvió status ${status}`,
+			description: `LiveConnect devolvió status ${status}${describeRequestContext(this)}`,
 			httpCode: String(response.statusCode),
 		});
 	}
