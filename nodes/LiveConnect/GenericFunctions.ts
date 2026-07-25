@@ -10,6 +10,9 @@ import type {
 } from 'n8n-workflow';
 import { NodeApiError, NodeOperationError } from 'n8n-workflow';
 
+import type { HeaderFormat } from './TemplateFields';
+import { headerUrlProperty, splitTemplateValues } from './TemplateFields';
+
 export const LIVECONNECT_BASE_URL = 'https://api.liveconnect.chat/prod';
 export const LIVECONNECT_TOKEN_HEADER = 'PageGearToken';
 export const LIVECONNECT_CREDENTIALS_NAME = 'liveConnectApi';
@@ -284,6 +287,79 @@ export async function burnTokenForContext(ctx: LcTokenContext): Promise<void> {
 		cKey?: string;
 	};
 	if (credentials.cKey) burnCurrentToken(credentials.cKey);
+}
+
+/**
+ * preSend de la operación "Enviar Plantilla": reparte los valores del campo visual
+ * "Datos de la Plantilla" entre las propiedades que espera el API.
+ *
+ * No usa `routing.send` porque un solo campo alimenta VARIAS propiedades del body
+ * (variables, variables del encabezado, URL del encabezado y botones). Lo que el
+ * usuario haya escrito a mano en Campos Adicionales tiene prioridad.
+ */
+export async function applyTemplateData(
+	this: IExecuteSingleFunctions,
+	requestOptions: IHttpRequestOptions,
+): Promise<IHttpRequestOptions> {
+	const datos = this.getNodeParameter('datos_plantilla', {}) as {
+		value?: IDataObject | null;
+		schema?: unknown;
+	};
+	const valores = datos?.value;
+	if (valores === undefined || valores === null || Object.keys(valores).length === 0) {
+		return requestOptions;
+	}
+
+	const bodyActual = requestOptions.body;
+	// El body de estas operaciones siempre es un objeto JSON; cualquier otra cosa se
+	// deja intacta antes que corromperla.
+	if (bodyActual !== undefined && (typeof bodyActual !== 'object' || bodyActual === null)) {
+		return requestOptions;
+	}
+
+	const body = { ...((bodyActual as IDataObject | undefined) ?? {}) };
+	const { variables, variablesEncabezado, urlEncabezado, formatoEncabezado, botones } =
+		splitTemplateValues(valores);
+
+	if (variables.length > 0 && body.variables === undefined) {
+		body.variables = variables;
+	}
+	if (variablesEncabezado.length > 0 && body.variables_encabezado === undefined) {
+		body.variables_encabezado = variablesEncabezado;
+	}
+
+	if (urlEncabezado !== undefined) {
+		// Se respeta la URL que el usuario haya puesto a mano en Campos Adicionales.
+		const yaConfigurada =
+			body.url_imagen_encabezado ?? body.url_video_encabezado ?? body.url_documento_encabezado;
+		if (yaConfigurada === undefined) {
+			// El formato lo declara la propia plantilla; la extensión solo es el respaldo.
+			const propiedad =
+				headerUrlProperty(formatoEncabezado ?? inferHeaderFormat(urlEncabezado)) ??
+				'url_imagen_encabezado';
+			body[propiedad] = urlEncabezado;
+		}
+	}
+
+	const indices = Object.keys(botones);
+	if (indices.length > 0 && body.buttons === undefined) {
+		// Formato de mejor esfuerzo: índice + valor dinámico. El campo "Botones" de
+		// Campos Adicionales permite sobrescribirlo si la cuenta espera otra forma.
+		body.buttons = indices
+			.map((indice) => Number(indice))
+			.sort((a, b) => a - b)
+			.map((indice) => ({ index: indice - 1, parameter: botones[indice] }));
+	}
+
+	return { ...requestOptions, body };
+}
+
+/** Deduce el tipo de medio del encabezado por la extensión de la URL de ejemplo. */
+function inferHeaderFormat(url: string): HeaderFormat {
+	const limpia = url.split('?')[0].toLowerCase();
+	if (/\.(mp4|3gp|mov|avi|mkv)$/.test(limpia)) return 'VIDEO';
+	if (/\.(pdf|doc|docx|xls|xlsx|ppt|pptx|txt|csv)$/.test(limpia)) return 'DOCUMENT';
+	return 'IMAGE';
 }
 
 /**

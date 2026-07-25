@@ -1,7 +1,7 @@
 import type { INodeType, INodeTypeDescription } from 'n8n-workflow';
 
 import { LIVECONNECT_BASE_URL, refreshTokenIfExpired } from './GenericFunctions';
-import { liveConnectLoadOptions } from './LoadOptions';
+import { getTemplateFields, liveConnectLoadOptions } from './LoadOptions';
 import {
 	assistantFields,
 	assistantOperations,
@@ -42,9 +42,11 @@ import {
 } from './descriptions';
 
 export class LiveConnect implements INodeType {
-	// Selectores dinámicos: alimentan los campos de ID con los endpoints de listado.
+	// Selectores dinámicos: alimentan los campos de ID con los endpoints de listado, y
+	// los campos editables de una plantilla WABA con sus variables de ejemplo.
 	methods = {
 		loadOptions: liveConnectLoadOptions,
+		resourceMapping: { getTemplateFields },
 	};
 
 	description: INodeTypeDescription = {

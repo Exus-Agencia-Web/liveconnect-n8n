@@ -165,7 +165,7 @@ export const automationFields: INodeProperties[] = [
 				displayName: 'ID de la Plantilla',
 				name: 'id_plantilla',
 				type: 'options',
-				typeOptions: { loadOptionsMethod: 'getWabaTemplates' },
+				typeOptions: { loadOptionsMethod: 'getWabaTemplates', loadOptionsDependsOn: ['&id_canal'] },
 				default: '',
 				description:
 					'Requerido si Tipo es mensaje y el canal es WABA/WABA Meta. Elige de la lista o especifica un ID con una expresión.',
@@ -318,7 +318,7 @@ export const automationFields: INodeProperties[] = [
 				displayName: 'ID de la Plantilla',
 				name: 'id_plantilla',
 				type: 'options',
-				typeOptions: { loadOptionsMethod: 'getWabaTemplates' },
+				typeOptions: { loadOptionsMethod: 'getWabaTemplates', loadOptionsDependsOn: ['&id_canal'] },
 				default: '',
 				description:
 					'Solo aplica si Tipo es mensaje y el canal es WABA/WABA Meta. Elige de la lista o especifica un ID con una expresión.',

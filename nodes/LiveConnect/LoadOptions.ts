@@ -1,5 +1,12 @@
-import type { IDataObject, ILoadOptionsFunctions, INodePropertyOptions } from 'n8n-workflow';
+import type {
+	IDataObject,
+	ILoadOptionsFunctions,
+	INodePropertyOptions,
+	ResourceMapperFields,
+} from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
+
+import { buildTemplateLayout } from './TemplateFields';
 
 import type { LcTokenContext } from './GenericFunctions';
 import {
@@ -11,15 +18,15 @@ import {
 } from './GenericFunctions';
 
 /**
- * Llama un endpoint de listado del API para alimentar un selector.
+ * Llama un endpoint del API y devuelve `data` en crudo.
  * Valida el envelope estándar: `status < 0` es error aun con HTTP 200.
  */
-async function lcList(
+async function lcRequest(
 	ctx: ILoadOptionsFunctions,
 	endpoint: string,
 	method: 'GET' | 'POST' = 'GET',
 	body?: IDataObject,
-): Promise<IDataObject[]> {
+): Promise<unknown> {
 	let response: { status?: number; status_message?: string; data?: unknown };
 
 	// Los selectores NO pasan por el preSend del nodo, así que el token de la credencial
@@ -73,7 +80,17 @@ async function lcList(
 		);
 	}
 
-	return pickRows(response.data);
+	return response.data;
+}
+
+/** Igual que `lcRequest`, pero normalizando la respuesta a filas para los selectores. */
+async function lcList(
+	ctx: ILoadOptionsFunctions,
+	endpoint: string,
+	method: 'GET' | 'POST' = 'GET',
+	body?: IDataObject,
+): Promise<IDataObject[]> {
+	return pickRows(await lcRequest(ctx, endpoint, method, body));
 }
 
 /**
@@ -356,6 +373,41 @@ function parseTemplateBody(data: unknown): string | undefined {
 		// No era JSON: se usa el texto tal cual.
 		return data;
 	}
+}
+
+/**
+ * Campos editables de la plantilla seleccionada (método `resourceMapping`): sus
+ * variables con el ejemplo de Meta como valor por defecto.
+ *
+ * Nunca lanza cuando falta el canal o la plantilla: devuelve una lista vacía para que
+ * el panel del nodo siga usable mientras el usuario termina de elegir.
+ */
+export async function getTemplateFields(
+	this: ILoadOptionsFunctions,
+): Promise<ResourceMapperFields> {
+	let idCanal: string | number | undefined;
+	let idPlantilla: string | number | undefined;
+	try {
+		idCanal = dependencyValue(this, 'id_canal', 'el Canal');
+		idPlantilla = dependencyValue(this, 'id_plantilla', 'la Plantilla');
+	} catch {
+		// Expresiones o valores aún sin resolver: no hay nada que mostrar todavía.
+		return { fields: [] };
+	}
+	if (idCanal === undefined || idPlantilla === undefined) return { fields: [] };
+
+	// getTemplate devuelve UN objeto: se pide en crudo (pickRows tomaría `components`).
+	const data = await lcRequest(this, '/direct/waba/getTemplate', 'POST', {
+		id_canal: Number(idCanal),
+		id: String(idPlantilla),
+	});
+
+	const template = Array.isArray(data) ? (data[0] as IDataObject | undefined) : (data as IDataObject | null);
+	if (template === undefined || template === null || typeof template !== 'object') {
+		return { fields: [] };
+	}
+
+	return { fields: buildTemplateLayout(template).fields };
 }
 
 /** Métodos listos para el bloque `methods.loadOptions` de cada nodo. */

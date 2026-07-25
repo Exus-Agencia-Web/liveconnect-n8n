@@ -1,6 +1,6 @@
 import type { INodeProperties } from 'n8n-workflow';
 
-import { handleLcResponse } from '../GenericFunctions';
+import { applyTemplateData, handleLcResponse } from '../GenericFunctions';
 
 export const wabaOperations: INodeProperties[] = [
 	{
@@ -332,7 +332,7 @@ export const wabaFields: INodeProperties[] = [
 		displayName: 'ID de la Plantilla',
 		name: 'id_plantilla',
 		type: 'options',
-		typeOptions: { loadOptionsMethod: 'getWabaTemplates' },
+		typeOptions: { loadOptionsMethod: 'getWabaTemplates', loadOptionsDependsOn: ['&id_canal'] },
 		required: true,
 		default: '',
 		description:
@@ -345,6 +345,40 @@ export const wabaFields: INodeProperties[] = [
 		},
 		routing: {
 			send: { type: 'body', property: 'id_plantilla' },
+		},
+	},
+	{
+		displayName: 'Datos de la Plantilla',
+		name: 'datos_plantilla',
+		type: 'resourceMapper',
+		noDataExpression: true,
+		default: {
+			mappingMode: 'defineBelow',
+			value: null,
+		},
+		description:
+			'Variables de la plantilla, precargadas con los ejemplos que trae de Meta. Edítalas antes de enviar; los carruseles no están soportados todavía.',
+		typeOptions: {
+			loadOptionsDependsOn: ['&id_canal', '&id_plantilla'],
+			resourceMapper: {
+				resourceMapperMethod: 'getTemplateFields',
+				mode: 'add',
+				fieldWords: { singular: 'dato', plural: 'datos' },
+				addAllFields: true,
+				multiKeyMatch: false,
+				supportAutoMap: false,
+			},
+		},
+		displayOptions: {
+			show: {
+				resource: ['waba'],
+				operation: ['sendTemplate'],
+			},
+		},
+		// Los valores se reparten en varias propiedades del body (variables, encabezado,
+		// botones), así que no puede hacerse con un routing.send de una sola propiedad.
+		routing: {
+			send: { preSend: [applyTemplateData] },
 		},
 	},
 	{

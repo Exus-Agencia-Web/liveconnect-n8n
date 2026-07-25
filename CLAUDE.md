@@ -117,7 +117,18 @@ Mapeo: `id_canal`→getChannels · `id_grupo`/`id_team`/`id_to_delegate`→getGr
 
 **Sin selector por falta de endpoint en el spec**: `id_tag`, `etiquetas`, `id_respuesta`, `id_empresa`, `id_contacto`, `id_deal`. Las dependencias se resuelven con el mapa `DEPENDENCY_PATHS` (`${resource}.${operation}.${campo}` → ruta exacta): n8n NO limpia los valores de los campos ocultos al cambiar de operación, así que probar varias rutas candidatas devolvía el valor de otra operación. La regla `node-param-display-name-wrong-for-dynamic-options` está desactivada (exige el literal inglés "Name or ID").
 
-**Forma de la respuesta**: casi todos los listados devuelven `data` como array plano, pero `/direct/waba/getTemplates` lo anida en **`data.templates`** (+ `paging`). `pickRows` acepta ambas formas (array, o el primer array dentro del objeto), así que un endpoint nuevo que anide no rompe el selector.
+**Forma de la respuesta**: casi todos los listados devuelven `data` como array plano, pero `/direct/waba/getTemplates` lo anida en **`data.templates`** (+ `paging`). `lcList` normaliza con `pickRows` (array, o el primer array dentro del objeto); `getTemplate` devuelve UN objeto, así que se pide con `lcRequest` (crudo) — con `lcList` tomaría `components` por error.
+
+**Refresco de selectores dependientes**: sin `typeOptions.loadOptionsDependsOn` las opciones quedan cacheadas y no se recargan al cambiar el campo del que dependen. Se declara con **ruta relativa `&`** (`['&id_canal']`, `['&id_pipeline']`), que resuelve al campo hermano y por eso sirve igual top-level que dentro de una colección (`node-parameters/path-utils.js:22`).
+
+## Plantillas WABA: campo "Datos de la Plantilla" (v0.6.0)
+
+`type: 'resourceMapper'` (`resourceMapperMethod: getTemplateFields`) que muestra las variables de la plantilla elegida **precargadas con los `example` de Meta** y editables. `ResourceMapperField.defaultValue` es lo que prellena (interfaces.d.ts:2321 · ResourceMapper.vue:93).
+
+- `TemplateFields.ts` parsea los `components` crudos de Meta: BODY/HEADER TEXT → una variable por cada `{{n}}` **detectado en el texto** (no depende de que haya `example`, así nunca falta un dato obligatorio); HEADER IMAGE/VIDEO/DOCUMENT → un campo de URL cuyo **ID lleva el formato** (`header_media_IMAGE`) para no adivinarlo luego por la extensión; BUTTONS → un campo por botón con parámetro dinámico (URL con `{{n}}` o COPY_CODE). Carruseles (`cards`) NO soportados aún.
+- Los valores llegan al body por un **preSend** (`applyTemplateData`), no por `routing.send`: un solo campo alimenta varias propiedades (`variables`, `variables_encabezado`, `url_*_encabezado`, `buttons`). **Lo que el usuario escriba en Campos Adicionales gana** sobre lo precargado.
+- IDs ordenables por sufijo numérico (`body_1`…`body_10`); el comparador manda los IDs sin número al final para no volverse inconsistente.
+- El formato de `buttons` en el body no está documentado en el spec: se envía `{index, parameter}` como mejor esfuerzo y el campo `buttons` (json) permite sobrescribirlo.
 
 ## Gotchas de build/publicación
 

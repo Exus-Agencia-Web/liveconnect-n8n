@@ -139,7 +139,7 @@ export const dealFields: INodeProperties[] = [
 		displayName: 'ID de la Etapa del Pipeline',
 		name: 'id_etapa_pipeline',
 		type: 'options',
-		typeOptions: { loadOptionsMethod: 'getStages' },
+		typeOptions: { loadOptionsMethod: 'getStages', loadOptionsDependsOn: ['&id_pipeline'] },
 		required: true,
 		default: '',
 		description:
@@ -479,7 +479,7 @@ export const dealFields: INodeProperties[] = [
 				displayName: 'ID de la Etapa del Pipeline',
 				name: 'id_etapa_pipeline',
 				type: 'options',
-				typeOptions: { loadOptionsMethod: 'getStages' },
+				typeOptions: { loadOptionsMethod: 'getStages', loadOptionsDependsOn: ['&id_pipeline'] },
 				default: '',
 				description:
 					'ID de la etapa del pipeline. Si cambia a una etapa de pérdida, requiere ID del Motivo de Pérdida. Elige de la lista o especifica un ID con una expresión.',
