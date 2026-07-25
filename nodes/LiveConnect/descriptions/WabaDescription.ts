@@ -71,7 +71,7 @@ export const wabaFields: INodeProperties[] = [
 		displayName: 'ID del Canal',
 		name: 'id_canal',
 		type: 'options',
-		typeOptions: { loadOptionsMethod: 'getChannels' },
+		typeOptions: { loadOptionsMethod: 'getWabaChannels' },
 		required: true,
 		default: '',
 		description:
@@ -155,7 +155,7 @@ export const wabaFields: INodeProperties[] = [
 		displayName: 'ID del Canal',
 		name: 'id_canal',
 		type: 'options',
-		typeOptions: { loadOptionsMethod: 'getChannels' },
+		typeOptions: { loadOptionsMethod: 'getWabaChannels' },
 		required: true,
 		default: '',
 		description:
@@ -210,7 +210,7 @@ export const wabaFields: INodeProperties[] = [
 		displayName: 'ID del Canal',
 		name: 'id_canal',
 		type: 'options',
-		typeOptions: { loadOptionsMethod: 'getChannels' },
+		typeOptions: { loadOptionsMethod: 'getWabaChannels' },
 		required: true,
 		default: '',
 		description:
@@ -296,7 +296,7 @@ export const wabaFields: INodeProperties[] = [
 		displayName: 'ID del Canal',
 		name: 'id_canal',
 		type: 'options',
-		typeOptions: { loadOptionsMethod: 'getChannels' },
+		typeOptions: { loadOptionsMethod: 'getWabaChannels' },
 		required: true,
 		default: '',
 		description:

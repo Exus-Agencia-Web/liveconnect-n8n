@@ -71,7 +71,7 @@ export const whatsAppFields: INodeProperties[] = [
 		displayName: 'ID del Canal',
 		name: 'id_canal',
 		type: 'options',
-		typeOptions: { loadOptionsMethod: 'getChannels' },
+		typeOptions: { loadOptionsMethod: 'getWhatsAppChannels' },
 		required: true,
 		default: '',
 		description:
@@ -111,7 +111,7 @@ export const whatsAppFields: INodeProperties[] = [
 		displayName: 'ID del Canal',
 		name: 'id_canal',
 		type: 'options',
-		typeOptions: { loadOptionsMethod: 'getChannels' },
+		typeOptions: { loadOptionsMethod: 'getWhatsAppChannels' },
 		required: true,
 		default: '',
 		description:
@@ -207,7 +207,7 @@ export const whatsAppFields: INodeProperties[] = [
 		displayName: 'ID del Canal',
 		name: 'id_canal',
 		type: 'options',
-		typeOptions: { loadOptionsMethod: 'getChannels' },
+		typeOptions: { loadOptionsMethod: 'getWhatsAppChannels' },
 		required: true,
 		default: '',
 		description:
@@ -288,7 +288,7 @@ export const whatsAppFields: INodeProperties[] = [
 		displayName: 'ID del Canal',
 		name: 'id_canal',
 		type: 'options',
-		typeOptions: { loadOptionsMethod: 'getChannels' },
+		typeOptions: { loadOptionsMethod: 'getWhatsAppChannels' },
 		required: true,
 		default: '',
 		description:

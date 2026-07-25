@@ -172,6 +172,48 @@ export async function getChannels(this: ILoadOptionsFunctions): Promise<INodePro
 	return toOptions(await lcList(this, '/channels/list'));
 }
 
+/** Texto donde buscar el proveedor de un canal (`proveedor.tipo`, `proveedor.nombre`, nombre). */
+function channelSignature(row: IDataObject): string {
+	const proveedor = row.proveedor;
+	const partes: string[] = [];
+	if (proveedor !== null && typeof proveedor === 'object') {
+		const p = proveedor as IDataObject;
+		for (const key of ['tipo', 'nombre']) {
+			if (typeof p[key] === 'string') partes.push(p[key] as string);
+		}
+	}
+	if (typeof row.nombre === 'string') partes.push(row.nombre);
+	return partes.join(' ').toLowerCase();
+}
+
+/**
+ * Filtra los canales por proveedor. Si ninguno coincide (p. ej. el API no devuelve
+ * `proveedor` en esta cuenta) se devuelven TODOS: es preferible una lista de más a un
+ * desplegable vacío que bloquee al usuario.
+ */
+function filterChannels(rows: IDataObject[], incluye: RegExp, excluye?: RegExp): IDataObject[] {
+	const filtrados = rows.filter((row) => {
+		const firma = channelSignature(row);
+		if (!incluye.test(firma)) return false;
+		return excluye === undefined || !excluye.test(firma);
+	});
+	return filtrados.length > 0 ? filtrados : rows;
+}
+
+/** Canales de WhatsApp Business API (WABA), los únicos que envían plantillas. */
+export async function getWabaChannels(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
+	const rows = await lcList(this, '/channels/list');
+	return toOptions(filterChannels(rows, /waba|business|cloud|meta|gupshup|360dialog/));
+}
+
+/** Canales de WhatsApp QR (instancias no oficiales), excluyendo los WABA. */
+export async function getWhatsAppChannels(
+	this: ILoadOptionsFunctions,
+): Promise<INodePropertyOptions[]> {
+	const rows = await lcList(this, '/channels/list');
+	return toOptions(filterChannels(rows, /wapi|whatsapp|wa\b|qr/, /waba|business|cloud|gupshup/));
+}
+
 export async function getGroups(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
 	return toOptions(await lcList(this, '/groups/list'));
 }
@@ -255,12 +297,40 @@ export async function getWabaTemplates(
 		.map(({ name, value }) => ({ name, value }));
 }
 
-/** Primer texto legible de una plantilla: nombre, alias del canal o su contenido. */
+/**
+ * Identificadores de Meta del tipo `667058365993373_67d4976c2921a_6360` o UUIDs: son
+ * técnicamente un "nombre" pero no dicen nada, así que se prefiere el contenido.
+ */
+function esIdentificadorOpaco(value: string): boolean {
+	return (
+		/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value) ||
+		/^[0-9a-f]{6,}(_[0-9a-f]{4,}){1,}$/i.test(value) ||
+		/^\d{8,}$/.test(value)
+	);
+}
+
+/** Primer texto legible de una plantilla: nombre, alias o su contenido. */
 function templateLabel(row: IDataObject): string {
+	const opacos: string[] = [];
 	for (const key of ['name', 'nombre', 'templateName', 'elementName', 'title', 'alias']) {
 		const value = row[key];
-		if (typeof value === 'string' && value.trim() !== '') return value.trim();
+		if (typeof value === 'string' && value.trim() !== '') {
+			const limpio = value.trim();
+			if (esIdentificadorOpaco(limpio)) {
+				opacos.push(limpio);
+				continue;
+			}
+			return limpio;
+		}
 	}
+
+	// Solo hay identificadores opacos: mejor mostrar el contenido si existe.
+	const cuerpo = parseTemplateBody(row.data);
+	if (cuerpo !== undefined) {
+		const limpio = cuerpo.replace(/\s+/g, ' ').trim();
+		if (limpio !== '') return limpio.length > 60 ? `${limpio.slice(0, 60)}…` : limpio;
+	}
+	if (opacos.length > 0) return opacos[0];
 
 	// Algunas cuentas entregan el contenido en `data` (texto plano o JSON serializado).
 	const contenido = parseTemplateBody(row.data);
@@ -299,5 +369,7 @@ export const liveConnectLoadOptions = {
 	getPipelines,
 	getStages,
 	getUsers,
+	getWabaChannels,
 	getWabaTemplates,
+	getWhatsAppChannels,
 };

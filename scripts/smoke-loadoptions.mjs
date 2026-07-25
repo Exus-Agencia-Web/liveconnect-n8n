@@ -205,6 +205,56 @@ await test('pickRows tolera array plano, objeto anidado y formas raras', async (
 	assert.deepEqual(await lo.getUsers.call(vacio.ctx), []);
 });
 
+await test('canales filtrados por proveedor según el recurso (WABA vs QR)', async () => {
+	const canales = {
+		status: 1,
+		data: [
+			{ id: 1, nombre: 'Ventas WABA', proveedor: { tipo: 'wabags', nombre: 'WhatsApp Business' } },
+			{ id: 2, nombre: 'Soporte QR', proveedor: { tipo: 'wapi', nombre: 'WhatsApp QR' } },
+			{ id: 3, nombre: 'Web Chat', proveedor: { tipo: 'web', nombre: 'Chat Web' } },
+		],
+	};
+	const waba = ctxFor({ response: canales });
+	assert.deepEqual(await lo.getWabaChannels.call(waba.ctx), [{ name: 'Ventas WABA (1)', value: 1 }]);
+
+	const qr = ctxFor({ response: canales });
+	assert.deepEqual(await lo.getWhatsAppChannels.call(qr.ctx), [{ name: 'Soporte QR (2)', value: 2 }]);
+
+	// Sin coincidencias (el API no devuelve proveedor) → se muestran todos, nunca vacío.
+	const sinProveedor = ctxFor({
+		response: { status: 1, data: [{ id: 9, nombre: 'Canal Genérico' }] },
+	});
+	assert.deepEqual(await lo.getWabaChannels.call(sinProveedor.ctx), [
+		{ name: 'Canal Genérico (9)', value: 9 },
+	]);
+});
+
+await test('nombres opacos de Meta ceden ante el contenido de la plantilla', async () => {
+	const { ctx } = ctxFor({
+		response: {
+			status: 1,
+			data: {
+				templates: [
+					{
+						id: 'a1',
+						name: '667058365993373_67d4976c2921a_6360',
+						data: 'Hola {{1}}, tu cita quedó confirmada',
+						category: 'MARKETING',
+						status: 'APPROVED',
+					},
+					// Opaco y sin contenido: se conserva el identificador, no se pierde la opción.
+					{ id: 'a2', name: '667058365993373_67d4976c2921a_9999', status: 'APPROVED' },
+				],
+			},
+		},
+		params: { resource: 'waba', operation: 'sendTemplate', id_canal: 1 },
+	});
+	const options = await lo.getWabaTemplates.call(ctx);
+	const byValue = Object.fromEntries(options.map((o) => [o.value, o.name]));
+	assert.equal(byValue.a1, 'Hola {{1}}, tu cita quedó confirmada (marketing)');
+	assert.equal(byValue.a2, '667058365993373_67d4976c2921a_9999');
+});
+
 await test('envelope con status<0 → error con el mensaje del API', async () => {
 	const { ctx } = ctxFor({ response: { status: -5, status_message: 'Sin permisos' } });
 	await assert.rejects(() => lo.getUsers.call(ctx), /Sin permisos.*status -5/);
