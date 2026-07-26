@@ -112,10 +112,14 @@ En [`examples/`](examples/) hay workflows importables listos para usar: envío m
 ## Desarrollo
 
 ```bash
-npm install
-npm run build   # tsc + íconos
+npm install --ignore-scripts   # a secas falla: isolated-vm no compila en Node >= 26
+npm run build                  # tsc + íconos
 npm run lint
+npm run verify                 # compara el nodo compilado con el OpenAPI de LiveConnect
+npm run smoke                  # pruebas de humo (triggers, respuesta, token, selectores, plantillas)
 ```
+
+**Antes de tocar el código, lee [`docs/`](docs/)**: ahí está el comportamiento real del API (lo que el spec no documenta), las trampas del runtime de n8n y el historial de diseños que se descartaron y por qué. Empieza por [docs/README.md](docs/README.md).
 
 ## Licencia
 
