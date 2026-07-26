@@ -15,6 +15,7 @@ import {
 	decodeTemplateValue,
 	headerUrlProperty,
 	templateName,
+	templateSendIdentifier,
 } from './TemplateFields';
 
 export const LIVECONNECT_BASE_URL = 'https://api.liveconnect.chat/prod';
@@ -298,7 +299,8 @@ export async function burnTokenForContext(ctx: LcTokenContext): Promise<void> {
  * ------------------------------------------------------------------ */
 
 /** Plantillas ya consultadas: evita una petición por ítem en envíos masivos. */
-const templateCache = new Map<string, { template?: IDataObject; expiresAt: number }>();
+/** Listado de plantillas por canal (clave = id_canal). */
+const templateCache = new Map<string, { rows?: IDataObject[]; expiresAt: number }>();
 const TEMPLATE_CACHE_TTL_MS = 5 * 60 * 1000;
 const MAX_CACHED_TEMPLATES = 100;
 
@@ -326,11 +328,36 @@ async function loadTemplate(
 	idCanal: number,
 	idPlantilla: string,
 ): Promise<IDataObject | undefined> {
-	const key = `${idCanal}:${idPlantilla}`;
-	const cached = templateCache.get(key);
-	if (cached !== undefined && cached.expiresAt > Date.now()) return cached.template;
+	const rows = await loadChannelTemplates(ctx, idCanal);
+	if (rows === undefined) return undefined;
 
-	let template: IDataObject | undefined;
+	const buscado = idPlantilla.trim().toLowerCase();
+	return rows.find((row) => {
+		for (const clave of ['id', 'elementName', 'name', 'templateName']) {
+			const valor = row[clave];
+			if (typeof valor === 'string' && valor.trim().toLowerCase() === buscado) return true;
+		}
+		return false;
+	});
+}
+
+/**
+ * Plantillas del canal, cacheadas.
+ *
+ * Se usa el LISTADO y no `/direct/waba/getTemplate`: ese endpoint identifica la plantilla
+ * por su id de META (o su nombre alterno) y responde `status:-400 Invalid template id
+ * provided` con el id de LiveConnect, que es justo el que hay que enviar. Una sola
+ * consulta por canal sirve además para todas las plantillas y todos los ítems del lote.
+ */
+async function loadChannelTemplates(
+	ctx: IExecuteSingleFunctions,
+	idCanal: number,
+): Promise<IDataObject[] | undefined> {
+	const key = String(idCanal);
+	const cached = templateCache.get(key);
+	if (cached !== undefined && cached.expiresAt > Date.now()) return cached.rows;
+
+	let rows: IDataObject[] | undefined;
 	try {
 		const token = await ensureFreshToken(ctx as unknown as LcTokenContext);
 		const response = (await ctx.helpers.httpRequestWithAuthentication.call(
@@ -338,29 +365,42 @@ async function loadTemplate(
 			LIVECONNECT_CREDENTIALS_NAME,
 			{
 				method: 'POST',
-				url: `${LIVECONNECT_BASE_URL}/direct/waba/getTemplate`,
-				body: { id_canal: idCanal, id: idPlantilla },
+				url: `${LIVECONNECT_BASE_URL}/direct/waba/getTemplates`,
+				body: { id_canal: idCanal },
 				...(token !== undefined ? { headers: { [LIVECONNECT_TOKEN_HEADER]: token } } : {}),
 				json: true,
 			},
 		)) as { status?: number; data?: unknown };
 
 		if (typeof response.status !== 'number' || response.status >= 0) {
-			const data = Array.isArray(response.data) ? response.data[0] : response.data;
-			if (data !== null && typeof data === 'object') template = data as IDataObject;
+			rows = pickTemplateRows(response.data);
 		}
 	} catch {
-		// Si no se puede consultar la plantilla no se bloquea el envío: se manda lo que
-		// el usuario configuró y que sea el API quien valide.
-		template = undefined;
+		// Si no se puede consultar el listado no se bloquea el envío: se manda lo que el
+		// usuario configuró y que sea el API quien valide.
+		rows = undefined;
 	}
 
 	if (templateCache.size >= MAX_CACHED_TEMPLATES) {
 		const oldest = templateCache.keys().next();
 		if (!oldest.done) templateCache.delete(oldest.value);
 	}
-	templateCache.set(key, { template, expiresAt: Date.now() + TEMPLATE_CACHE_TTL_MS });
-	return template;
+	templateCache.set(key, { rows, expiresAt: Date.now() + TEMPLATE_CACHE_TTL_MS });
+	return rows;
+}
+
+/** `data` es un array plano o el objeto `{ templates, paging }` que devuelve el API. */
+function pickTemplateRows(data: unknown): IDataObject[] {
+	if (Array.isArray(data)) return data as IDataObject[];
+	if (data === null || typeof data !== 'object') return [];
+	const contenedor = data as IDataObject;
+	for (const clave of ['templates', 'items', 'list', 'rows', 'results', 'data']) {
+		if (Array.isArray(contenedor[clave])) return contenedor[clave] as IDataObject[];
+	}
+	for (const valor of Object.values(contenedor)) {
+		if (Array.isArray(valor)) return valor as IDataObject[];
+	}
+	return [];
 }
 
 /**
@@ -417,6 +457,11 @@ export async function prepareTemplateSend(
 		typeof f.defaultValue === 'string' ? f.defaultValue : '',
 	);
 	const nombre = templateName(template) ?? idPlantilla;
+	// El identificador correcto depende del proveedor del canal (Gupshup pide el id,
+	// Meta directo el nombre): se recalcula sobre la fila real del listado, así también
+	// se corrige un valor viejo guardado en el nodo.
+	const identificadorReal = templateSendIdentifier(template);
+	if (identificadorReal !== undefined) body.id_plantilla = identificadorReal;
 
 	const total = camposCuerpo.length;
 	if (total > 0) {
@@ -463,18 +508,17 @@ export async function prepareTemplateSend(
 					: '';
 		const yaConfigurada =
 			body.url_imagen_encabezado ?? body.url_video_encabezado ?? body.url_documento_encabezado;
-		if (url === '' && yaConfigurada === undefined) {
+		// La plantilla con medio propio se envía sin URL: el API usa el suyo (comprobado
+		// en vivo). Solo se exige cuando no hay ninguno de los dos.
+		const medioPropio = typeof ejemploUrl === 'string' && ejemploUrl !== '';
+		if (url === '' && yaConfigurada === undefined && !medioPropio) {
 			const medio =
 				headerFormat === 'IMAGE' ? 'una imagen' : headerFormat === 'VIDEO' ? 'un video' : 'un documento';
 			throw new NodeOperationError(
 				this.getNode(),
 				`La plantilla «${nombre}» lleva ${medio} en el encabezado y falta su URL`,
 				{
-					description:
-						`Pega la URL pública ${headerFormat === 'IMAGE' ? 'de la imagen' : headerFormat === 'VIDEO' ? 'del video' : 'del documento'} en el campo "URL del Encabezado".` +
-						(typeof ejemploUrl === 'string' && ejemploUrl !== ''
-							? ` La plantilla trae este ejemplo: ${ejemploUrl}`
-							: ''),
+					description: `Pega la URL pública ${headerFormat === 'IMAGE' ? 'de la imagen' : headerFormat === 'VIDEO' ? 'del video' : 'del documento'} en el campo "URL del Encabezado". Debe ser accesible desde internet.`,
 				},
 			);
 		}

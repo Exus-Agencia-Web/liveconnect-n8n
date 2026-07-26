@@ -295,6 +295,21 @@ await test('UI: con la plantilla por expresión se ofrece la URL (no se puede de
 	assert.ok(visibles.includes('URL del Encabezado'), visibles.join(' , '));
 });
 
+await test('identificador de envío: Gupshup manda el id, Meta directo el nombre', () => {
+	// LiveConnect trabaja con varios proveedores y cada uno resuelve por una clave.
+	assert.equal(tf.templateSendIdentifier(GUPSHUP_VIDEO), '6990cf14-7796-425c-88a8-bb834dd61073');
+	assert.equal(tf.templateSendIdentifier(META), 'confirmacion_cita');
+	assert.equal(tf.templateSendIdentifier({ id: 'solo-id' }), 'solo-id');
+	assert.equal(tf.templateSendIdentifier({}), undefined);
+});
+
+await test('selector: el valor lleva el identificador del proveedor', async () => {
+	const meta = await lo.getWabaTemplates.call(optionsCtx([META]));
+	assert.equal(meta[0].value, 'confirmacion_cita|v2|IMAGE');
+	const gupshup = await lo.getWabaTemplates.call(optionsCtx([GUPSHUP_VIDEO]));
+	assert.equal(gupshup[0].value, '6990cf14-7796-425c-88a8-bb834dd61073|v2|VIDEO');
+});
+
 // --- preSend -------------------------------------------------------------------------
 
 /** Campos "Variable {{n}}" tal como los lee el nodo. */
@@ -315,7 +330,8 @@ function executeCtx({ params = {}, template = META, falla = false } = {}) {
 				httpRequestWithAuthentication: async (_cred, opts) => {
 					calls.push(opts);
 					if (falla) throw new Error('API caída');
-					return { status: 1, data: template };
+					// El preSend consulta el LISTADO del canal (getTemplate exige el id de Meta).
+					return { status: 1, data: { templates: [template], paging: false } };
 				},
 			},
 		},
@@ -339,6 +355,23 @@ await test('preSend: envía el identificador limpio, sin el sufijo del selector'
 	assert.deepEqual(out.body.variables, ['Ana', '30']);
 	assert.equal(out.body.url_video_encabezado, 'https://cdn.test/v.mp4');
 	assert.equal(out.body.numero, '57300');
+});
+
+await test('preSend: corrige el identificador según el proveedor del canal', async () => {
+	// Valor viejo guardado con el id largo de Meta: la fila real dice que ese canal es
+	// Meta directo, así que se envía el nombre.
+	const { ctx } = executeCtx({
+		params: {
+			id_canal: 808,
+			id_plantilla: 'confirmacion_cita|v2|IMAGE',
+			...vars('Ana', '12 de mayo'),
+		},
+		template: { ...META, id: '667058365993373_67d4976c2921a_6360', name: 'confirmacion_cita' },
+	});
+	const out = await prepareTemplateSend.call(ctx, {
+		body: { id_plantilla: 'confirmacion_cita|v2|IMAGE' },
+	});
+	assert.equal(out.body.id_plantilla, 'confirmacion_cita');
 });
 
 await test('preSend: las variables van en el orden de los campos', async () => {
@@ -388,15 +421,37 @@ await test('preSend: hueco en el medio → error que nombra la variable vacía',
 	);
 });
 
-await test('preSend: falta la URL del encabezado → error que explica el medio', async () => {
+await test('preSend: la plantilla con medio propio no exige URL', async () => {
+	// Comprobado en vivo: el API envía el video de la plantilla si no se manda ninguno.
 	const { ctx } = executeCtx({
-		params: { id_canal: 1, id_plantilla: 'tpl_1|v2|IMAGE', ...vars('Ana', '12 de mayo') },
+		params: {
+			id_canal: 4695,
+			id_plantilla: '6990cf14-7796-425c-88a8-bb834dd61073|v2|VIDEO',
+			...vars('Ana', '30'),
+		},
+		template: GUPSHUP_VIDEO,
+	});
+	const out = await prepareTemplateSend.call(ctx, { body: {} });
+	assert.equal(out.body.url_video_encabezado, undefined);
+	assert.deepEqual(out.body.variables, ['Ana', '30']);
+});
+
+await test('preSend: medio sin URL ni ejemplo → error que explica qué pegar', async () => {
+	const sinMedio = {
+		id: 'tpl_img',
+		elementName: 'promo_img',
+		templateType: 'IMAGE',
+		content: 'Hola {{1}}',
+	};
+	const { ctx } = executeCtx({
+		params: { id_canal: 4242, id_plantilla: 'tpl_img|v1|IMAGE', ...vars('Ana') },
+		template: sinMedio,
 	});
 	await assert.rejects(
 		() => prepareTemplateSend.call(ctx, { body: {} }),
 		(err) =>
 			/lleva una imagen en el encabezado/.test(err.message) &&
-			/https:\/\/cdn.test\/foto.jpg/.test(err.description ?? ''),
+			/URL pública de la imagen/.test(err.description ?? ''),
 	);
 });
 
@@ -426,7 +481,7 @@ await test('preSend: "Usar Datos de Ejemplo" completa solo los huecos', async ()
 
 await test('preSend: plantilla sin variables no exige nada', async () => {
 	const { ctx } = executeCtx({
-		params: { id_canal: 4695, id_plantilla: 'fcbcb260-4bc2-4056-8d98-d709dd17f2c0|v0|TEXT' },
+		params: { id_canal: 4696, id_plantilla: 'fcbcb260-4bc2-4056-8d98-d709dd17f2c0|v0|TEXT' },
 		template: GUPSHUP_TEXTO,
 	});
 	const out = await prepareTemplateSend.call(ctx, { body: { numero: '57300' } });
@@ -438,7 +493,7 @@ await test('preSend: plantilla sin variables no exige nada', async () => {
 await test('preSend: plantilla sin variables ignora restos de otra plantilla', async () => {
 	const { ctx } = executeCtx({
 		params: {
-			id_canal: 4695,
+			id_canal: 4697,
 			id_plantilla: 'fcbcb260-4bc2-4056-8d98-d709dd17f2c0|v0|TEXT',
 			...vars('resto', 'de antes'),
 		},
@@ -451,8 +506,8 @@ await test('preSend: plantilla sin variables ignora restos de otra plantilla', a
 await test('preSend: la URL va a la propiedad del formato declarado (video)', async () => {
 	const { ctx } = executeCtx({
 		params: {
-			id_canal: 1,
-			id_plantilla: 'tpl_v|v2|VIDEO',
+			id_canal: 4698,
+			id_plantilla: '6990cf14-7796-425c-88a8-bb834dd61073|v2|VIDEO',
 			...vars('Ana', '30'),
 			url_encabezado: 'https://cdn.test/sin-extension',
 		},
@@ -463,10 +518,52 @@ await test('preSend: la URL va a la propiedad del formato declarado (video)', as
 	assert.equal(out.body.url_imagen_encabezado, undefined);
 });
 
+await test('preSend: consulta el LISTADO, no getTemplate (que pide el id de Meta)', async () => {
+	const { ctx, calls } = executeCtx({
+		params: { id_canal: 606, id_plantilla: 'tpl_1|v2|IMAGE', ...vars('Ana', '12 de mayo') },
+	});
+	await prepareTemplateSend.call(ctx, { body: {} });
+	assert.equal(calls.length, 1);
+	assert.match(calls[0].url, /\/direct\/waba\/getTemplates$/);
+	assert.deepEqual(calls[0].body, { id_canal: 606 });
+});
+
+await test('preSend: una consulta por canal sirve para varias plantillas', async () => {
+	const dos = {
+		getNode: () => ({ name: 'test' }),
+		getCredentials: async () => ({}),
+		helpers: {
+			httpRequest: async () => ({ status: 1, data: { token: 'T' } }),
+			httpRequestWithAuthentication: async () => {
+				llamadas++;
+				return { status: 1, data: { templates: [META, META_SIMPLE] } };
+			},
+		},
+	};
+	let llamadas = 0;
+	const conParams = (params) => ({ ...dos, getNodeParameter: (n, f) => params[n] ?? f });
+
+	const a = await prepareTemplateSend.call(
+		conParams({
+			id_canal: 707,
+			id_plantilla: 'tpl_1|v2|IMAGE',
+			...vars('Ana', '12 de mayo'),
+		}),
+		{ body: {} },
+	);
+	const b = await prepareTemplateSend.call(
+		conParams({ id_canal: 707, id_plantilla: 'tpl_2|v0|NONE' }),
+		{ body: {} },
+	);
+	assert.equal(llamadas, 1, 'la segunda plantilla debe salir de la caché del canal');
+	assert.deepEqual(a.body.variables, ['Ana', '12 de mayo']);
+	assert.equal(b.body.variables, undefined);
+});
+
 await test('preSend: la plantilla se consulta una sola vez (caché entre ítems)', async () => {
 	const params = {
 		id_canal: 77,
-		id_plantilla: 'tpl_cache|v2|IMAGE',
+		id_plantilla: 'tpl_1|v2|IMAGE',
 		...vars('Ana', '12 de mayo'),
 		url_encabezado: 'https://x/f.jpg',
 	};
@@ -481,7 +578,7 @@ await test('preSend: la plantilla se consulta una sola vez (caché entre ítems)
 
 await test('preSend: si no se puede consultar la plantilla, envía igual', async () => {
 	const { ctx } = executeCtx({
-		params: { id_canal: 99, id_plantilla: 'tpl_sin_red|v1|NONE', ...vars('Ana') },
+		params: { id_canal: 99, id_plantilla: 'tpl_1|v1|NONE', ...vars('Ana') },
 		falla: true,
 	});
 	const out = await prepareTemplateSend.call(ctx, { body: { numero: '57300' } });

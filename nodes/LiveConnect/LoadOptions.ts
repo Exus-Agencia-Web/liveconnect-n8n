@@ -1,7 +1,7 @@
 import type { IDataObject, ILoadOptionsFunctions, INodePropertyOptions } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
 
-import { buildTemplateLayout, encodeTemplateValue } from './TemplateFields';
+import { buildTemplateLayout, encodeTemplateValue, templateSendIdentifier } from './TemplateFields';
 
 import type { LcTokenContext } from './GenericFunctions';
 import {
@@ -300,10 +300,9 @@ export async function getWabaTemplates(
 				name: detalles !== '' ? `${nombre} · ${detalles}` : nombre,
 				// El valor codifica qué necesita la plantilla para que el nodo muestre solo
 				// los campos que aplican (ver encodeTemplateValue).
-				// El identificador SIEMPRE es el `id` de LiveConnect: con el nombre de la
-				// plantilla el API responde "Invalid template id provided" (verificado).
+				// El identificador depende del proveedor del canal (ver templateSendIdentifier).
 				value: encodeTemplateValue(
-					String(row.id),
+					templateSendIdentifier(row) ?? String(row.id),
 					countBodyVariables(row),
 					buildTemplateLayout(row).headerFormat,
 				),

@@ -103,6 +103,30 @@ export function templateContent(template: IDataObject): string {
 	);
 }
 
+/**
+ * Identificador con el que hay que pedirle a LiveConnect que envíe la plantilla.
+ *
+ * LiveConnect trabaja con VARIOS proveedores de WhatsApp y cada uno resuelve por una
+ * clave distinta (`sendTemplate` documenta "Id/nombre de la plantilla"):
+ * - **Gupshup** (fila con `elementName`/`templateType`): el `id` (UUID). Con el nombre
+ *   responde `status:-1` «Invalid template id provided».
+ * - **Meta directo** (fila con `components`): el NOMBRE. Con el id largo de Meta
+ *   (`667058365993373_67d4976c2921a_6360`) no resuelve.
+ *
+ * Se decide por la forma de la fila, que es lo único que distingue al proveedor.
+ */
+export function templateSendIdentifier(template: IDataObject): string | undefined {
+	const esMeta = asArray(template.components).length > 0;
+	const claves = esMeta
+		? ['name', 'templateName', 'elementName', 'id']
+		: ['id', 'elementName', 'name', 'templateName'];
+	for (const clave of claves) {
+		const valor = asText(template[clave]);
+		if (valor !== undefined) return valor.trim();
+	}
+	return undefined;
+}
+
 /** Nombre legible de la plantilla tal como lo expone LiveConnect. */
 export function templateName(template: IDataObject): string | undefined {
 	for (const key of ['elementName', 'name', 'nombre', 'templateName', 'title']) {

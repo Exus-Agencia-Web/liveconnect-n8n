@@ -137,7 +137,15 @@ Cómo se logra sin que n8n pueda consultar el API para decidir la UI: **el valor
 
 **Formato real de las plantillas (proveedor Gupshup, NO los `components` de Meta)**: `id` (UUID), `elementName`, `content` con los `{{n}}`, `templateType` (TEXT/IMAGE/VIDEO/DOCUMENT), `mediaUrl`, `buttons`, `containerMeta`, `languageCode`, `status`. `buildTemplateLayout` despacha entre `buildLayoutFromGupshup` y `buildLayoutFromMetaComponents` según haya `components`.
 
-**El identificador de envío es el `id` (UUID), NUNCA el nombre**: con `elementName` el API responde `status:-1` «Invalid template id provided» (probado en vivo contra la cuenta real).
+**LiveConnect trabaja con VARIOS proveedores de WhatsApp y el identificador de envío depende de cuál sea** (`templateSendIdentifier` decide por la forma de la fila):
+- **Gupshup** (fila con `elementName`/`templateType`, sin `components`) → el **`id` (UUID)**. Con `elementName` responde `status:-1` «Invalid template id provided» (probado en vivo).
+- **Meta directo** (fila con `components`) → el **nombre**. El id largo de Meta (`667058365993373_…`) no resuelve.
+
+El preSend recalcula el identificador sobre la fila real del listado, así corrige también los valores viejos guardados en el nodo.
+
+**La plantilla se consulta con el LISTADO `/direct/waba/getTemplates` (caché por canal), NO con `/direct/waba/getTemplate`**: ese endpoint identifica por el id de **Meta** o el nombre alterno y responde `status:-400 Invalid template id provided` con el id de LiveConnect — por eso en v0.9.0 el preSend no lograba leer la plantilla y no validaba nada (enviaba con las variables vacías). Una consulta por canal sirve para todas las plantillas y todos los ítems del lote.
+
+**Encabezado con medio**: si la plantilla trae su propio `mediaUrl`, la URL NO se exige (el API usa el de la plantilla, comprobado en vivo); solo se exige cuando no hay ninguno de los dos.
 
 Quién hace el trabajo:
 - **El selector** (`getWabaTemplates` → `describeTemplateNeeds`) etiqueta con lo que hay que rellenar: `promo_48h · es · 2 variables · video`. Aprobadas primero.
