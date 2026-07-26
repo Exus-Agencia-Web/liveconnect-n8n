@@ -106,9 +106,9 @@ function optionsCtx(templates) {
 
 await test('selector: la etiqueta dice cuántas variables y qué medio pide', async () => {
 	const options = await lo.getWabaTemplates.call(optionsCtx([PLANTILLA, PLANTILLA_SIMPLE]));
-	const byValue = Object.fromEntries(options.map((o) => [o.value, o.name]));
-	assert.equal(byValue.tpl_1, 'confirmacion_cita · es · 2 variables · imagen · botón');
-	assert.equal(byValue.tpl_2, 'aviso · es · sin variables');
+	const nombres = options.map((o) => o.name);
+	assert.ok(nombres.includes('confirmacion_cita · es · 2 variables · imagen · botón'), nombres.join(' , '));
+	assert.ok(nombres.includes('aviso · es · sin variables'), nombres.join(' , '));
 });
 
 await test('selector: sin components cuenta las variables del texto del cuerpo', async () => {
@@ -116,6 +116,36 @@ await test('selector: sin components cuenta las variables del texto del cuerpo',
 		optionsCtx([{ id: 'x', name: 'promo', language: 'es', data: 'Hola {{1}}, {{2}}' }]),
 	);
 	assert.match(options[0].name, /2 variables/);
+});
+
+// --- valor codificado del selector (controla qué campos se ven) ---
+
+await test('valor del selector: codifica y decodifica lo que pide la plantilla', () => {
+	assert.equal(tf.encodeTemplateValue('confirmacion_cita', 2, 'IMAGE'), 'confirmacion_cita|v2|IMAGE');
+	assert.deepEqual(tf.decodeTemplateValue('confirmacion_cita|v2|IMAGE'), {
+		identificador: 'confirmacion_cita',
+		variables: 2,
+		headerFormat: 'IMAGE',
+	});
+	// Sin variables ni medio: los campos se ocultan por displayOptions.
+	assert.deepEqual(tf.decodeTemplateValue('aviso|v0|NONE'), {
+		identificador: 'aviso',
+		variables: 0,
+		headerFormat: 'NONE',
+	});
+	// Valor antiguo (solo el identificador): se usa tal cual.
+	assert.deepEqual(tf.decodeTemplateValue('667058365993373_67d4976c2921a_6360'), {
+		identificador: '667058365993373_67d4976c2921a_6360',
+	});
+	// Un nombre con "|" no rompe el identificador.
+	assert.equal(tf.decodeTemplateValue('raro|nombre|v1|TEXT').identificador, 'raro|nombre');
+});
+
+await test('selector: el valor lleva el nombre, las variables y el formato', async () => {
+	const options = await lo.getWabaTemplates.call(optionsCtx([PLANTILLA, PLANTILLA_SIMPLE]));
+	const valores = options.map((o) => o.value);
+	assert.ok(valores.includes('confirmacion_cita|v2|IMAGE'), valores.join(' , '));
+	assert.ok(valores.includes('aviso|v0|NONE'), valores.join(' , '));
 });
 
 // --- preSend ---

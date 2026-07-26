@@ -193,6 +193,49 @@ export function buildTemplateLayout(template: IDataObject): TemplateLayout {
 	return { fields: unicos, headerFormat, buttons };
 }
 
+/**
+ * El valor del selector de plantillas codifica lo que esa plantilla necesita:
+ * `nombre|v2|IMAGE` (identificador, nº de variables del cuerpo, formato del encabezado).
+ *
+ * Sirve para dos cosas que n8n no permite de otro modo: mostrar los campos "Variables" y
+ * "URL del Encabezado" SOLO cuando la plantilla los usa (displayOptions únicamente puede
+ * mirar otros parámetros, nunca datos del API), y validar sin volver a consultarla.
+ * Es el mismo patrón del nodo oficial de WhatsApp, cuyo valor es `nombre|idioma`.
+ */
+export function encodeTemplateValue(
+	identificador: string,
+	variables: number,
+	headerFormat: HeaderFormat,
+): string {
+	return `${identificador}|v${variables}|${headerFormat}`;
+}
+
+export interface DecodedTemplateValue {
+	/** Nombre o ID con el que el API resuelve la plantilla. */
+	identificador: string;
+	/** Número de variables del cuerpo, o `undefined` si el valor no lo codifica. */
+	variables?: number;
+	headerFormat?: HeaderFormat;
+}
+
+/** Lee el valor del selector. Tolera valores antiguos (solo el identificador). */
+export function decodeTemplateValue(value: string): DecodedTemplateValue {
+	const partes = value.split('|');
+	if (partes.length < 3) return { identificador: value };
+
+	const formato = partes[partes.length - 1].toUpperCase();
+	const marcador = partes[partes.length - 2];
+	const identificador = partes.slice(0, -2).join('|');
+
+	const variables = /^v\d+$/.test(marcador) ? Number(marcador.slice(1)) : undefined;
+	const headerFormat = ['IMAGE', 'VIDEO', 'DOCUMENT', 'TEXT', 'NONE'].includes(formato)
+		? (formato as HeaderFormat)
+		: undefined;
+
+	if (variables === undefined || headerFormat === undefined) return { identificador: value };
+	return { identificador, variables, headerFormat };
+}
+
 /** Propiedad del body que corresponde a la URL del encabezado según su formato. */
 export function headerUrlProperty(formato: HeaderFormat): string | undefined {
 	if (formato === 'IMAGE') return 'url_imagen_encabezado';

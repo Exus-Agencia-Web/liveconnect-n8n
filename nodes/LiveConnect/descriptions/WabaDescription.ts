@@ -354,11 +354,17 @@ export const wabaFields: INodeProperties[] = [
 		default: '',
 		placeholder: 'Ana, 12 de mayo',
 		description:
-			'Valores de las variables del cuerpo, separados por comas y en el orden {{1}}, {{2}}… El desplegable de arriba indica cuántas pide la plantilla. Déjalo vacío y activa "Usar Datos de Ejemplo" para una prueba rápida.',
+			'Valores de las variables, separados por comas y en el orden {{1}}, {{2}}… El desplegable de arriba indica cuántas pide la plantilla. Déjalo vacío y activa "Usar Datos de Ejemplo" para una prueba rápida.',
 		displayOptions: {
 			show: {
 				resource: ['waba'],
 				operation: ['sendTemplate'],
+			},
+			// El valor del selector codifica cuántas variables pide la plantilla: si son
+			// cero, este campo no aparece. Con una expresión no se puede saber, así que
+			// se muestra por si acaso.
+			hide: {
+				id_plantilla: [{ _cnd: { includes: '|v0|' } }],
 			},
 		},
 	},
@@ -369,11 +375,16 @@ export const wabaFields: INodeProperties[] = [
 		default: '',
 		placeholder: 'https://…',
 		description:
-			'URL pública de la imagen, video o documento del encabezado. Solo hace falta si el desplegable de la plantilla indica que lleva uno; el nodo la coloca en el campo que corresponda.',
+			'URL pública de la imagen, video o documento del encabezado de la plantilla. El nodo la coloca en el campo que corresponda al tipo de medio.',
 		displayOptions: {
 			show: {
 				resource: ['waba'],
 				operation: ['sendTemplate'],
+			},
+			// Solo aparece cuando la plantilla elegida lleva un medio en el encabezado
+			// (el valor del selector termina en IMAGE, VIDEO o DOCUMENT).
+			hide: {
+				id_plantilla: [{ _cnd: { regex: '\\|(NONE|TEXT)$' } }],
 			},
 		},
 		// El preSend consulta la plantilla, valida lo que falta y reparte los valores

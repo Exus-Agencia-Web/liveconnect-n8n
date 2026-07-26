@@ -160,9 +160,10 @@ await test('getWabaTemplates lee data.templates (respuesta anidada real del API)
 	});
 	const options = await lo.getWabaTemplates.call(con.ctx);
 	// Aprobadas primero, luego alfabético.
+	// El valor codifica el nombre + lo que pide la plantilla (controla qué campos se ven).
 	assert.deepEqual(options, [
-		{ name: 'bienvenida · es · sin variables', value: '123456789' },
-		{ name: 'aviso_pago · es_CO · sin variables · PENDING', value: '987654321' },
+		{ name: 'bienvenida · es · sin variables', value: 'bienvenida|v0|NONE' },
+		{ name: 'aviso_pago · es_CO · sin variables · PENDING', value: 'aviso_pago|v0|NONE' },
 	]);
 	assert.deepEqual(con.calls[0].body, { id_canal: 67095 });
 });
@@ -184,11 +185,12 @@ await test('plantillas sin name: usa campos alternativos o el contenido, no el U
 	});
 	const options = await lo.getWabaTemplates.call(ctx);
 	// El sufijo describe lo que pide cada plantilla (aquí, ninguna tiene variables).
+	// Sin `name`, el identificador del valor es el id de la plantilla.
 	assert.deepEqual(options, [
-		{ name: 'Hola {{1}}, tu pedido ya salió · 1 variable', value: 'uuid-3' },
-		{ name: 'pago_recibido · sin variables', value: 'uuid-2' },
-		{ name: 'recordatorio_cita · sin variables', value: 'uuid-1' },
-		{ name: 'ID uuid-4 · sin variables · FAILED', value: 'uuid-4' },
+		{ name: 'Hola {{1}}, tu pedido ya salió · 1 variable', value: 'uuid-3|v1|NONE' },
+		{ name: 'pago_recibido · sin variables', value: 'uuid-2|v0|NONE' },
+		{ name: 'recordatorio_cita · sin variables', value: 'uuid-1|v0|NONE' },
+		{ name: 'ID uuid-4 · sin variables · FAILED', value: 'uuid-4|v0|NONE' },
 	]);
 });
 
@@ -252,8 +254,9 @@ await test('nombres opacos de Meta ceden ante el contenido de la plantilla', asy
 	});
 	const options = await lo.getWabaTemplates.call(ctx);
 	const byValue = Object.fromEntries(options.map((o) => [o.value, o.name]));
-	assert.equal(byValue.a1, 'Hola {{1}}, tu cita quedó confirmada · 1 variable');
-	assert.equal(byValue.a2, '667058365993373_67d4976c2921a_9999 · sin variables');
+	const nombres = options.map((o) => o.name);
+	assert.ok(nombres.includes('Hola {{1}}, tu cita quedó confirmada · 1 variable'), nombres.join(' , '));
+	assert.ok(nombres.includes('667058365993373_67d4976c2921a_9999 · sin variables'), nombres.join(' , '));
 });
 
 await test('envelope con status<0 → error con el mensaje del API', async () => {

@@ -1,7 +1,7 @@
 import type { IDataObject, ILoadOptionsFunctions, INodePropertyOptions } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
 
-import { buildTemplateLayout } from './TemplateFields';
+import { buildTemplateLayout, encodeTemplateValue } from './TemplateFields';
 
 import type { LcTokenContext } from './GenericFunctions';
 import {
@@ -296,7 +296,15 @@ export async function getWabaTemplates(
 			const nombre = templateLabel(row);
 			return {
 				name: detalles !== '' ? `${nombre} · ${detalles}` : nombre,
-				value: row.id as string | number,
+				// El valor codifica qué necesita la plantilla para que el nodo muestre solo
+				// los campos que aplican (ver encodeTemplateValue).
+				value: encodeTemplateValue(
+					typeof row.name === 'string' && row.name.trim() !== ''
+						? row.name.trim()
+						: String(row.id),
+					countBodyVariables(row),
+					buildTemplateLayout(row).headerFormat,
+				),
 				// Las aprobadas primero: son las únicas que se pueden enviar.
 				aprobada: estado === '' || estado === 'APPROVED',
 			};
@@ -308,14 +316,20 @@ export async function getWabaTemplates(
 		.map(({ name, value }) => ({ name, value }));
 }
 
+/** Variables del cuerpo y del encabezado de texto que hay que rellenar. */
+function countBodyVariables(row: IDataObject): number {
+	return buildTemplateLayout(row).fields.filter(
+		(f) =>
+			f.id.startsWith('body_') || (f.id.startsWith('header_') && !f.id.startsWith('header_media')),
+	).length;
+}
+
 /** Resumen de lo que la plantilla exige: "2 variables · imagen · botón". */
 function describeTemplateNeeds(row: IDataObject): string {
 	const { fields, headerFormat } = buildTemplateLayout(row);
 	const partes: string[] = [];
 
-	const variables = fields.filter(
-		(f) => f.id.startsWith('body_') || (f.id.startsWith('header_') && !f.id.startsWith('header_media')),
-	).length;
+	const variables = countBodyVariables(row);
 	if (variables > 0) partes.push(variables === 1 ? '1 variable' : `${variables} variables`);
 
 	if (headerFormat === 'IMAGE') partes.push('imagen');

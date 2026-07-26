@@ -10,7 +10,7 @@ import type {
 } from 'n8n-workflow';
 import { NodeApiError, NodeOperationError } from 'n8n-workflow';
 
-import { buildTemplateLayout, headerUrlProperty } from './TemplateFields';
+import { buildTemplateLayout, decodeTemplateValue, headerUrlProperty } from './TemplateFields';
 
 export const LIVECONNECT_BASE_URL = 'https://api.liveconnect.chat/prod';
 export const LIVECONNECT_TOKEN_HEADER = 'PageGearToken';
@@ -362,7 +362,12 @@ export async function prepareTemplateSend(
 	const body = { ...((bodyActual as IDataObject | undefined) ?? {}) };
 
 	const idCanal = Number(this.getNodeParameter('id_canal', 0));
-	const idPlantilla = String(this.getNodeParameter('id_plantilla', ''));
+	// El selector codifica lo que la plantilla necesita: hay que quedarse con el
+	// identificador antes de mandarlo al API.
+	const { identificador: idPlantilla } = decodeTemplateValue(
+		String(this.getNodeParameter('id_plantilla', '')),
+	);
+	body.id_plantilla = idPlantilla;
 	const urlEncabezado = String(this.getNodeParameter('url_encabezado', '') ?? '').trim();
 	const usarEjemplo = this.getNodeParameter('additionalFields.usar_ejemplo', false) as boolean;
 	let variables = parseCsv(this.getNodeParameter('variables', ''));
