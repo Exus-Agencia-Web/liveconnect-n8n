@@ -78,6 +78,19 @@ Regla de oro: **cierra siempre con una acción `input`** (vacía sirve) — sin 
 
 Los campos de ID (canal, equipo, agente, pipeline, etapa, origen de lead, categoría, asistente, plantilla WABA) son **listas desplegables** que se cargan desde tu propia cuenta de LiveConnect: no hace falta buscar los IDs a mano. Las etapas se filtran por el pipeline elegido y las plantillas por el canal WABA elegido. Si prefieres pasar un ID desde otro nodo, usa el modo expresión del campo.
 
+## Enviar una plantilla de WhatsApp
+
+Es la operación que más datos combina, así que el nodo la resuelve por ti:
+
+1. Elige el **Canal** (solo aparecen los canales WhatsApp) y la **Plantilla**. La etiqueta del desplegable ya dice lo que hace falta: `promo_48h · es · 2 variables · video`.
+2. Aparecen **exactamente** los campos que esa plantilla necesita: `Variable {{1}}`, `Variable {{2}}`… y `URL del Encabezado` solo si la plantilla lleva imagen, video o documento. Si no lleva nada, no se muestra nada.
+3. **Execute step**. Si falta algo, el error dice cuál: *«La plantilla promo_48h necesita 2 variables y falta el valor de {{2}}»*.
+
+Atajos útiles:
+
+- **Campos Adicionales → Usar Datos de Ejemplo**: rellena lo que dejes vacío con los ejemplos que trae la plantilla, para enviarte una prueba sin escribir nada.
+- **Envío masivo con una plantilla distinta por fila**: pon una expresión en *ID de la Plantilla* y manda los valores por *Campos Adicionales → Variables del Cuerpo Separadas por Comas*, en el orden `{{1}}, {{2}}…` (ver [`examples/02-envio-masivo-plantillas-waba.json`](examples/02-envio-masivo-plantillas-waba.json)).
+
 ## Respuesta del API
 
 LiveConnect responde siempre `{ status, status_message, data }` (`status > 0` éxito, `status < 0` error):

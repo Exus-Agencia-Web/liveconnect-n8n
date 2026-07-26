@@ -121,32 +121,30 @@ Mapeo: `id_canal`→getChannels · `id_grupo`/`id_team`/`id_to_delegate`→getGr
 
 **Refresco de selectores dependientes**: sin `typeOptions.loadOptionsDependsOn` las opciones quedan cacheadas y no se recargan al cambiar el campo del que dependen. Se declara con **ruta relativa `&`** (`['&id_canal']`, `['&id_pipeline']`), que resuelve al campo hermano y por eso sirve igual top-level que dentro de una colección (`node-parameters/path-utils.js:22`).
 
-## Plantillas WABA: 4 campos planos (v0.8.0 — diseño vigente)
+## Plantillas WABA: un campo por variable (v0.9.0 — diseño vigente)
 
-Enviar una plantilla son campos normales, **sin resourceMapper y sin duplicidad**: `ID del Canal` · `Número` · `ID de la Plantilla` · `Variables` (CSV en orden) · `URL del Encabezado`, y en Campos Adicionales solo lo que no se repite (Botones, Mensaje Adicional, Equipo a Delegar, Variables del Encabezado, **Usar Datos de Ejemplo**).
+Enviar una plantilla son campos normales, **sin resourceMapper y sin duplicidad**. El usuario ve solo lo que su plantilla necesita:
 
-Dos iteraciones previas fallaron por lo mismo: **dar dos caminos para lo mismo** (un campo "inteligente" + las mismas opciones sueltas en Campos Adicionales) y meter la UI de mapeo donde bastaban campos de texto. El nodo oficial de WhatsApp tampoco usa resourceMapper (`MessagesDescription.ts:1118-1210`).
-
-Quién hace el trabajo:
-- **El selector** (`getWabaTemplates` → `describeTemplateNeeds`) dice lo que hay que rellenar: `bienvenida · es · 2 variables · imagen · botón`.
-- **El preSend `prepareTemplateSend`** consulta la plantilla (caché en memoria por `id_canal+id_plantilla`, TTL 5 min, para no pedirla en cada ítem), coloca la URL en `url_imagen|video|documento_encabezado` según el formato **declarado** por la plantilla, y **valida con mensajes que enseñan**: *«La plantilla X necesita 2 variables y recibió 1 … Por ejemplo: Ana, 12 de mayo»*. Si la consulta falla, NO bloquea: envía lo configurado.
-- `buildTemplateLayout` cuenta las variables por los `{{n}}` del texto y, si no hay `components`, usa `data` (texto del cuerpo) como respaldo.
-
-## Historial: campo "Contenido de la Plantilla" (v0.7.0, retirado)
-
-`type: 'resourceMapper'` (`resourceMapperMethod: getTemplateFields`) que devuelve **UN único campo** `id: 'datos'`, `type: 'object'` con `defaultValue` = la estructura JSON de la plantilla. Truco clave: un `ResourceMapperField` de tipo `object` se renderiza como **editor JSON** (`MappingFields.vue:267-273` mapea object/array → `json`), y `defaultValue` es lo que lo prellena (interfaces.d.ts:2321 · ResourceMapper.vue:93). Así se logra "un campo JSON que se llena solo", que n8n no permite en un `type: 'json'` normal.
-
-Estructura generada (estilo Meta, solo las claves que la plantilla usa):
-```jsonc
-{ "header": { "type": "image", "url": "…" },      // o { "type": "text", "variables": [...] }
-  "body": ["Ana", "12 de mayo"],
-  "buttons": [{ "index": 0, "type": "url", "parameter": "…" }] }
+```
+ID del Canal · Número · ID de la Plantilla        ← siempre
+Variable {{1}} … Variable {{10}}                   ← tantas como pida la plantilla
+URL del Encabezado                                 ← solo si lleva imagen/video/documento
+▸ Campos Adicionales (botones, mensaje, delegar, variables del encabezado,
+                      Usar Datos de Ejemplo, Variables del Cuerpo Separadas por Comas)
 ```
 
-- `TemplateFields.ts` parsea los `components` crudos de Meta: las variables se detectan por los `{{n}}` **del texto** (no dependen de que haya `example`, así nunca falta un dato obligatorio); HEADER IMAGE/VIDEO/DOCUMENT → `header.url`; BUTTONS con parámetro dinámico (URL con `{{n}}` o COPY_CODE). Carruseles (`cards`) NO soportados aún.
-- `templateExampleToBody` traduce esa estructura a las propiedades reales (`variables`, `variables_encabezado`, `url_*_encabezado`, `buttons`) y la aplica un **preSend** (`applyTemplateData`), no `routing.send`: un solo campo alimenta varias propiedades. **Lo que el usuario escriba en Campos Adicionales gana** sobre lo precargado.
-- `buildTemplateLayout` + `splitTemplateValues` (un campo por variable, IDs `body_1`/`header_media_IMAGE`/`button_1`) se conservan **solo** como ruta de compatibilidad para nodos configurados con v0.6.0.
-- El formato de `buttons` en el body no está documentado en el spec: se envía lo que trae el JSON (`{index, type, parameter}`) como mejor esfuerzo y el campo `buttons` de Campos Adicionales permite sobrescribirlo.
+Cómo se logra sin que n8n pueda consultar el API para decidir la UI: **el valor del selector codifica lo que la plantilla pide** — `<id>|v<N>|<FORMATO>` (`encodeTemplateValue`/`decodeTemplateValue`). Los `displayOptions` de cada campo miran ese valor con `_cnd.regex` (`variable_3` se muestra con `\|v([3-9]|\d{2,})\|`; la URL se oculta con `['', {regex:'\|(NONE|TEXT)$'}]`). Es el patrón del nodo oficial de WhatsApp, cuyo valor es `nombre|idioma`. Verificado con el propio `NodeHelpers.displayParameter` en `smoke-template-fields.mjs`.
+
+**Formato real de las plantillas (proveedor Gupshup, NO los `components` de Meta)**: `id` (UUID), `elementName`, `content` con los `{{n}}`, `templateType` (TEXT/IMAGE/VIDEO/DOCUMENT), `mediaUrl`, `buttons`, `containerMeta`, `languageCode`, `status`. `buildTemplateLayout` despacha entre `buildLayoutFromGupshup` y `buildLayoutFromMetaComponents` según haya `components`.
+
+**El identificador de envío es el `id` (UUID), NUNCA el nombre**: con `elementName` el API responde `status:-1` «Invalid template id provided» (probado en vivo contra la cuenta real).
+
+Quién hace el trabajo:
+- **El selector** (`getWabaTemplates` → `describeTemplateNeeds`) etiqueta con lo que hay que rellenar: `promo_48h · es · 2 variables · video`. Aprobadas primero.
+- **El preSend `prepareTemplateSend`** cuelga del campo `numero` — **no de un campo que se pueda ocultar**: n8n NO ejecuta los `preSend` de propiedades no visibles (routing-node.ts:804-814), y ese fue el bug de v0.8.2 (el valor codificado salía crudo al API). Consulta la plantilla (caché en memoria por `id_canal+id_plantilla`, TTL 5 min), recorta las variables a las que la plantilla declara (al cambiar de plantilla n8n conserva lo escrito en los campos ya ocultos), coloca la URL en `url_imagen|video|documento_encabezado` según el formato declarado y **valida nombrando el hueco**: *«La plantilla X necesita 2 variables y falta el valor de {{2}}»*. Si la consulta falla, NO bloquea: envía lo configurado.
+- **Plantilla elegida por expresión** (envío masivo con plantilla distinta por fila): `displayOptions` no evalúa expresiones, así que no se puede saber cuántos campos mostrar → para ese caso está *Campos Adicionales → Variables del Cuerpo Separadas por Comas* (`variables_csv`), respaldo que solo se usa si los campos numerados están vacíos.
+
+Historial de lo que NO funcionó (no repetir): v0.6.0 un campo por variable vía `resourceMapper`; v0.7.0 un único campo JSON prellenado (`ResourceMapperField` de `type: 'object'` → editor JSON); v0.8.0 CSV plano. Las tres fallaron por lo mismo: **dos caminos para lo mismo** (campo "inteligente" + las mismas opciones sueltas en Campos Adicionales) o pedir al usuario que arme una estructura. Carruseles (`cards`) siguen sin soporte.
 
 ## Gotchas de build/publicación
 

@@ -78,14 +78,97 @@ function field(
  * obligatorio en el envío.
  */
 export function buildTemplateLayout(template: IDataObject): TemplateLayout {
+	const components = asArray(template.components)
+		.map((component) => asObject(component))
+		.filter((component): component is IDataObject => component !== undefined);
+
+	// Formato real de LiveConnect (proveedor Gupshup): el texto con los marcadores vive
+	// en `content` y el tipo de medio en `templateType`; no hay `components` de Meta.
+	if (components.length === 0) {
+		return buildLayoutFromGupshup(template);
+	}
+
+	return buildLayoutFromMetaComponents(template, components);
+}
+
+/** Texto de la plantilla con sus marcadores {{n}}, en cualquiera de sus variantes. */
+export function templateContent(template: IDataObject): string {
+	const containerMeta = asObject(template.containerMeta) ?? {};
+	return (
+		asText(template.content) ??
+		asText(containerMeta.data) ??
+		asText(template.data) ??
+		asText(template.preview) ??
+		''
+	);
+}
+
+/** Nombre legible de la plantilla tal como lo expone LiveConnect. */
+export function templateName(template: IDataObject): string | undefined {
+	for (const key of ['elementName', 'name', 'nombre', 'templateName', 'title']) {
+		const value = asText(template[key]);
+		if (value !== undefined) return value;
+	}
+	return undefined;
+}
+
+function buildLayoutFromGupshup(template: IDataObject): TemplateLayout {
+	const fields: ResourceMapperField[] = [];
+	const containerMeta = asObject(template.containerMeta) ?? {};
+
+	// Variables posicionales {{1}}, {{2}}… del cuerpo.
+	const total = countPlaceholders(templateContent(template));
+	for (let i = 0; i < total; i++) {
+		fields.push(field(`${TEMPLATE_FIELD_PREFIX.body}${i + 1}`, `Variable {{${i + 1}}}`));
+	}
+
+	// El tipo de plantilla declara si lleva medio en el encabezado.
+	const tipo = (asText(template.templateType) ?? 'TEXT').toUpperCase();
+	let headerFormat: HeaderFormat = 'NONE';
+	if (tipo === 'IMAGE' || tipo === 'VIDEO' || tipo === 'DOCUMENT') {
+		headerFormat = tipo;
+		const etiqueta = tipo === 'IMAGE' ? 'imagen' : tipo === 'VIDEO' ? 'video' : 'documento';
+		fields.push(
+			field(
+				`${TEMPLATE_FIELD_PREFIX.headerMedia}_${tipo}`,
+				`URL de ${etiqueta}`,
+				asText(template.mediaUrl) ?? asText(containerMeta.mediaUrl),
+			),
+		);
+	} else if (tipo === 'TEXT') {
+		headerFormat = 'TEXT';
+	}
+
+	const crudos = Array.isArray(template.buttons) ? template.buttons : containerMeta.buttons;
+	const buttons = asArray(crudos)
+		.map((button) => asObject(button))
+		.filter((button): button is IDataObject => button !== undefined);
+
+	buttons.forEach((button, index) => {
+		const url = asText(button.url) ?? '';
+		const tipoBoton = (asText(button.type) ?? '').toUpperCase();
+		if (countPlaceholders(url) === 0 && tipoBoton !== 'COPY_CODE') return;
+		const etiqueta = asText(button.text) ?? `Botón ${index + 1}`;
+		fields.push(
+			field(
+				`${TEMPLATE_FIELD_PREFIX.button}${index + 1}`,
+				`Botón · ${etiqueta}`,
+				asText(asArray(button.example)[0]),
+			),
+		);
+	});
+
+	return { fields, headerFormat, buttons };
+}
+
+function buildLayoutFromMetaComponents(
+	template: IDataObject,
+	components: IDataObject[],
+): TemplateLayout {
 	const fields: ResourceMapperField[] = [];
 	let headerFormat: HeaderFormat = 'NONE';
 	let buttons: IDataObject[] = [];
 	let hayCuerpo = false;
-
-	const components = asArray(template.components)
-		.map((component) => asObject(component))
-		.filter((component): component is IDataObject => component !== undefined);
 
 	for (const component of components) {
 		const tipo = (asText(component.type) ?? '').toUpperCase();

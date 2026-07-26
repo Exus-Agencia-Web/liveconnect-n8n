@@ -286,8 +286,10 @@ export async function getWabaTemplates(
 		.filter((row) => row.id !== undefined && row.id !== null)
 		.map((row) => {
 			const estado = typeof row.status === 'string' ? row.status.toUpperCase() : '';
+			// LiveConnect (Gupshup) lo llama languageCode; el formato de Meta, language.
+			const idioma = row.languageCode ?? row.language;
 			const detalles = [
-				typeof row.language === 'string' ? row.language : '',
+				typeof idioma === 'string' ? idioma : '',
 				describeTemplateNeeds(row),
 				estado !== '' && estado !== 'APPROVED' ? estado : '',
 			]
@@ -298,10 +300,10 @@ export async function getWabaTemplates(
 				name: detalles !== '' ? `${nombre} · ${detalles}` : nombre,
 				// El valor codifica qué necesita la plantilla para que el nodo muestre solo
 				// los campos que aplican (ver encodeTemplateValue).
+				// El identificador SIEMPRE es el `id` de LiveConnect: con el nombre de la
+				// plantilla el API responde "Invalid template id provided" (verificado).
 				value: encodeTemplateValue(
-					typeof row.name === 'string' && row.name.trim() !== ''
-						? row.name.trim()
-						: String(row.id),
+					String(row.id),
 					countBodyVariables(row),
 					buildTemplateLayout(row).headerFormat,
 				),

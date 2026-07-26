@@ -10,7 +10,12 @@ import type {
 } from 'n8n-workflow';
 import { NodeApiError, NodeOperationError } from 'n8n-workflow';
 
-import { buildTemplateLayout, decodeTemplateValue, headerUrlProperty } from './TemplateFields';
+import {
+	buildTemplateLayout,
+	decodeTemplateValue,
+	headerUrlProperty,
+	templateName,
+} from './TemplateFields';
 
 export const LIVECONNECT_BASE_URL = 'https://api.liveconnect.chat/prod';
 export const LIVECONNECT_TOKEN_HEADER = 'PageGearToken';
@@ -297,12 +302,24 @@ const templateCache = new Map<string, { template?: IDataObject; expiresAt: numbe
 const TEMPLATE_CACHE_TTL_MS = 5 * 60 * 1000;
 const MAX_CACHED_TEMPLATES = 100;
 
-/** Lista de valores separados por comas → array, respetando el orden y sin vacíos al final. */
-function parseCsv(value: unknown): string[] {
-	if (Array.isArray(value)) return value.map((v) => String(v ?? ''));
-	if (typeof value !== 'string' || value.trim() === '') return [];
-	return value.split(',').map((v) => v.trim());
+
+/**
+ * Valores de los campos "Variable {{1}}", "Variable {{2}}"… en orden. Se cortan en el
+ * último con contenido para no enviar huecos al final.
+ */
+function readNumberedVariables(ctx: IExecuteSingleFunctions): string[] {
+	const valores: string[] = [];
+	for (let i = 1; i <= MAX_TEMPLATE_VARIABLES; i++) {
+		const valor = ctx.getNodeParameter(`variable_${i}`, '');
+		valores.push(valor === null || valor === undefined ? '' : String(valor));
+	}
+	let ultimo = valores.length;
+	while (ultimo > 0 && valores[ultimo - 1].trim() === '') ultimo--;
+	return valores.slice(0, ultimo);
 }
+
+/** Tope de campos de variable declarados en la operación de envío. */
+const MAX_TEMPLATE_VARIABLES = 10;
 
 async function loadTemplate(
 	ctx: IExecuteSingleFunctions,
@@ -364,29 +381,34 @@ export async function prepareTemplateSend(
 	const idCanal = Number(this.getNodeParameter('id_canal', 0));
 	// El selector codifica lo que la plantilla necesita: hay que quedarse con el
 	// identificador antes de mandarlo al API.
-	const { identificador: idPlantilla } = decodeTemplateValue(
+	const { identificador: idPlantilla, headerFormat: formatoCodificado } = decodeTemplateValue(
 		String(this.getNodeParameter('id_plantilla', '')),
 	);
 	body.id_plantilla = idPlantilla;
 	const urlEncabezado = String(this.getNodeParameter('url_encabezado', '') ?? '').trim();
 	const usarEjemplo = this.getNodeParameter('additionalFields.usar_ejemplo', false) as boolean;
-	let variables = parseCsv(this.getNodeParameter('variables', ''));
+	let variables = readNumberedVariables(this);
+	// Respaldo para la plantilla elegida por expresión: ahí los campos "Variable {{n}}"
+	// no se muestran porque displayOptions no evalúa expresiones.
+	if (variables.length === 0) {
+		variables = String(this.getNodeParameter('additionalFields.variables_csv', '') ?? '')
+			.split(',')
+			.map((valor) => valor.trim())
+			.filter((valor, i, todos) => todos.slice(i).some((resto) => resto !== ''));
+	}
 
 	const template =
 		idCanal > 0 && idPlantilla !== '' ? await loadTemplate(this, idCanal, idPlantilla) : undefined;
 
-	// Sin datos de la plantilla se envía lo que haya configurado el usuario.
+	// Sin datos de la plantilla se envía lo que haya configurado el usuario. El formato
+	// del encabezado se toma del valor del selector, que ya lo trae codificado.
 	if (template === undefined) {
 		if (variables.length > 0) body.variables = variables;
-		if (urlEncabezado !== '') body.url_imagen_encabezado = urlEncabezado;
+		if (urlEncabezado !== '') {
+			body[headerUrlProperty(formatoCodificado ?? 'IMAGE') ?? 'url_imagen_encabezado'] =
+				urlEncabezado;
+		}
 		return { ...requestOptions, body };
-	}
-
-	// El API acepta "id/nombre" de plantilla, pero el identificador largo de Meta
-	// (667058365993373_67d4976c2921a_6360) no siempre resuelve: se envía el NOMBRE,
-	// que es con el que trabaja el panel de LiveConnect.
-	if (typeof template.name === 'string' && template.name.trim() !== '') {
-		body.id_plantilla = template.name.trim();
 	}
 
 	const { fields, headerFormat } = buildTemplateLayout(template);
@@ -394,26 +416,38 @@ export async function prepareTemplateSend(
 	const ejemplosCuerpo = camposCuerpo.map((f) =>
 		typeof f.defaultValue === 'string' ? f.defaultValue : '',
 	);
-	const nombre =
-		typeof template.name === 'string' && template.name.trim() !== ''
-			? template.name
-			: idPlantilla;
+	const nombre = templateName(template) ?? idPlantilla;
 
-	if (variables.length === 0 && usarEjemplo) variables = ejemplosCuerpo;
+	const total = camposCuerpo.length;
+	if (total > 0) {
+		// Se toman solo las posiciones que la plantilla declara: al cambiar de plantilla,
+		// n8n conserva en el nodo lo que se escribió en los campos que ahora están ocultos.
+		variables = variables.slice(0, total);
+		while (variables.length < total) variables.push('');
+		if (usarEjemplo) {
+			variables = variables.map((valor, i) => (valor.trim() !== '' ? valor : ejemplosCuerpo[i] ?? ''));
+		}
 
-	// Validación que enseña: cuántas variables faltan y un ejemplo tomado de la plantilla.
-	if (camposCuerpo.length > 0 && variables.length !== camposCuerpo.length) {
-		const ejemplo = ejemplosCuerpo.filter((v) => v !== '').join(', ');
-		throw new NodeOperationError(
-			this.getNode(),
-			`La plantilla «${nombre}» necesita ${camposCuerpo.length} ${camposCuerpo.length === 1 ? 'variable' : 'variables'} y recibió ${variables.length}`,
-			{
-				description:
-					'Escribe los valores separados por comas en el campo "Variables", en el orden {{1}}, {{2}}…' +
-					(ejemplo !== '' ? ` Por ejemplo: ${ejemplo}` : '') +
-					'. También puedes activar "Usar Datos de Ejemplo" en Campos Adicionales para una prueba rápida.',
-			},
-		);
+		// Validación que enseña: se nombran las posiciones vacías, no un total abstracto.
+		const faltantes = variables
+			.map((valor, i) => (valor.trim() === '' ? i + 1 : 0))
+			.filter((posicion) => posicion > 0);
+		if (faltantes.length > 0) {
+			const ejemplo = ejemplosCuerpo.filter((v) => v !== '').join(', ');
+			const lista = faltantes.map((n) => `{{${n}}}`).join(', ');
+			throw new NodeOperationError(
+				this.getNode(),
+				`La plantilla «${nombre}» necesita ${total === 1 ? 'una variable' : `${total} variables`} y ${faltantes.length === 1 ? 'falta el valor de' : 'faltan los valores de'} ${lista}`,
+				{
+					description:
+						`Llena ${faltantes.length === 1 ? 'el campo' : 'los campos'} ${faltantes.map((n) => `"Variable {{${n}}}"`).join(', ')} debajo del selector de plantilla.` +
+						(ejemplo !== '' ? ` La plantilla trae este ejemplo: ${ejemplo}.` : '') +
+						' También puedes activar "Usar Datos de Ejemplo" en Campos Adicionales para una prueba rápida.',
+				},
+			);
+		}
+	} else {
+		variables = [];
 	}
 	if (variables.length > 0) body.variables = variables;
 
@@ -473,7 +507,7 @@ function describeRequestContext(ctx: IExecuteSingleFunctions): string {
 		const operation = String(ctx.getNodeParameter('operation', ''));
 		if (resource !== 'waba' || operation !== 'sendTemplate') return '';
 
-		const variables = parseCsv(ctx.getNodeParameter('variables', ''));
+		const variables = readNumberedVariables(ctx);
 		const partes = [
 			`plantilla: ${String(ctx.getNodeParameter('id_plantilla', '')) || '(sin elegir)'}`,
 			`canal: ${String(ctx.getNodeParameter('id_canal', '')) || '(sin elegir)'}`,

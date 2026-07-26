@@ -317,7 +317,8 @@ export const wabaFields: INodeProperties[] = [
 		type: 'string',
 		required: true,
 		default: '',
-		description: 'Celular destino',
+		placeholder: '573001112233',
+		description: 'Celular destino con código de país, sin espacios ni signos',
 		displayOptions: {
 			show: {
 				resource: ['waba'],
@@ -325,7 +326,10 @@ export const wabaFields: INodeProperties[] = [
 			},
 		},
 		routing: {
-			send: { type: 'body', property: 'numero' },
+			// El preSend cuelga de este campo porque SIEMPRE está visible: n8n no ejecuta
+			// los preSend de campos ocultos, y los de variables/URL aparecen según la
+			// plantilla elegida.
+			send: { type: 'body', property: 'numero', preSend: [prepareTemplateSend] },
 		},
 	},
 	{
@@ -348,23 +352,142 @@ export const wabaFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Variables',
-		name: 'variables',
+		displayName: 'Variable {{1}}',
+		name: 'variable_1',
 		type: 'string',
 		default: '',
-		placeholder: 'Ana, 12 de mayo',
-		description:
-			'Valores de las variables, separados por comas y en el orden {{1}}, {{2}}… El desplegable de arriba indica cuántas pide la plantilla. Déjalo vacío y activa "Usar Datos de Ejemplo" para una prueba rápida.',
+		description: 'Valor que reemplaza a {{1}} en el texto de la plantilla',
 		displayOptions: {
 			show: {
 				resource: ['waba'],
 				operation: ['sendTemplate'],
+				id_plantilla: [{ _cnd: { regex: '\\|v([1-9]|\\d{2,})\\|' } }],
 			},
-			// El valor del selector codifica cuántas variables pide la plantilla: si son
-			// cero, este campo no aparece. Con una expresión no se puede saber, así que
-			// se muestra por si acaso.
-			hide: {
-				id_plantilla: [{ _cnd: { includes: '|v0|' } }],
+		},
+	},
+	{
+		displayName: 'Variable {{2}}',
+		name: 'variable_2',
+		type: 'string',
+		default: '',
+		description: 'Valor que reemplaza a {{2}} en el texto de la plantilla',
+		displayOptions: {
+			show: {
+				resource: ['waba'],
+				operation: ['sendTemplate'],
+				id_plantilla: [{ _cnd: { regex: '\\|v([2-9]|\\d{2,})\\|' } }],
+			},
+		},
+	},
+	{
+		displayName: 'Variable {{3}}',
+		name: 'variable_3',
+		type: 'string',
+		default: '',
+		description: 'Valor que reemplaza a {{3}} en el texto de la plantilla',
+		displayOptions: {
+			show: {
+				resource: ['waba'],
+				operation: ['sendTemplate'],
+				id_plantilla: [{ _cnd: { regex: '\\|v([3-9]|\\d{2,})\\|' } }],
+			},
+		},
+	},
+	{
+		displayName: 'Variable {{4}}',
+		name: 'variable_4',
+		type: 'string',
+		default: '',
+		description: 'Valor que reemplaza a {{4}} en el texto de la plantilla',
+		displayOptions: {
+			show: {
+				resource: ['waba'],
+				operation: ['sendTemplate'],
+				id_plantilla: [{ _cnd: { regex: '\\|v([4-9]|\\d{2,})\\|' } }],
+			},
+		},
+	},
+	{
+		displayName: 'Variable {{5}}',
+		name: 'variable_5',
+		type: 'string',
+		default: '',
+		description: 'Valor que reemplaza a {{5}} en el texto de la plantilla',
+		displayOptions: {
+			show: {
+				resource: ['waba'],
+				operation: ['sendTemplate'],
+				id_plantilla: [{ _cnd: { regex: '\\|v([5-9]|\\d{2,})\\|' } }],
+			},
+		},
+	},
+	{
+		displayName: 'Variable {{6}}',
+		name: 'variable_6',
+		type: 'string',
+		default: '',
+		description: 'Valor que reemplaza a {{6}} en el texto de la plantilla',
+		displayOptions: {
+			show: {
+				resource: ['waba'],
+				operation: ['sendTemplate'],
+				id_plantilla: [{ _cnd: { regex: '\\|v([6-9]|\\d{2,})\\|' } }],
+			},
+		},
+	},
+	{
+		displayName: 'Variable {{7}}',
+		name: 'variable_7',
+		type: 'string',
+		default: '',
+		description: 'Valor que reemplaza a {{7}} en el texto de la plantilla',
+		displayOptions: {
+			show: {
+				resource: ['waba'],
+				operation: ['sendTemplate'],
+				id_plantilla: [{ _cnd: { regex: '\\|v([7-9]|\\d{2,})\\|' } }],
+			},
+		},
+	},
+	{
+		displayName: 'Variable {{8}}',
+		name: 'variable_8',
+		type: 'string',
+		default: '',
+		description: 'Valor que reemplaza a {{8}} en el texto de la plantilla',
+		displayOptions: {
+			show: {
+				resource: ['waba'],
+				operation: ['sendTemplate'],
+				id_plantilla: [{ _cnd: { regex: '\\|v([8-9]|\\d{2,})\\|' } }],
+			},
+		},
+	},
+	{
+		displayName: 'Variable {{9}}',
+		name: 'variable_9',
+		type: 'string',
+		default: '',
+		description: 'Valor que reemplaza a {{9}} en el texto de la plantilla',
+		displayOptions: {
+			show: {
+				resource: ['waba'],
+				operation: ['sendTemplate'],
+				id_plantilla: [{ _cnd: { regex: '\\|v(9|\\d{2,})\\|' } }],
+			},
+		},
+	},
+	{
+		displayName: 'Variable {{10}}',
+		name: 'variable_10',
+		type: 'string',
+		default: '',
+		description: 'Valor que reemplaza a {{10}} en el texto de la plantilla',
+		displayOptions: {
+			show: {
+				resource: ['waba'],
+				operation: ['sendTemplate'],
+				id_plantilla: [{ _cnd: { regex: '\\|v\\d{2,}\\|' } }],
 			},
 		},
 	},
@@ -382,15 +505,11 @@ export const wabaFields: INodeProperties[] = [
 				operation: ['sendTemplate'],
 			},
 			// Solo aparece cuando la plantilla elegida lleva un medio en el encabezado
-			// (el valor del selector termina en IMAGE, VIDEO o DOCUMENT).
+			// (el valor del selector termina en IMAGE, VIDEO o DOCUMENT); con la plantilla
+			// sin elegir no se muestra nada.
 			hide: {
-				id_plantilla: [{ _cnd: { regex: '\\|(NONE|TEXT)$' } }],
+				id_plantilla: ['', { _cnd: { regex: '\\|(NONE|TEXT)$' } }],
 			},
-		},
-		// El preSend consulta la plantilla, valida lo que falta y reparte los valores
-		// (variables, URL del encabezado y botones) en las propiedades del cuerpo.
-		routing: {
-			send: { preSend: [prepareTemplateSend] },
 		},
 	},
 	{
@@ -451,6 +570,18 @@ export const wabaFields: INodeProperties[] = [
 				default: false,
 				description:
 					'Si se activa, rellena lo que dejes vacío con los datos de ejemplo que trae la plantilla de Meta. Sirve para enviarte una prueba sin escribir nada.',
+			},
+			{
+				displayName: 'Variables del Cuerpo Separadas por Comas',
+				name: 'variables_csv',
+				type: 'string',
+				default: '',
+				placeholder: 'Ana, 12 de mayo',
+				// Con la plantilla elegida por expresión (envío masivo con una plantilla
+				// distinta por fila) n8n no puede saber cuántos campos "Variable {{n}}"
+				// mostrar, porque displayOptions ve la expresión sin evaluar.
+				description:
+					'Solo si eliges la plantilla con una expresión: valores del cuerpo separados por comas, en el orden {{1}}, {{2}}, etc. Si llenas los campos "Variable {{n}}", estos mandan.',
 			},
 			{
 				displayName: 'Variables del Encabezado',

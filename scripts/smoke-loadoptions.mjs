@@ -160,10 +160,11 @@ await test('getWabaTemplates lee data.templates (respuesta anidada real del API)
 	});
 	const options = await lo.getWabaTemplates.call(con.ctx);
 	// Aprobadas primero, luego alfabético.
-	// El valor codifica el nombre + lo que pide la plantilla (controla qué campos se ven).
+	// El valor codifica el ID de LiveConnect + lo que pide la plantilla (controla qué
+	// campos se ven). Con el nombre el API responde "Invalid template id provided".
 	assert.deepEqual(options, [
-		{ name: 'bienvenida · es · sin variables', value: 'bienvenida|v0|NONE' },
-		{ name: 'aviso_pago · es_CO · sin variables · PENDING', value: 'aviso_pago|v0|NONE' },
+		{ name: 'bienvenida · es · sin variables', value: '123456789|v0|TEXT' },
+		{ name: 'aviso_pago · es_CO · sin variables · PENDING', value: '987654321|v0|TEXT' },
 	]);
 	assert.deepEqual(con.calls[0].body, { id_canal: 67095 });
 });
@@ -184,13 +185,13 @@ await test('plantillas sin name: usa campos alternativos o el contenido, no el U
 		params: { resource: 'waba', operation: 'sendTemplate', id_canal: 1 },
 	});
 	const options = await lo.getWabaTemplates.call(ctx);
-	// El sufijo describe lo que pide cada plantilla (aquí, ninguna tiene variables).
-	// Sin `name`, el identificador del valor es el id de la plantilla.
+	// El sufijo describe lo que pide cada plantilla (aquí, ninguna lleva medio: el campo
+	// "URL del Encabezado" se oculta igual con TEXT que con NONE).
 	assert.deepEqual(options, [
-		{ name: 'Hola {{1}}, tu pedido ya salió · 1 variable', value: 'uuid-3|v1|NONE' },
-		{ name: 'pago_recibido · sin variables', value: 'uuid-2|v0|NONE' },
-		{ name: 'recordatorio_cita · sin variables', value: 'uuid-1|v0|NONE' },
-		{ name: 'ID uuid-4 · sin variables · FAILED', value: 'uuid-4|v0|NONE' },
+		{ name: 'Hola {{1}}, tu pedido ya salió · 1 variable', value: 'uuid-3|v1|TEXT' },
+		{ name: 'pago_recibido · sin variables', value: 'uuid-2|v0|TEXT' },
+		{ name: 'recordatorio_cita · sin variables', value: 'uuid-1|v0|TEXT' },
+		{ name: 'ID uuid-4 · sin variables · FAILED', value: 'uuid-4|v0|TEXT' },
 	]);
 });
 
