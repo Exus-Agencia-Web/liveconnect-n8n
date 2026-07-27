@@ -4,7 +4,7 @@ import { handleLcResponse } from '../GenericFunctions';
 
 export const productOperations: INodeProperties[] = [
 	{
-		displayName: 'Operación',
+		displayName: 'Operation',
 		name: 'operation',
 		type: 'options',
 		noDataExpression: true,
@@ -15,30 +15,30 @@ export const productOperations: INodeProperties[] = [
 		},
 		options: [
 			{
-				name: 'Actualizar',
+				name: 'Update',
 				value: 'update',
-				action: 'Actualizar un producto',
-				description: 'Actualiza los campos enviados de un producto existente',
+				action: 'Update a product',
+				description: 'Update the submitted fields of an existing product',
 				routing: {
 					request: { method: 'POST', url: '/catalogue/edtProduct' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
 			{
-				name: 'Crear',
+				name: 'Create',
 				value: 'create',
-				action: 'Crear un producto',
-				description: 'Agrega un producto al catálogo de la cuenta',
+				action: 'Create a product',
+				description: 'Add a product to the account catalog',
 				routing: {
 					request: { method: 'POST', url: '/catalogue/addProduct' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
 			{
-				name: 'Obtener Varios',
+				name: 'Get Many',
 				value: 'getMany',
-				action: 'Obtener varios productos',
-				description: 'Lista los productos del catálogo de la cuenta, opcionalmente filtrados por ID',
+				action: 'Get many products',
+				description: 'List the products in the account catalog, optionally filtered by ID',
 				routing: {
 					request: { method: 'GET', url: '/catalogue/listProducts' },
 					output: { postReceive: [handleLcResponse] },
@@ -54,12 +54,12 @@ export const productFields: INodeProperties[] = [
 	//         product: create
 	// ----------------------------------
 	{
-		displayName: 'Nombre',
+		displayName: 'Name',
 		name: 'nombre',
 		type: 'string',
 		required: true,
 		default: '',
-		description: 'Nombre del producto',
+		description: 'Name of the product',
 		displayOptions: {
 			show: {
 				resource: ['product'],
@@ -75,10 +75,10 @@ export const productFields: INodeProperties[] = [
 	//         product: getMany
 	// ----------------------------------
 	{
-		displayName: 'Filtros',
+		displayName: 'Filters',
 		name: 'filters',
 		type: 'collection',
-		placeholder: 'Agregar Filtro',
+		placeholder: 'Add Filter',
 		default: {},
 		displayOptions: {
 			show: {
@@ -88,11 +88,11 @@ export const productFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'ID del Producto',
+				displayName: 'Product ID',
 				name: 'id',
 				type: 'number',
 				default: 0,
-				description: 'Filtra por ID de producto',
+				description: 'Filter by product ID',
 				routing: { send: { type: 'query', property: 'id' } },
 			},
 		],
@@ -102,12 +102,12 @@ export const productFields: INodeProperties[] = [
 	//         product: update
 	// ----------------------------------
 	{
-		displayName: 'ID del Producto',
+		displayName: 'Product ID',
 		name: 'id',
 		type: 'number',
 		required: true,
 		default: 0,
-		description: 'ID del producto a editar',
+		description: 'ID of the product to edit',
 		displayOptions: {
 			show: {
 				resource: ['product'],
@@ -119,12 +119,12 @@ export const productFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Nombre',
+		displayName: 'Name',
 		name: 'nombre',
 		type: 'string',
 		required: true,
 		default: '',
-		description: 'Nombre del producto',
+		description: 'Name of the product',
 		displayOptions: {
 			show: {
 				resource: ['product'],
@@ -136,10 +136,10 @@ export const productFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Campos a Actualizar',
+		displayName: 'Update Fields',
 		name: 'updateFields',
 		type: 'collection',
-		placeholder: 'Agregar Campo',
+		placeholder: 'Add Field',
 		default: {},
 		displayOptions: {
 			show: {
@@ -149,77 +149,76 @@ export const productFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Descripción',
-				name: 'descripcion',
-				type: 'string',
-				default: '',
-				description: 'Descripción del producto',
-				routing: { send: { type: 'body', property: 'descripcion' } },
-			},
-			{
-				displayName: 'Estado',
-				name: 'estado',
-				type: 'number',
-				default: 0,
-				description: 'Estado del producto',
-				routing: { send: { type: 'body', property: 'estado' } },
-			},
-			{
-				displayName: 'Fijado',
-				name: 'fijar',
-				type: 'number',
-				default: 0,
-				description: 'Fija el producto como destacado (1 = fijado, 0 = normal)',
-				routing: { send: { type: 'body', property: 'fijar' } },
-			},
-			{
-				displayName: 'Foto',
-				name: 'foto',
-				type: 'string',
-				default: '',
-				description: 'URL de la foto del producto',
-				routing: { send: { type: 'body', property: 'foto' } },
-			},
-			{
-				displayName: 'ID de la Categoría',
+				displayName: 'Category Name or ID',
 				name: 'id_categoria',
 				type: 'options',
 				typeOptions: { loadOptionsMethod: 'getCategories' },
 				default: '',
-				description:
-					'ID de la categoría del producto. Elige de la lista o especifica un ID con una expresión.',
+				description: 'ID of the product category. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 				routing: { send: { type: 'body', property: 'id_categoria' } },
 			},
 			{
-				displayName: 'Nota',
+				displayName: 'Description',
+				name: 'descripcion',
+				type: 'string',
+				default: '',
+				description: 'Description of the product',
+				routing: { send: { type: 'body', property: 'descripcion' } },
+			},
+			{
+				displayName: 'Note',
 				name: 'nota',
 				type: 'string',
 				default: '',
-				description: 'Nota del producto',
+				description: 'Note of the product',
 				routing: { send: { type: 'body', property: 'nota' } },
 			},
 			{
-				displayName: 'Referencia',
+				displayName: 'Photo',
+				name: 'foto',
+				type: 'string',
+				default: '',
+				description: 'URL of the product photo',
+				routing: { send: { type: 'body', property: 'foto' } },
+			},
+			{
+				displayName: 'Pinned',
+				name: 'fijar',
+				type: 'number',
+				default: 0,
+				description: 'Pins the product as featured (1 = pinned, 0 = normal)',
+				routing: { send: { type: 'body', property: 'fijar' } },
+			},
+			{
+				displayName: 'Reference',
 				name: 'referencia',
 				type: 'string',
 				default: '',
-				description: 'Referencia del producto',
+				description: 'Reference of the product',
 				routing: { send: { type: 'body', property: 'referencia' } },
+			},
+			{
+				displayName: 'Status',
+				name: 'estado',
+				type: 'number',
+				default: 0,
+				description: 'Status of the product',
+				routing: { send: { type: 'body', property: 'estado' } },
 			},
 			{
 				displayName: 'URL',
 				name: 'url',
 				type: 'string',
 				default: '',
-				description: 'URL del producto',
+				description: 'URL of the product',
 				routing: { send: { type: 'body', property: 'url' } },
 			},
 			{
-				displayName: 'Valor',
+				displayName: 'Value',
 				name: 'valor',
 				type: 'string',
 				default: '',
-				description: 'Valor del producto',
+				description: 'Value of the product',
 				routing: { send: { type: 'body', property: 'valor' } },
 			},
 		],

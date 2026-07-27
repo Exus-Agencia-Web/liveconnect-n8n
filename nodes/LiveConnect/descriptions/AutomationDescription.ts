@@ -4,7 +4,7 @@ import { handleLcResponse } from '../GenericFunctions';
 
 export const automationOperations: INodeProperties[] = [
 	{
-		displayName: 'Operación',
+		displayName: 'Operation',
 		name: 'operation',
 		type: 'options',
 		noDataExpression: true,
@@ -15,32 +15,32 @@ export const automationOperations: INodeProperties[] = [
 		},
 		options: [
 			{
-				name: 'Actualizar',
+				name: 'Update',
 				value: 'update',
-				action: 'Actualizar una automatización',
+				action: 'Update an automation',
 				description:
-					'Solo permite editar automatizaciones en estado pendiente. Para tipo mensaje edita el texto, la fecha, el canal, la plantilla o los adjuntos; para tipo correo edita Datos del Correo Electrónico y/o la fecha.',
+					'Only allows editing automations in pending status. When Type is Message, it edits the text, date, channel, template, or attachments; when Type is Email, it edits Email Data and/or the date.',
 				routing: {
 					request: { method: 'POST', url: '/crm/editAutomation' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
 			{
-				name: 'Crear',
+				name: 'Create',
 				value: 'create',
-				action: 'Crear una automatización',
+				action: 'Create an automation',
 				description:
-					'Programa una automatización pendiente para un contacto. Si es de tipo mensaje requiere Número de Teléfono, ID del Canal y Mensaje (o ID de la Plantilla en canales WABA); si es de tipo correo requiere Datos del Correo Electrónico.',
+					'Schedules a pending automation for a contact. If Type is Message, it requires Phone Number, Channel ID, and Message (or Template ID on WABA channels); if Type is Email, it requires Email Data.',
 				routing: {
 					request: { method: 'POST', url: '/crm/addAutomation' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
 			{
-				name: 'Eliminar',
+				name: 'Delete',
 				value: 'delete',
-				action: 'Eliminar una automatización',
-				description: 'Solo permite cancelar automatizaciones en estado pendiente',
+				action: 'Delete an automation',
+				description: 'Only allows canceling automations in pending status',
 				routing: {
 					request: { method: 'POST', url: '/crm/deleteAutomation' },
 					output: { postReceive: [handleLcResponse] },
@@ -56,16 +56,16 @@ export const automationFields: INodeProperties[] = [
 	//         automation: create
 	// ----------------------------------
 	{
-		displayName: 'Tipo',
+		displayName: 'Type',
 		name: 'tipo',
 		type: 'options',
 		required: true,
 		options: [
-			{ name: 'Correo', value: 'correo' },
-			{ name: 'Mensaje', value: 'mensaje' },
+			{ name: 'Email', value: 'correo' },
+			{ name: 'Message', value: 'mensaje' },
 		],
 		default: 'mensaje',
-		description: 'Tipo de automatización a programar',
+		description: 'Type of automation to schedule',
 		displayOptions: {
 			show: {
 				resource: ['automation'],
@@ -77,12 +77,12 @@ export const automationFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'ID del Contacto',
+		displayName: 'Contact ID',
 		name: 'id_contacto',
 		type: 'number',
 		required: true,
 		default: 0,
-		description: 'ID del contacto de la automatización',
+		description: 'ID of the automation contact',
 		displayOptions: {
 			show: {
 				resource: ['automation'],
@@ -94,13 +94,13 @@ export const automationFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Fecha Programada',
+		displayName: 'Scheduled Date',
 		name: 'fecha_programada',
 		type: 'string',
 		required: true,
 		default: '',
 		placeholder: 'YYYY-MM-DD HH:mm:ss',
-		description: 'Fecha y hora programada de la automatización',
+		description: 'Scheduled date and time of the automation',
 		displayOptions: {
 			show: {
 				resource: ['automation'],
@@ -112,10 +112,10 @@ export const automationFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Campos Adicionales',
+		displayName: 'Additional Fields',
 		name: 'additionalFields',
 		type: 'collection',
-		placeholder: 'Agregar Campo',
+		placeholder: 'Add Field',
 		default: {},
 		displayOptions: {
 			show: {
@@ -125,11 +125,11 @@ export const automationFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Archivos',
+				displayName: 'Attachments',
 				name: 'archivos',
 				type: 'json',
 				default: '[]',
-				description: 'Adjuntos; solo canales WhatsApp (no soportado en WABA). Arreglo de objetos con URL, nombre y extension.',
+				description: 'Attachments; WhatsApp channels only (not supported on WABA). Array of objects with URL, nombre, and extension.',
 				routing: {
 					send: {
 						type: 'body',
@@ -139,12 +139,29 @@ export const automationFields: INodeProperties[] = [
 				},
 			},
 			{
-				displayName: 'Datos del Correo Electrónico',
+				displayName: 'Channel Name or ID',
+				name: 'id_canal',
+				type: 'options',
+				typeOptions: { loadOptionsMethod: 'getChannels' },
+				default: '',
+				description: 'Required if Type is Message. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+				routing: { send: { type: 'body', property: 'id_canal' } },
+			},
+			{
+				displayName: 'Deal ID',
+				name: 'id_deal',
+				type: 'number',
+				default: 0,
+				description: 'Optional; consecutive number of the deal where the activity is logged',
+				routing: { send: { type: 'body', property: 'id_deal' } },
+			},
+			{
+				displayName: 'Email Data',
 				name: 'data',
 				type: 'json',
 				default: '{}',
 				description:
-					'Requerido si Tipo es correo. Objeto con email_destino, asunto y cuerpo_html.',
+					'Required if Type is Email. Object with email_destino, asunto, and cuerpo_html.',
 				routing: {
 					send: {
 						type: 'body',
@@ -154,64 +171,45 @@ export const automationFields: INodeProperties[] = [
 				},
 			},
 			{
-				displayName: 'ID de la Negociación',
-				name: 'id_deal',
-				type: 'number',
-				default: 0,
-				description: 'Opcional; consecutivo de la negociación donde registrar la actividad',
-				routing: { send: { type: 'body', property: 'id_deal' } },
-			},
-			{
-				displayName: 'ID de la Plantilla',
-				name: 'id_plantilla',
-				type: 'options',
-				typeOptions: { loadOptionsMethod: 'getWabaTemplates', loadOptionsDependsOn: ['&id_canal'] },
-				default: '',
-				description:
-					'Requerido si Tipo es mensaje y el canal es WABA/WABA Meta. Elige de la lista o especifica un ID con una expresión.',
-				routing: { send: { type: 'body', property: 'id_plantilla' } },
-			},
-			{
-				displayName: 'ID del Canal',
-				name: 'id_canal',
-				type: 'options',
-				typeOptions: { loadOptionsMethod: 'getChannels' },
-				default: '',
-				description:
-					'Requerido si Tipo es mensaje. Elige de la lista o especifica un ID con una expresión.',
-				routing: { send: { type: 'body', property: 'id_canal' } },
-			},
-			{
-				displayName: 'ID Interno de la Negociación',
+				displayName: 'Internal Deal ID',
 				name: 'id_interno',
 				type: 'number',
 				default: 0,
-				description: 'ID interno de la negociación (alternativa a ID de la Negociación/consecutivo)',
+				description: 'Internal deal ID (alternative to Deal ID/consecutive number)',
 				routing: { send: { type: 'body', property: 'id_interno' } },
 			},
 			{
-				displayName: 'Mensaje',
+				displayName: 'Message',
 				name: 'mensaje',
 				type: 'string',
 				typeOptions: { rows: 3 },
 				default: '',
-				description: 'Requerido si Tipo es mensaje y el canal es WhatsApp (QR/Cloud)',
+				description: 'Required if Type is Message and the channel is WhatsApp (QR/Cloud)',
 				routing: { send: { type: 'body', property: 'mensaje' } },
 			},
 			{
-				displayName: 'Número de Teléfono',
+				displayName: 'Phone Number',
 				name: 'numero',
 				type: 'string',
 				default: '',
-				description: 'Requerido si Tipo es mensaje; teléfono o destino del contacto',
+				description: 'Required if Type is Message; phone number or destination of the contact',
 				routing: { send: { type: 'body', property: 'numero' } },
 			},
 			{
-				displayName: 'Variables de la Plantilla',
+				displayName: 'Template Name or ID',
+				name: 'id_plantilla',
+				type: 'options',
+				typeOptions: { loadOptionsMethod: 'getWabaTemplates', loadOptionsDependsOn: ['&id_canal'] },
+				default: '',
+				description: 'Required if Type is Message and the channel is WABA/WABA Meta. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+				routing: { send: { type: 'body', property: 'id_plantilla' } },
+			},
+			{
+				displayName: 'Template Variables',
 				name: 'variables',
 				type: 'json',
 				default: '[]',
-				description: 'Parámetros de la plantilla WABA (arreglo de textos)',
+				description: 'Parameters of the WABA template (array of strings)',
 				routing: {
 					send: {
 						type: 'body',
@@ -227,12 +225,12 @@ export const automationFields: INodeProperties[] = [
 	//         automation: delete
 	// ----------------------------------
 	{
-		displayName: 'ID de la Automatización',
+		displayName: 'Automation ID',
 		name: 'id',
 		type: 'number',
 		required: true,
 		default: 0,
-		description: 'ID de la automatización a cancelar',
+		description: 'ID of the automation to cancel',
 		displayOptions: {
 			show: {
 				resource: ['automation'],
@@ -248,12 +246,12 @@ export const automationFields: INodeProperties[] = [
 	//         automation: update
 	// ----------------------------------
 	{
-		displayName: 'ID de la Automatización',
+		displayName: 'Automation ID',
 		name: 'id',
 		type: 'number',
 		required: true,
 		default: 0,
-		description: 'ID de la automatización a editar',
+		description: 'ID of the automation to edit',
 		displayOptions: {
 			show: {
 				resource: ['automation'],
@@ -265,10 +263,10 @@ export const automationFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Campos a Actualizar',
+		displayName: 'Update Fields',
 		name: 'updateFields',
 		type: 'collection',
-		placeholder: 'Agregar Campo',
+		placeholder: 'Add Field',
 		default: {},
 		displayOptions: {
 			show: {
@@ -278,11 +276,11 @@ export const automationFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Archivos',
+				displayName: 'Attachments',
 				name: 'archivos',
 				type: 'json',
 				default: '[]',
-				description: 'Adjuntos; solo canales WhatsApp (arreglo de objetos con URL, nombre y extension)',
+				description: 'Attachments; WhatsApp channels only (array of objects with URL, nombre, and extension)',
 				routing: {
 					send: {
 						type: 'body',
@@ -292,11 +290,20 @@ export const automationFields: INodeProperties[] = [
 				},
 			},
 			{
-				displayName: 'Datos del Correo Electrónico',
+				displayName: 'Channel Name or ID',
+				name: 'id_canal',
+				type: 'options',
+				typeOptions: { loadOptionsMethod: 'getChannels' },
+				default: '',
+				description: 'Only applies if Type is Message. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+				routing: { send: { type: 'body', property: 'id_canal' } },
+			},
+			{
+				displayName: 'Email Data',
 				name: 'data',
 				type: 'json',
 				default: '{}',
-				description: 'Payload del correo (solo Tipo correo)',
+				description: 'Email payload (only if Type is Email)',
 				routing: {
 					send: {
 						type: 'body',
@@ -306,49 +313,38 @@ export const automationFields: INodeProperties[] = [
 				},
 			},
 			{
-				displayName: 'Fecha Programada',
-				name: 'fecha_programada',
-				type: 'string',
-				default: '',
-				placeholder: 'YYYY-MM-DD HH:mm:ss',
-				description: 'Nueva fecha y hora programada',
-				routing: { send: { type: 'body', property: 'fecha_programada' } },
-			},
-			{
-				displayName: 'ID de la Plantilla',
-				name: 'id_plantilla',
-				type: 'options',
-				typeOptions: { loadOptionsMethod: 'getWabaTemplates', loadOptionsDependsOn: ['&id_canal'] },
-				default: '',
-				description:
-					'Solo aplica si Tipo es mensaje y el canal es WABA/WABA Meta. Elige de la lista o especifica un ID con una expresión.',
-				routing: { send: { type: 'body', property: 'id_plantilla' } },
-			},
-			{
-				displayName: 'ID del Canal',
-				name: 'id_canal',
-				type: 'options',
-				typeOptions: { loadOptionsMethod: 'getChannels' },
-				default: '',
-				description:
-					'Solo aplica si Tipo es mensaje. Elige de la lista o especifica un ID con una expresión.',
-				routing: { send: { type: 'body', property: 'id_canal' } },
-			},
-			{
-				displayName: 'Mensaje',
+				displayName: 'Message',
 				name: 'mensaje',
 				type: 'string',
 				typeOptions: { rows: 3 },
 				default: '',
-				description: 'Nuevo texto (solo Tipo mensaje, canal WhatsApp)',
+				description: 'New text (Type Message only, WhatsApp channel)',
 				routing: { send: { type: 'body', property: 'mensaje' } },
 			},
 			{
-				displayName: 'Variables de la Plantilla',
+				displayName: 'Scheduled Date',
+				name: 'fecha_programada',
+				type: 'string',
+				default: '',
+				placeholder: 'YYYY-MM-DD HH:mm:ss',
+				description: 'New scheduled date and time',
+				routing: { send: { type: 'body', property: 'fecha_programada' } },
+			},
+			{
+				displayName: 'Template Name or ID',
+				name: 'id_plantilla',
+				type: 'options',
+				typeOptions: { loadOptionsMethod: 'getWabaTemplates', loadOptionsDependsOn: ['&id_canal'] },
+				default: '',
+				description: 'Only applies if Type is Message and the channel is WABA/WABA Meta. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+				routing: { send: { type: 'body', property: 'id_plantilla' } },
+			},
+			{
+				displayName: 'Template Variables',
 				name: 'variables',
 				type: 'json',
 				default: '[]',
-				description: 'Parámetros de la plantilla WABA (arreglo de textos)',
+				description: 'Parameters of the WABA template (array of strings)',
 				routing: {
 					send: {
 						type: 'body',

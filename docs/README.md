@@ -13,8 +13,9 @@ El `README.md` de la raíz es para quien **usa** el nodo. Esto es para quien lo 
 | [03-plantillas-waba.md](03-plantillas-waba.md) | Plantillas de WhatsApp: proveedores (Gupshup / Meta), qué identificador acepta cada uno, cómo se decide la UI, el preSend | tocar `Enviar Plantilla` |
 | [04-triggers-y-callbacks.md](04-triggers-y-callbacks.md) | Proxy Trigger, Callback Trigger (contrato del Flowbot) y el nodo de respuesta visual | tocar triggers o respuestas de callback |
 | [05-lecciones-n8n.md](05-lecciones-n8n.md) | Trampas del framework n8n que costaron versiones enteras | cualquier cambio de UI, routing, auth o ESLint |
-| [06-mantenimiento.md](06-mantenimiento.md) | Flujo desde el OpenAPI, contrato de las descriptions, pruebas, build y publicación | actualizar el spec o publicar |
+| [06-mantenimiento.md](06-mantenimiento.md) | Flujo desde el OpenAPI, contrato de las descriptions, pruebas, build, verificación de n8n y publicación | actualizar el spec o publicar |
 | [07-historial-decisiones.md](07-historial-decisiones.md) | Qué se intentó en cada versión y por qué se descartó | proponer un rediseño |
+| [08-paquete-espanol.md](08-paquete-espanol.md) | Por qué el español es un paquete aparte (`n8n-nodes-liveconnect-es`), cómo se genera desde el mismo código y el diccionario `i18n/es.json` | tocar cualquier texto visible del nodo, o el paquete español |
 
 ## Reglas que no se negocian
 
@@ -22,7 +23,7 @@ El `README.md` de la raíz es para quien **usa** el nodo. Esto es para quien lo 
 2. **El spec no lo cuenta todo.** Lo que el API hace de verdad (y no está documentado) vive en [02-api-liveconnect.md](02-api-liveconnect.md). Si descubres algo nuevo, va ahí.
 3. **Nada se da por bueno sin probarlo contra el API real.** Varias versiones se publicaron con supuestos razonables y falsos: ver [07-historial-decisiones.md](07-historial-decisiones.md).
 4. **Antes de publicar**: `npm run build && npm run lint && npm run verify && npm run smoke`, todo en verde.
-5. **UI en español**, `name`/`value` internos jamás cambian. Detalle en [06-mantenimiento.md](06-mantenimiento.md).
+5. **La interfaz del paquete principal está en inglés** (lo exige la verificación de nodos comunitarios de n8n); `name`/`value` internos jamás cambian. El español se publica como paquete aparte, `n8n-nodes-liveconnect-es`, generado desde este mismo código. Detalle en [06-mantenimiento.md](06-mantenimiento.md) y [08-paquete-espanol.md](08-paquete-espanol.md).
 
 ## Cómo mantener esta documentación
 

@@ -1,14 +1,14 @@
 {
-	"name": "LiveConnect 09 — Chatbot con respuesta visual (sin código)",
+	"name": "LiveConnect 09 — Chatbot with Visual Response (no code)",
 	"nodes": [
 		{
 			"parameters": {
-				"content": "## Respuesta del callback construida visualmente\n\nEl nodo **LiveConnect Respuesta al Callback** (v0.4.0+) arma las actions desde el editor — sin nodo Code y sin Respond to Webhook: **él mismo responde el webhook**.\n\n**Configuración:**\n1. Activa el workflow y pega la URL Production del trigger en el callback de tu Flowbot (mismo `secret` en ambos).\n2. Agrega/edita acciones en el nodo de respuesta: texto, imagen, archivo, etiqueta, variables, delegación, actualizar contacto…\n3. La **regla de oro** va sola: con \"Agregar Input de Cierre Automáticamente\" activo, la respuesta siempre cierra con `input` (y si delegas, se quita — el bot sale del callback).\n\nOrden importa: LiveConnect ejecuta las acciones en el orden del nodo (puedes arrastrarlas).\n\nVariante con código: `examples/07-chatbot-callback-trigger.json` (motor de reglas en un nodo Code).",
+				"content": "## Callback response built visually\n\nThe **LiveConnect Callback Response** node (v0.4.0+) builds the actions from the editor — no Code node and no Respond to Webhook: **it responds to the webhook itself**.\n\n**Setup:**\n1. Activate the workflow and paste the trigger's Production URL into the callback of your Flowbot (same `secret` on both).\n2. Add/edit actions on the response node: text, image, file, tag, variables, delegation, update contact…\n3. The **golden rule** takes care of itself: with \"Automatically Add Closing Input\" turned on, the response always closes with `input` (and if you delegate, it is removed — the bot exits the callback).\n\nOrder matters: LiveConnect runs the actions in the node's order (you can drag them).\n\nCode-based variant: `examples/07-chatbot-callback-trigger.json` (rules engine in a Code node).",
 				"height": 420,
 				"width": 480
 			},
 			"id": "b9000000-0000-4000-8000-000000000001",
-			"name": "Instrucciones",
+			"name": "Instructions",
 			"type": "n8n-nodes-base.stickyNote",
 			"typeVersion": 1,
 			"position": [
@@ -18,7 +18,7 @@
 		},
 		{
 			"parameters": {
-				"secret": "cambia-este-secreto",
+				"secret": "change-this-secret",
 				"responseMode": "responseNode",
 				"simple": true,
 				"path": "callback-visual"
@@ -38,7 +38,7 @@
 					"accion": [
 						{
 							"tipo": "sendText",
-							"text": "={{ $json.esPrimerTurno ? '¡Hola' + ($json.contacto.nombre ? ' ' + $json.contacto.nombre : '') + '! Soy el asistente virtual. ¿En qué puedo ayudarte?' : 'Recibí tu mensaje: \"' + $json.mensaje + '\". Cuéntame más para ayudarte mejor.' }}"
+							"text": "={{ $json.esPrimerTurno ? 'Hello' + ($json.contacto.nombre ? ' ' + $json.contacto.nombre : '') + '! I am the virtual assistant. How can I help you?' : 'I received your message: \"' + $json.mensaje + '\". Tell me more so I can help you better.' }}"
 						},
 						{
 							"tipo": "addVar",
@@ -51,7 +51,7 @@
 				"respondWebhook": true
 			},
 			"id": "b9000000-0000-4000-8000-000000000003",
-			"name": "Respuesta visual (actions)",
+			"name": "Visual Response (actions)",
 			"type": "n8n-nodes-liveconnect.liveConnectCallbackResponse",
 			"typeVersion": 1,
 			"position": [
@@ -65,7 +65,7 @@
 			"main": [
 				[
 					{
-						"node": "Respuesta visual (actions)",
+						"node": "Visual Response (actions)",
 						"type": "main",
 						"index": 0
 					}

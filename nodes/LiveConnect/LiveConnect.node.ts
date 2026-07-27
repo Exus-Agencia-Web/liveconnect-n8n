@@ -1,4 +1,5 @@
 import type { INodeType, INodeTypeDescription } from 'n8n-workflow';
+import { NodeConnectionTypes } from 'n8n-workflow';
 
 import { LIVECONNECT_BASE_URL, refreshTokenIfExpired } from './GenericFunctions';
 import { liveConnectLoadOptions } from './LoadOptions';
@@ -50,16 +51,16 @@ export class LiveConnect implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'LiveConnect',
 		name: 'liveConnect',
-		icon: 'file:liveconnect2.svg',
+		icon: { light: 'file:liveconnect2.svg', dark: 'file:liveconnect2.dark.svg' },
 		group: ['transform'],
 		version: 1,
 		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
-		description: 'Interactúa con la API de LiveConnect (mensajería omnicanal + CRM)',
+		description: 'Interact with the LiveConnect API (omnichannel messaging + CRM)',
 		defaults: {
 			name: 'LiveConnect',
 		},
-		inputs: ['main'],
-		outputs: ['main'],
+		inputs: [NodeConnectionTypes.Main],
+		outputs: [NodeConnectionTypes.Main],
 		usableAsTool: true,
 		credentials: [
 			{
@@ -76,7 +77,7 @@ export class LiveConnect implements INodeType {
 		},
 		properties: [
 			{
-				displayName: 'Recurso',
+				displayName: 'Resource',
 				name: 'resource',
 				type: 'options',
 				noDataExpression: true,
@@ -87,22 +88,22 @@ export class LiveConnect implements INodeType {
 					send: { preSend: [refreshTokenIfExpired] },
 				},
 				options: [
-					{ name: 'Asistente', value: 'assistant' },
-					{ name: 'Automatización CRM', value: 'automation' },
-					{ name: 'Canal', value: 'channel' },
-					{ name: 'Categoría', value: 'category' },
-					{ name: 'Contacto', value: 'contact' },
-					{ name: 'Conversación', value: 'conversation' },
+					{ name: 'Assistant', value: 'assistant' },
+					{ name: 'Category', value: 'category' },
+					{ name: 'Channel', value: 'channel' },
+					{ name: 'Contact', value: 'contact' },
+					{ name: 'Conversation', value: 'conversation' },
 					{ name: 'CRM', value: 'crm' },
-					{ name: 'Grupo', value: 'group' },
-					{ name: 'Historial', value: 'history' },
-					{ name: 'Negociación', value: 'deal' },
-					{ name: 'Producto', value: 'product' },
+					{ name: 'CRM Automation', value: 'automation' },
+					{ name: 'Deal', value: 'deal' },
+					{ name: 'Deal Task', value: 'dealTask' },
+					{ name: 'History', value: 'history' },
+					{ name: 'Product', value: 'product' },
 					{ name: 'Proxy', value: 'proxy' },
-					{ name: 'Respuesta Rápida', value: 'quickReply' },
-					{ name: 'Tarea De Negociación', value: 'dealTask' },
-					{ name: 'Tópico', value: 'topic' },
-					{ name: 'Usuario', value: 'user' },
+					{ name: 'Quick Reply', value: 'quickReply' },
+					{ name: 'Team', value: 'group' },
+					{ name: 'Topic', value: 'topic' },
+					{ name: 'User', value: 'user' },
 					{ name: 'WhatsApp Business (WABA)', value: 'waba' },
 					{ name: 'WhatsApp QR', value: 'whatsapp' },
 				],
@@ -147,12 +148,12 @@ export class LiveConnect implements INodeType {
 			...whatsAppFields,
 
 			{
-				displayName: 'Devolver Respuesta Completa',
+				displayName: 'Return Full Response',
 				name: 'fullResponse',
 				type: 'boolean',
 				default: false,
 				description:
-					'Si se activa, devuelve el envelope completo del API ({ status, status_message, data }) en lugar de solo el campo data',
+					'Whether to return the full API envelope ({ status, status_message, data }) instead of just the data field',
 			},
 		],
 	};

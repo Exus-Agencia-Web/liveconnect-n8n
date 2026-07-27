@@ -26,12 +26,14 @@ Evidencia:
 
 ## 2. Lo que ve el usuario
 
+La interfaz del nodo está en inglés (ver [01-arquitectura.md](01-arquitectura.md) § Idioma); el resto de este documento sigue en español, pero las etiquetas citadas abajo son las reales del código:
+
 ```
-ID del Canal · Número · ID de la Plantilla        ← siempre
-Variable {{1}} … Variable {{10}}                   ← tantas como pida la plantilla
-URL del Encabezado                                 ← solo si lleva imagen/video/documento
-▸ Campos Adicionales (botones, mensaje, delegar, variables del encabezado,
-                      Usar Datos de Ejemplo, Variables del Cuerpo Separadas por Comas)
+Channel Name or ID · Phone Number · Template Name or ID    ← siempre
+Variable {{1}} … Variable {{10}}                            ← tantas como pida la plantilla
+Header URL                                                  ← solo si lleva imagen/video/documento
+▸ Additional Fields (Buttons, Additional Message, Delegate Team Name or ID,
+                      Header Variables, Use Sample Data, Body Variables (Comma-Separated))
 ```
 
 La etiqueta del selector dice lo que hace falta antes de elegir: `promo_48h · es · 2 variables · video`. Las aprobadas van primero; las no aprobadas llevan su estado (`PENDING`, `FAILED`).
@@ -49,7 +51,7 @@ n8n **no puede consultar el API para decidir la UI**: `displayOptions` solo mira
 
 - `variable_3` aparece con `\|v([3-9]|\d{2,})\|` (3 o más variables).
 - `variable_10` con `\|v\d{2,}\|`.
-- `URL del Encabezado` se **oculta** con `['', {regex: '\|(NONE|TEXT)$'}]` — el `''` evita ofrecerla antes de elegir plantilla.
+- `Header URL` se **oculta** con `['', {regex: '\|(NONE|TEXT)$'}]` — el `''` evita ofrecerla antes de elegir plantilla.
 
 Es el mismo patrón del nodo oficial de WhatsApp de n8n, cuyo valor es `nombre|idioma`.
 
@@ -64,17 +66,17 @@ Cuelga del campo **`numero`**. No es un capricho: **n8n no ejecuta los `preSend`
 Qué hace, en orden:
 
 1. Decodifica el valor del selector y deja en `body.id_plantilla` el identificador limpio.
-2. Lee las variables de los campos `variable_1..variable_10`. Si están todos vacíos, cae al respaldo CSV de Campos Adicionales.
+2. Lee las variables de los campos `variable_1..variable_10`. Si están todos vacíos, cae al respaldo CSV de Additional Fields.
 3. Consulta el **listado de plantillas del canal** (`/direct/waba/getTemplates`, **no** `getTemplate` — ver [02-api-liveconnect.md](02-api-liveconnect.md)) y busca la fila por `id`, `elementName`, `name` o `templateName`. **La caché es por canal** (5 min): una consulta sirve para todas las plantillas y todos los ítems de un envío masivo.
 4. Con la fila real: recalcula el identificador según el proveedor, recorta las variables a las que la plantilla declara, coloca la URL en `url_imagen_encabezado` / `url_video_encabezado` / `url_documento_encabezado` según el formato **declarado**, y valida.
 5. **Si la consulta falla, no bloquea**: envía lo que el usuario configuró y que sea el API quien decida.
 
 ### Validación que enseña
 
-En vez de un error abstracto, se nombra el hueco:
+En vez de un error abstracto, se nombra el hueco (mensaje real, en inglés — la interfaz del nodo lo está):
 
-> La plantilla «promo_48h» necesita 2 variables y falta el valor de {{2}}
-> *Llena el campo "Variable {{2}}" debajo del selector de plantilla. La plantilla trae este ejemplo: Ana, 12 de mayo.*
+> Template "promo_48h" needs 2 variables and is missing the value of {{2}}
+> *Fill in the field "Variable {{2}}" below the template selector. The template includes this example: Ana, May 12. You can also enable "Use Sample Data" in Additional Fields for a quick test.*
 
 ### Dos decisiones que parecen menores y no lo son
 
@@ -83,7 +85,7 @@ En vez de un error abstracto, se nombra el hueco:
 
 ## 5. Plantilla elegida por expresión (envío masivo)
 
-`displayOptions` **no evalúa expresiones**: si el ID de la plantilla viene de una expresión (`{{ $json.plantilla }}`), n8n no puede saber cuántos campos de variable mostrar y no muestra ninguno. Para ese caso existe **Campos Adicionales → Variables del Cuerpo Separadas por Comas** (`variables_csv`), que solo se usa si los campos numerados están vacíos. Es el camino del ejemplo `examples/02-envio-masivo-plantillas-waba.json`.
+`displayOptions` **no evalúa expresiones**: si el ID de la plantilla viene de una expresión (`{{ $json.plantilla }}`), n8n no puede saber cuántos campos de variable mostrar y no muestra ninguno. Para ese caso existe **Additional Fields → Body Variables (Comma-Separated)** (`variables_csv`), que solo se usa si los campos numerados están vacíos. Es el camino del ejemplo `examples/02-envio-masivo-plantillas-waba.json`.
 
 ## 6. Selector de plantillas
 
@@ -97,5 +99,5 @@ En vez de un error abstracto, se nombra el hueco:
 ## 7. Lo que sigue sin soporte
 
 - **Carruseles** (`cards`): no se parsean.
-- Botones con parámetro dinámico: se rellenan solo con "Usar Datos de Ejemplo"; el formato de `buttons` en el cuerpo no está documentado en el spec y se envía como mejor esfuerzo (`{index, parameter}`), sobreescribible desde Campos Adicionales.
+- Botones con parámetro dinámico: se rellenan solo con "Use Sample Data"; el formato de `buttons` en el cuerpo no está documentado en el spec y se envía como mejor esfuerzo (`{index, parameter}`), sobreescribible desde Additional Fields.
 - Variables del encabezado de texto: existen como campo (`variables_encabezado`) pero no se validan contra la plantilla.

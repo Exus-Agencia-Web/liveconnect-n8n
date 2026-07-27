@@ -151,11 +151,11 @@ function buildLayoutFromGupshup(template: IDataObject): TemplateLayout {
 	let headerFormat: HeaderFormat = 'NONE';
 	if (tipo === 'IMAGE' || tipo === 'VIDEO' || tipo === 'DOCUMENT') {
 		headerFormat = tipo;
-		const etiqueta = tipo === 'IMAGE' ? 'imagen' : tipo === 'VIDEO' ? 'video' : 'documento';
+		const etiqueta = tipo === 'IMAGE' ? 'Image' : tipo === 'VIDEO' ? 'Video' : 'Document';
 		fields.push(
 			field(
 				`${TEMPLATE_FIELD_PREFIX.headerMedia}_${tipo}`,
-				`URL de ${etiqueta}`,
+				`${etiqueta} URL`,
 				asText(template.mediaUrl) ?? asText(containerMeta.mediaUrl),
 			),
 		);
@@ -172,11 +172,11 @@ function buildLayoutFromGupshup(template: IDataObject): TemplateLayout {
 		const url = asText(button.url) ?? '';
 		const tipoBoton = (asText(button.type) ?? '').toUpperCase();
 		if (countPlaceholders(url) === 0 && tipoBoton !== 'COPY_CODE') return;
-		const etiqueta = asText(button.text) ?? `Botón ${index + 1}`;
+		const etiqueta = asText(button.text) ?? `Button ${index + 1}`;
 		fields.push(
 			field(
 				`${TEMPLATE_FIELD_PREFIX.button}${index + 1}`,
-				`Botón · ${etiqueta}`,
+				`Button · ${etiqueta}`,
 				asText(asArray(button.example)[0]),
 			),
 		);
@@ -210,7 +210,7 @@ function buildLayoutFromMetaComponents(
 					fields.push(
 						field(
 							`${TEMPLATE_FIELD_PREFIX.header}${i + 1}`,
-							`Encabezado · variable {{${i + 1}}}`,
+							`Header · variable {{${i + 1}}}`,
 							asText(ejemplos[i]),
 						),
 					);
@@ -222,12 +222,12 @@ function buildLayoutFromMetaComponents(
 				headerFormat = formato;
 				const handles = asArray(example.header_handle);
 				const etiqueta =
-					formato === 'IMAGE' ? 'imagen' : formato === 'VIDEO' ? 'video' : 'documento';
+					formato === 'IMAGE' ? 'Image' : formato === 'VIDEO' ? 'Video' : 'Document';
 				// El formato va en el ID para no tener que adivinarlo luego por la extensión.
 				fields.push(
 					field(
 						`${TEMPLATE_FIELD_PREFIX.headerMedia}_${formato}`,
-						`Encabezado · URL de ${etiqueta}`,
+						`Header · ${etiqueta} URL`,
 						asText(handles[0]),
 					),
 				);
@@ -245,7 +245,7 @@ function buildLayoutFromMetaComponents(
 				fields.push(
 					field(
 						`${TEMPLATE_FIELD_PREFIX.body}${i + 1}`,
-						`Cuerpo · variable {{${i + 1}}}`,
+						`Body · variable {{${i + 1}}}`,
 						asText(primeraFila[i]),
 					),
 				);
@@ -266,7 +266,7 @@ function buildLayoutFromMetaComponents(
 		const total = countPlaceholders(texto);
 		for (let i = 0; i < total; i++) {
 			fields.push(
-				field(`${TEMPLATE_FIELD_PREFIX.body}${i + 1}`, `Cuerpo · variable {{${i + 1}}}`),
+				field(`${TEMPLATE_FIELD_PREFIX.body}${i + 1}`, `Body · variable {{${i + 1}}}`),
 			);
 		}
 	}
@@ -287,9 +287,9 @@ function buildLayoutFromMetaComponents(
 		if (!esDinamico) return;
 
 		const ejemplo = asText(asArray(button.example)[0]);
-		const etiqueta = asText(button.text) ?? `Botón ${index + 1}`;
+		const etiqueta = asText(button.text) ?? `Button ${index + 1}`;
 		fields.push(
-			field(`${TEMPLATE_FIELD_PREFIX.button}${index + 1}`, `Botón · ${etiqueta}`, ejemplo),
+			field(`${TEMPLATE_FIELD_PREFIX.button}${index + 1}`, `Button · ${etiqueta}`, ejemplo),
 		);
 	});
 

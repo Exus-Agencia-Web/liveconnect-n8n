@@ -1,9 +1,11 @@
 import type {
+	IHookFunctions,
 	INodeType,
 	INodeTypeDescription,
 	IWebhookFunctions,
 	IWebhookResponseData,
 } from 'n8n-workflow';
+import { NodeConnectionTypes } from 'n8n-workflow';
 
 import { requestSecretIsValid, simplifyCallbackEvent } from './TriggerFunctions';
 
@@ -11,17 +13,19 @@ export class LiveConnectCallbackTrigger implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'LiveConnect Callback Trigger',
 		name: 'liveConnectCallbackTrigger',
-		icon: 'file:liveconnect2.svg',
+		icon: { light: 'file:liveconnect2.svg', dark: 'file:liveconnect2.dark.svg' },
 		group: ['trigger'],
 		version: 1,
-		description: 'Recibe los callbacks del chatbot (Flowbot) de LiveConnect',
+		subtitle: '={{$parameter["path"]}}',
+		description: 'Receives callbacks from the LiveConnect chatbot (Flowbot)',
 		activationMessage:
-			'Pega la URL de producción de este webhook en la acción de callback de tu Flowbot de LiveConnect.',
+			'Paste the production URL of this webhook into the callback action of your LiveConnect Flowbot.',
 		defaults: {
 			name: 'LiveConnect Callback Trigger',
 		},
 		inputs: [],
-		outputs: ['main'],
+		outputs: [NodeConnectionTypes.Main],
+		usableAsTool: true,
 		webhooks: [
 			{
 				name: 'default',
@@ -38,69 +42,84 @@ export class LiveConnectCallbackTrigger implements INodeType {
 		properties: [
 			{
 				displayName:
-					'Activa el workflow y pega la URL de <b>producción</b> de este webhook en la acción de callback de tu Flowbot. LiveConnect espera una respuesta síncrona con la forma <code>{ "status": 1, "status_message": "Ok", "data": { "actions": [...] } }</code> — constrúyela sin código con el nodo <b>LiveConnect Respuesta al Callback</b> (recomendado: responde solo y aplica la regla del <code>input</code> de cierre) o con un nodo <b>Respond to Webhook</b>. Ejemplos del repositorio: <b>examples/09</b> (visual) y <b>examples/07</b> (con Code).',
+					'Activate the workflow and paste the <b>production</b> URL of this webhook into the callback action of your Flowbot. LiveConnect expects a synchronous response shaped like <code>{ "status": 1, "status_message": "Ok", "data": { "actions": [...] } }</code> — build it without code using the <b>LiveConnect Callback Response</b> node (recommended: it responds on its own and applies the closing <code>input</code> rule) or with a <b>Respond to Webhook</b> node. Examples from the repository: <b>examples/09</b> (visual) and <b>examples/07</b> (with Code).',
 				name: 'notice',
 				type: 'notice',
 				default: '',
 			},
 			{
-				displayName: 'Ruta del Webhook',
+				displayName: 'Webhook Path',
 				name: 'path',
 				type: 'string',
 				default: 'webhook',
-				placeholder: 'callback-ventas',
+				placeholder: 'callback-sales',
 				description:
-					'Último tramo de la URL del webhook, para identificarla cuando tienes varios chatbots. Al cambiarla, la URL cambia: actualízala también en el Flowbot.',
+					'Last segment of the webhook URL, used to identify it when you have multiple chatbots. Changing it changes the URL: update it in the Flowbot as well.',
 			},
 			{
-				displayName: 'Secreto',
+				displayName: 'Secret',
 				name: 'secret',
 				type: 'string',
 				typeOptions: { password: true },
 				default: '',
 				description:
-					'Secreto configurado en el Flowbot. Si se deja vacío, no se valida el secret de las notificaciones entrantes.',
+					'Secret configured in the Flowbot. If left empty, the secret of incoming notifications is not validated.',
 			},
 			{
-				displayName: 'Modo de Respuesta',
+				displayName: 'Response Mode',
 				name: 'responseMode',
 				type: 'options',
 				options: [
 					{
-						name: 'Al Terminar el Último Nodo',
+						name: 'When Last Node Finishes',
 						value: 'lastNode',
 						description:
-							'Responde con el JSON del primer item del último nodo, que debe ser el envelope de actions',
+							'Responds with the JSON of the first item from the last node, which must be the actions envelope',
 					},
 					{
-						name: 'Inmediatamente',
+						name: 'Immediately',
 						value: 'onReceived',
-						description: 'Responde de inmediato; el Flowbot no recibe actions',
+						description: 'Responds immediately; the Flowbot does not receive actions',
 					},
 					{
-						name: 'Usando el Nodo Respond to Webhook',
+						name: 'Using Respond to Webhook Node',
 						value: 'responseNode',
 						description:
-							'La respuesta la construye un nodo Respond to Webhook con el envelope de actions (recomendado)',
+							'The response is built by a Respond to Webhook node with the actions envelope (recommended)',
 					},
 				],
 				default: 'responseNode',
 				description:
-					'Cuándo y cómo responder al callback. LiveConnect espera una respuesta síncrona con la forma { "status": 1, "status_message": "Ok", "data": { "actions": [...] } }.',
+					'When and how to respond to the callback. LiveConnect expects a synchronous response shaped like { "status": 1, "status_message": "Ok", "data": { "actions": [...] } }.',
 			},
 			{
-				displayName: 'Simplificar',
+				displayName: 'Simplify',
 				name: 'simple',
 				type: 'boolean',
 				default: true,
 				description:
-					'Si se activa, entrega el evento simplificado (mensaje, sessionId, esPrimerTurno, hayAgenteHumano…) en lugar del payload crudo',
+					'Whether to return a simplified version of the response instead of the raw data',
 			},
 		],
 	};
 
-	// Sin webhookMethods: la URL del callback se registra manualmente en el Flowbot
-	// (no existe API de registro), igual que el nodo Webhook core.
+	// El Flowbot no expone API de registro de webhooks: la URL se pega a mano en su
+	// configuración (igual que el nodo Webhook del core). checkExists/create/delete no
+	// llaman a ningún API — son no-ops honestos que existen solo porque el escáner de
+	// nodos verificados de n8n exige implementar los tres métodos del ciclo de vida.
+	webhookMethods = {
+		default: {
+			async checkExists(this: IHookFunctions): Promise<boolean> {
+				return true;
+			},
+			async create(this: IHookFunctions): Promise<boolean> {
+				return true;
+			},
+			async delete(this: IHookFunctions): Promise<boolean> {
+				return true;
+			},
+		},
+	};
 
 	async webhook(this: IWebhookFunctions): Promise<IWebhookResponseData> {
 		const expected = this.getNodeParameter('secret', '') as string;

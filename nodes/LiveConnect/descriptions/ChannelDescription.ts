@@ -4,7 +4,7 @@ import { handleLcResponse } from '../GenericFunctions';
 
 export const channelOperations: INodeProperties[] = [
 	{
-		displayName: 'Operación',
+		displayName: 'Operation',
 		name: 'operation',
 		type: 'options',
 		noDataExpression: true,
@@ -15,10 +15,10 @@ export const channelOperations: INodeProperties[] = [
 		},
 		options: [
 			{
-				name: 'Obtener Varios',
+				name: 'Get Many',
 				value: 'getMany',
-				action: 'Obtener varios canales',
-				description: 'Lista los canales configurados en la cuenta, con filtros opcionales',
+				action: 'Get many channels',
+				description: 'List the channels configured in the account, with optional filters',
 				routing: {
 					request: { method: 'GET', url: '/channels/list' },
 					output: { postReceive: [handleLcResponse] },
@@ -34,10 +34,10 @@ export const channelFields: INodeProperties[] = [
 	//         channel: getMany
 	// ----------------------------------
 	{
-		displayName: 'Filtros',
+		displayName: 'Filters',
 		name: 'filters',
 		type: 'collection',
-		placeholder: 'Agregar Filtro',
+		placeholder: 'Add Filter',
 		default: {},
 		displayOptions: {
 			show: {
@@ -47,31 +47,31 @@ export const channelFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Estado',
+				displayName: 'Status',
 				name: 'estado',
 				type: 'number',
 				default: 1,
-				description: 'Estado del canal (default 1)',
+				description: 'Channel status (default 1)',
 				routing: { send: { type: 'query', property: 'estado' } },
 			},
 			{
-				displayName: 'ID del Canal',
+				displayName: 'Channel ID',
 				name: 'id',
 				type: 'number',
 				default: 0,
-				description: 'Filtra por ID de canal',
+				description: 'Filter by channel ID',
 				routing: { send: { type: 'query', property: 'id' } },
 			},
 			{
-				displayName: 'Iniciable',
+				displayName: 'Startable',
 				name: 'iniciable',
 				type: 'options',
 				options: [
 					{ name: 'No', value: 0 },
-					{ name: 'Sí', value: 1 },
+					{ name: 'Yes', value: 1 },
 				],
 				default: 1,
-				description: 'Filtra por canales iniciables',
+				description: 'Filter by startable channels',
 				routing: { send: { type: 'query', property: 'iniciable' } },
 			},
 			{
@@ -80,10 +80,10 @@ export const channelFields: INodeProperties[] = [
 				type: 'options',
 				options: [
 					{ name: 'No', value: 0 },
-					{ name: 'Sí', value: 1 },
+					{ name: 'Yes', value: 1 },
 				],
 				default: 1,
-				description: 'Filtra por visibilidad',
+				description: 'Filter by visibility',
 				routing: { send: { type: 'query', property: 'visible' } },
 			},
 		],

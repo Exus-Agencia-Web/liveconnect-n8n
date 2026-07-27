@@ -130,7 +130,7 @@ await test('red caída al renovar → NodeOperationError accionable', async () =
 	});
 	await assert.rejects(
 		() => refreshTokenIfExpired.call(ctx, { url: '/x', headers: {} }),
-		/No se pudo renovar el token de sesión/,
+		/Could not renew the LiveConnect session token/,
 	);
 });
 
@@ -175,7 +175,7 @@ await test('capa reactiva: JWT sin exp + status -403 fuerza la renovación sigui
 				body: { status: -403, status_message: 'Token no valido!' },
 				headers: {},
 			}),
-		/token de sesión de LiveConnect no es válido o expiró/,
+		/LiveConnect session token is invalid or expired/,
 	);
 
 	// 3) el siguiente preSend SÍ emite uno nuevo

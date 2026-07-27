@@ -4,7 +4,7 @@ import { handleLcResponse, prepareTemplateSend } from '../GenericFunctions';
 
 export const wabaOperations: INodeProperties[] = [
 	{
-		displayName: 'Operación',
+		displayName: 'Operation',
 		name: 'operation',
 		type: 'options',
 		noDataExpression: true,
@@ -15,44 +15,44 @@ export const wabaOperations: INodeProperties[] = [
 		},
 		options: [
 			{
-				name: 'Enviar Plantilla',
+				name: 'Send Template',
 				value: 'sendTemplate',
-				action: 'Enviar una plantilla',
+				action: 'Send a template',
 				description:
-					'Envía la plantilla indicada al número destino por el canal seleccionado. El encabezado admite imagen, documento o video (el video se rechaza si supera 16MB o no es mp4/3gp).',
+					'Sends the specified template to the destination number through the selected channel. The header accepts an image, document, or video (video is rejected if it exceeds 16MB or is not mp4/3gp).',
 				routing: {
 					request: { method: 'POST', url: '/direct/waba/sendTemplate' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
 			{
-				name: 'Enviar Respuesta Rápida',
+				name: 'Send Quick Reply',
 				value: 'sendQuickAnswer',
-				action: 'Enviar una respuesta rápida',
+				action: 'Send a quick reply',
 				description:
-					'Envía una respuesta rápida (texto y/o archivo adjunto) al número destino, sustituyendo {clave} en el texto por las variables indicadas',
+					'Sends a quick reply (text and/or attachment) to the destination number, replacing {key} in the text with the specified variables',
 				routing: {
 					request: { method: 'POST', url: '/direct/waba/sendwabaQuickAnswer' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
 			{
-				name: 'Obtener Plantilla',
+				name: 'Get Template',
 				value: 'getTemplate',
-				action: 'Obtener una plantilla',
+				action: 'Get a template',
 				description:
-					'Busca una plantilla por ID o por nombre. Requiere el ID del canal y, como identificador, el ID de la plantilla en Meta o su nombre alterno.',
+					'Looks up a template by ID or name. Requires the channel ID and, as the identifier, the template ID in Meta or its alternate name.',
 				routing: {
 					request: { method: 'POST', url: '/direct/waba/getTemplate' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
 			{
-				name: 'Obtener Varias Plantillas',
+				name: 'Get Many Templates',
 				value: 'getManyTemplates',
-				action: 'Obtener varias plantillas',
+				action: 'Get many templates',
 				description:
-					'Retorna las plantillas de WhatsApp Business API configuradas en el canal, con paginación y filtros opcionales de Meta',
+					'Returns the WhatsApp Business API templates configured on the channel, with pagination and optional Meta filters',
 				routing: {
 					request: { method: 'POST', url: '/direct/waba/getTemplates' },
 					output: { postReceive: [handleLcResponse] },
@@ -68,14 +68,13 @@ export const wabaFields: INodeProperties[] = [
 	//         waba: getManyTemplates
 	// ----------------------------------
 	{
-		displayName: 'ID del Canal',
+		displayName: 'Channel Name or ID',
 		name: 'id_canal',
 		type: 'options',
 		typeOptions: { loadOptionsMethod: 'getWabaChannels' },
 		required: true,
 		default: '',
-		description:
-			'ID del canal WABA de la cuenta. Elige de la lista o especifica un ID con una expresión.',
+		description: 'ID of the WABA channel for the account. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 		displayOptions: {
 			show: {
 				resource: ['waba'],
@@ -87,10 +86,10 @@ export const wabaFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Filtros',
+		displayName: 'Filters',
 		name: 'filters',
 		type: 'collection',
-		placeholder: 'Agregar Filtro',
+		placeholder: 'Add Filter',
 		default: {},
 		displayOptions: {
 			show: {
@@ -100,50 +99,50 @@ export const wabaFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Categoría',
+				displayName: 'Approved Only',
+				name: 'approved',
+				type: 'boolean',
+				default: false,
+				description: 'Whether to return only templates with APPROVED status',
+				routing: { send: { type: 'body', property: 'approved' } },
+			},
+			{
+				displayName: 'Category',
 				name: 'category',
 				type: 'options',
 				options: [
-					{ name: 'Autenticación', value: 'AUTHENTICATION' },
+					{ name: 'Authentication', value: 'AUTHENTICATION' },
 					{ name: 'Marketing', value: 'MARKETING' },
-					{ name: 'Utilidad', value: 'UTILITY' },
+					{ name: 'Utility', value: 'UTILITY' },
 				],
 				default: 'MARKETING',
-				description: 'Filtra por categoría de Meta',
+				description: 'Filter by Meta category',
 				routing: { send: { type: 'body', property: 'category' } },
 			},
 			{
-				displayName: 'Cursor de Paginación',
-				name: 'paging',
-				type: 'string',
-				default: '',
-				description: 'Cursor de paginación devuelto por una llamada previa',
-				routing: { send: { type: 'body', property: 'paging' } },
-			},
-			{
-				displayName: 'Límite',
+				displayName: 'Limit',
 				name: 'limit',
 				type: 'number',
 				typeOptions: { minValue: 1 },
 				default: 50,
-				description: 'Cantidad máxima de resultados a devolver',
+				description: 'Max number of results to return',
 				routing: { send: { type: 'body', property: 'limit' } },
 			},
 			{
-				displayName: 'Nombre',
+				displayName: 'Name',
 				name: 'name',
 				type: 'string',
 				default: '',
-				description: 'Filtra por nombre de la plantilla',
+				description: 'Filter by template name',
 				routing: { send: { type: 'body', property: 'name' } },
 			},
 			{
-				displayName: 'Solo Aprobadas',
-				name: 'approved',
-				type: 'boolean',
-				default: false,
-				description: 'Si se activa, devuelve solo las plantillas con estado APPROVED',
-				routing: { send: { type: 'body', property: 'approved' } },
+				displayName: 'Pagination Cursor',
+				name: 'paging',
+				type: 'string',
+				default: '',
+				description: 'Pagination cursor returned by a previous call',
+				routing: { send: { type: 'body', property: 'paging' } },
 			},
 		],
 	},
@@ -152,14 +151,13 @@ export const wabaFields: INodeProperties[] = [
 	//         waba: getTemplate
 	// ----------------------------------
 	{
-		displayName: 'ID del Canal',
+		displayName: 'Channel Name or ID',
 		name: 'id_canal',
 		type: 'options',
 		typeOptions: { loadOptionsMethod: 'getWabaChannels' },
 		required: true,
 		default: '',
-		description:
-			'ID del canal WABA de la cuenta. Elige de la lista o especifica un ID con una expresión.',
+		description: 'ID of the WABA channel for the account. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 		displayOptions: {
 			show: {
 				resource: ['waba'],
@@ -171,12 +169,12 @@ export const wabaFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Campos de Búsqueda',
+		displayName: 'Search Fields',
 		name: 'searchFields',
 		type: 'collection',
-		placeholder: 'Agregar Campo',
+		placeholder: 'Add Field',
 		default: {},
-		description: 'Envía el ID de la plantilla en Meta o su nombre alterno para identificarla',
+		description: 'Send the template ID in Meta or its alternate name to identify it',
 		displayOptions: {
 			show: {
 				resource: ['waba'],
@@ -185,19 +183,19 @@ export const wabaFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'ID de la Plantilla',
+				displayName: 'Template ID',
 				name: 'id',
 				type: 'string',
 				default: '',
-				description: 'ID de la plantilla en Meta',
+				description: 'ID of the template in Meta',
 				routing: { send: { type: 'body', property: 'id' } },
 			},
 			{
-				displayName: 'Nombre de la Plantilla',
+				displayName: 'Template Name',
 				name: 'id_template',
 				type: 'string',
 				default: '',
-				description: 'Nombre o ID alterno de la plantilla',
+				description: 'Alternate name or ID of the template',
 				routing: { send: { type: 'body', property: 'id_template' } },
 			},
 		],
@@ -207,14 +205,13 @@ export const wabaFields: INodeProperties[] = [
 	//         waba: sendQuickAnswer
 	// ----------------------------------
 	{
-		displayName: 'ID del Canal',
+		displayName: 'Channel Name or ID',
 		name: 'id_canal',
 		type: 'options',
 		typeOptions: { loadOptionsMethod: 'getWabaChannels' },
 		required: true,
 		default: '',
-		description:
-			'ID del canal WABA de la cuenta. Elige de la lista o especifica un ID con una expresión.',
+		description: 'ID of the WABA channel for the account. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 		displayOptions: {
 			show: {
 				resource: ['waba'],
@@ -226,12 +223,12 @@ export const wabaFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Número de Teléfono',
+		displayName: 'Phone Number',
 		name: 'numero',
 		type: 'string',
 		required: true,
 		default: '',
-		description: 'Celular destino',
+		description: 'Destination phone number',
 		displayOptions: {
 			show: {
 				resource: ['waba'],
@@ -243,12 +240,12 @@ export const wabaFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'ID de la Respuesta Rápida',
+		displayName: 'Quick Reply ID',
 		name: 'id_respuesta',
 		type: 'number',
 		required: true,
 		default: 0,
-		description: 'ID de la respuesta rápida (lc_respuestasrapidas)',
+		description: 'ID of the quick reply (lc_respuestasrapidas)',
 		displayOptions: {
 			show: {
 				resource: ['waba'],
@@ -260,10 +257,10 @@ export const wabaFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Campos Adicionales',
+		displayName: 'Additional Fields',
 		name: 'additionalFields',
 		type: 'collection',
-		placeholder: 'Agregar Campo',
+		placeholder: 'Add Field',
 		default: {},
 		displayOptions: {
 			show: {
@@ -277,7 +274,7 @@ export const wabaFields: INodeProperties[] = [
 				name: 'variables',
 				type: 'json',
 				default: '{}',
-				description: 'Pares clave-valor para sustituir {clave} en el texto de la respuesta',
+				description: 'Key-value pairs to substitute {key} in the reply text',
 				routing: {
 					send: {
 						type: 'body',
@@ -293,14 +290,13 @@ export const wabaFields: INodeProperties[] = [
 	//         waba: sendTemplate
 	// ----------------------------------
 	{
-		displayName: 'ID del Canal',
+		displayName: 'Channel Name or ID',
 		name: 'id_canal',
 		type: 'options',
 		typeOptions: { loadOptionsMethod: 'getWabaChannels' },
 		required: true,
 		default: '',
-		description:
-			'ID del canal WABA de la cuenta. Elige de la lista o especifica un ID con una expresión.',
+		description: 'ID of the WABA channel for the account. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 		displayOptions: {
 			show: {
 				resource: ['waba'],
@@ -312,13 +308,13 @@ export const wabaFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Número de Teléfono',
+		displayName: 'Phone Number',
 		name: 'numero',
 		type: 'string',
 		required: true,
 		default: '',
 		placeholder: '573001112233',
-		description: 'Celular destino con código de país, sin espacios ni signos',
+		description: 'Destination phone number with country code, no spaces or symbols',
 		displayOptions: {
 			show: {
 				resource: ['waba'],
@@ -333,14 +329,13 @@ export const wabaFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'ID de la Plantilla',
+		displayName: 'Template Name or ID',
 		name: 'id_plantilla',
 		type: 'options',
 		typeOptions: { loadOptionsMethod: 'getWabaTemplates', loadOptionsDependsOn: ['&id_canal'] },
 		required: true,
 		default: '',
-		description:
-			'ID o nombre de la plantilla a enviar. Elige de la lista o especifica un ID con una expresión.',
+		description: 'ID or name of the template to send. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 		displayOptions: {
 			show: {
 				resource: ['waba'],
@@ -356,7 +351,7 @@ export const wabaFields: INodeProperties[] = [
 		name: 'variable_1',
 		type: 'string',
 		default: '',
-		description: 'Valor que reemplaza a {{1}} en el texto de la plantilla',
+		description: 'Value that replaces {{1}} in the template text',
 		displayOptions: {
 			show: {
 				resource: ['waba'],
@@ -370,7 +365,7 @@ export const wabaFields: INodeProperties[] = [
 		name: 'variable_2',
 		type: 'string',
 		default: '',
-		description: 'Valor que reemplaza a {{2}} en el texto de la plantilla',
+		description: 'Value that replaces {{2}} in the template text',
 		displayOptions: {
 			show: {
 				resource: ['waba'],
@@ -384,7 +379,7 @@ export const wabaFields: INodeProperties[] = [
 		name: 'variable_3',
 		type: 'string',
 		default: '',
-		description: 'Valor que reemplaza a {{3}} en el texto de la plantilla',
+		description: 'Value that replaces {{3}} in the template text',
 		displayOptions: {
 			show: {
 				resource: ['waba'],
@@ -398,7 +393,7 @@ export const wabaFields: INodeProperties[] = [
 		name: 'variable_4',
 		type: 'string',
 		default: '',
-		description: 'Valor que reemplaza a {{4}} en el texto de la plantilla',
+		description: 'Value that replaces {{4}} in the template text',
 		displayOptions: {
 			show: {
 				resource: ['waba'],
@@ -412,7 +407,7 @@ export const wabaFields: INodeProperties[] = [
 		name: 'variable_5',
 		type: 'string',
 		default: '',
-		description: 'Valor que reemplaza a {{5}} en el texto de la plantilla',
+		description: 'Value that replaces {{5}} in the template text',
 		displayOptions: {
 			show: {
 				resource: ['waba'],
@@ -426,7 +421,7 @@ export const wabaFields: INodeProperties[] = [
 		name: 'variable_6',
 		type: 'string',
 		default: '',
-		description: 'Valor que reemplaza a {{6}} en el texto de la plantilla',
+		description: 'Value that replaces {{6}} in the template text',
 		displayOptions: {
 			show: {
 				resource: ['waba'],
@@ -440,7 +435,7 @@ export const wabaFields: INodeProperties[] = [
 		name: 'variable_7',
 		type: 'string',
 		default: '',
-		description: 'Valor que reemplaza a {{7}} en el texto de la plantilla',
+		description: 'Value that replaces {{7}} in the template text',
 		displayOptions: {
 			show: {
 				resource: ['waba'],
@@ -454,7 +449,7 @@ export const wabaFields: INodeProperties[] = [
 		name: 'variable_8',
 		type: 'string',
 		default: '',
-		description: 'Valor que reemplaza a {{8}} en el texto de la plantilla',
+		description: 'Value that replaces {{8}} in the template text',
 		displayOptions: {
 			show: {
 				resource: ['waba'],
@@ -468,7 +463,7 @@ export const wabaFields: INodeProperties[] = [
 		name: 'variable_9',
 		type: 'string',
 		default: '',
-		description: 'Valor que reemplaza a {{9}} en el texto de la plantilla',
+		description: 'Value that replaces {{9}} in the template text',
 		displayOptions: {
 			show: {
 				resource: ['waba'],
@@ -482,7 +477,7 @@ export const wabaFields: INodeProperties[] = [
 		name: 'variable_10',
 		type: 'string',
 		default: '',
-		description: 'Valor que reemplaza a {{10}} en el texto de la plantilla',
+		description: 'Value that replaces {{10}} in the template text',
 		displayOptions: {
 			show: {
 				resource: ['waba'],
@@ -492,13 +487,13 @@ export const wabaFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'URL del Encabezado',
+		displayName: 'Header URL',
 		name: 'url_encabezado',
 		type: 'string',
 		default: '',
 		placeholder: 'https://…',
 		description:
-			'URL pública de la imagen, video o documento del encabezado de la plantilla. El nodo la coloca en el campo que corresponda al tipo de medio.',
+			'Public URL of the template header image, video, or document. The node places it in the field matching the media type.',
 		displayOptions: {
 			show: {
 				resource: ['waba'],
@@ -513,10 +508,10 @@ export const wabaFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Campos Adicionales',
+		displayName: 'Additional Fields',
 		name: 'additionalFields',
 		type: 'collection',
-		placeholder: 'Agregar Campo',
+		placeholder: 'Add Field',
 		default: {},
 		displayOptions: {
 			show: {
@@ -526,35 +521,11 @@ export const wabaFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Botones',
-				name: 'buttons',
-				type: 'json',
-				default: '[]',
-				description: 'Botones dinámicos de la plantilla (arreglo de objetos)',
-				routing: {
-					send: {
-						type: 'body',
-						property: 'buttons',
-						value: '={{ typeof $value === "object" && $value !== null ? $value : JSON.parse($value || "[]") }}',
-					},
-				},
-			},
-			{
-				displayName: 'ID del Equipo a Delegar',
-				name: 'id_to_delegate',
-				type: 'options',
-				typeOptions: { loadOptionsMethod: 'getGroups' },
-				default: '',
-				description:
-					'ID del equipo al que delegar el seguimiento de la plantilla enviada. Elige de la lista o especifica un ID con una expresión.',
-				routing: { send: { type: 'body', property: 'id_to_delegate' } },
-			},
-			{
-				displayName: 'Mensaje Adicional',
+				displayName: 'Additional Message',
 				name: 'message',
 				type: 'json',
 				default: '{}',
-				description: 'Mensaje adicional para acompañar la plantilla',
+				description: 'Additional message to accompany the template',
 				routing: {
 					send: {
 						type: 'body',
@@ -564,32 +535,47 @@ export const wabaFields: INodeProperties[] = [
 				},
 			},
 			{
-				displayName: 'Usar Datos de Ejemplo',
-				name: 'usar_ejemplo',
-				type: 'boolean',
-				default: false,
-				description:
-					'Si se activa, rellena lo que dejes vacío con los datos de ejemplo que trae la plantilla de Meta. Sirve para enviarte una prueba sin escribir nada.',
-			},
-			{
-				displayName: 'Variables del Cuerpo Separadas por Comas',
+				displayName: 'Body Variables (Comma-Separated)',
 				name: 'variables_csv',
 				type: 'string',
 				default: '',
-				placeholder: 'Ana, 12 de mayo',
+				placeholder: 'Ana, May 12',
 				// Con la plantilla elegida por expresión (envío masivo con una plantilla
 				// distinta por fila) n8n no puede saber cuántos campos "Variable {{n}}"
 				// mostrar, porque displayOptions ve la expresión sin evaluar.
 				description:
-					'Solo si eliges la plantilla con una expresión: valores del cuerpo separados por comas, en el orden {{1}}, {{2}}, etc. Si llenas los campos "Variable {{n}}", estos mandan.',
+					'Only used if you choose the template with an expression: body values separated by commas, in the order {{1}}, {{2}}, etc. If you fill in the "Variable {{n}}" fields, they take precedence.',
 			},
 			{
-				displayName: 'Variables del Encabezado',
+				displayName: 'Buttons',
+				name: 'buttons',
+				type: 'json',
+				default: '[]',
+				description: 'Dynamic buttons of the template (array of objects)',
+				routing: {
+					send: {
+						type: 'body',
+						property: 'buttons',
+						value: '={{ typeof $value === "object" && $value !== null ? $value : JSON.parse($value || "[]") }}',
+					},
+				},
+			},
+			{
+				displayName: 'Delegate Team Name or ID',
+				name: 'id_to_delegate',
+				type: 'options',
+				typeOptions: { loadOptionsMethod: 'getGroups' },
+				default: '',
+				description: 'ID of the team to delegate follow-up of the sent template to. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+				routing: { send: { type: 'body', property: 'id_to_delegate' } },
+			},
+			{
+				displayName: 'Header Variables',
 				name: 'variables_encabezado',
 				type: 'string',
 				default: '',
 				placeholder: 'value1,value2',
-				description: 'Variables del encabezado de texto, separadas por comas',
+				description: 'Text header variables, separated by commas',
 				routing: {
 					send: {
 						type: 'body',
@@ -598,6 +584,14 @@ export const wabaFields: INodeProperties[] = [
 							'={{ $value.toString().split(",").map((v) => v.trim()).filter((v) => v !== "") }}',
 					},
 				},
+			},
+			{
+				displayName: 'Use Sample Data',
+				name: 'usar_ejemplo',
+				type: 'boolean',
+				default: false,
+				description:
+					'Whether to fill in whatever you leave empty with the sample data provided by the Meta template. Useful for sending yourself a test without typing anything.',
 			},
 		],
 	},

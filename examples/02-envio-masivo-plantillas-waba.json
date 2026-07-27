@@ -1,14 +1,14 @@
 {
-	"name": "LiveConnect 02 — Envío masivo de plantillas WABA",
+	"name": "LiveConnect 02 — Bulk WABA Template Sending",
 	"nodes": [
 		{
 			"parameters": {
-				"content": "## Envío masivo de plantillas (WhatsApp Business API)\n\n1. Reemplaza el nodo **Destinatarios (demo)** por tu fuente real: Google Sheets, base de datos, o `Contacto · Obtener Varios` del propio nodo LiveConnect.\n2. En **Enviar plantilla** elige el **Canal** y la **Plantilla** en los desplegables: la etiqueta de la plantilla dice cuántas variables pide y si lleva imagen o video.\n3. Para los valores que cambian en cada fila tienes dos caminos:\n   - Llenar los campos **Variable {{1}}, {{2}}…** con expresiones (`{{ $json.nombre }}`).\n   - O mandarlos todos juntos por **Campos Adicionales → Variables del Cuerpo Separadas por Comas**, que es lo que hace este ejemplo y también sirve cuando la plantilla se elige con una expresión.\n4. El **Wait** de 2 s regula el ritmo de envío (ajústalo según tu límite de WABA).\n\nCada item debe traer `numero` (celular destino) y `variables` (CSV en el orden de la plantilla).",
+				"content": "## Bulk template sending (WhatsApp Business API)\n\n1. Replace the **Recipients (demo)** node with your real source: Google Sheets, a database, or the LiveConnect node's own `Contact · Get Many`.\n2. In **Send Template** choose the **Channel** and the **Template** from the dropdowns: the template's label shows how many variables it needs and whether it includes an image or video.\n3. For the values that change on each row you have two options:\n   - Fill in the **Variable {{1}}, {{2}}…** fields with expressions (`{{ $json.nombre }}`).\n   - Or send them all together via **Additional Fields → Body Variables (Comma-Separated)**, which is what this example does and also works when the template is chosen with an expression.\n4. The 2 s **Wait** regulates the sending pace (adjust it to your WABA rate limit).\n\nEach item must include `numero` (destination phone number) and `variables` (CSV in the template's order).",
 				"height": 320,
 				"width": 440
 			},
 			"id": "b2000000-0000-4000-8000-000000000001",
-			"name": "Instrucciones",
+			"name": "Instructions",
 			"type": "n8n-nodes-base.stickyNote",
 			"typeVersion": 1,
 			"position": [
@@ -19,7 +19,7 @@
 		{
 			"parameters": {},
 			"id": "b2000000-0000-4000-8000-000000000002",
-			"name": "Ejecutar manualmente",
+			"name": "Run Manually",
 			"type": "n8n-nodes-base.manualTrigger",
 			"typeVersion": 1,
 			"position": [
@@ -29,10 +29,10 @@
 		},
 		{
 			"parameters": {
-				"jsCode": "// DEMO: reemplaza por Google Sheets, MySQL, o LiveConnect Contact · Get Many\nreturn [\n\t{ json: { numero: '573001112233', variables: 'Ana,Plan Pro' } },\n\t{ json: { numero: '573004445566', variables: 'Luis,Plan Básico' } },\n];"
+				"jsCode": "// DEMO: replace with Google Sheets, MySQL, or LiveConnect Contact · Get Many\nreturn [\n\t{ json: { numero: '573001112233', variables: 'Ana,Pro Plan' } },\n\t{ json: { numero: '573004445566', variables: 'Luis,Basic Plan' } },\n];"
 			},
 			"id": "b2000000-0000-4000-8000-000000000003",
-			"name": "Destinatarios (demo)",
+			"name": "Recipients (demo)",
 			"type": "n8n-nodes-base.code",
 			"typeVersion": 2,
 			"position": [
@@ -46,7 +46,7 @@
 				"options": {}
 			},
 			"id": "b2000000-0000-4000-8000-000000000004",
-			"name": "Por lotes",
+			"name": "In Batches",
 			"type": "n8n-nodes-base.splitInBatches",
 			"typeVersion": 3,
 			"position": [
@@ -66,7 +66,7 @@
 				}
 			},
 			"id": "b2000000-0000-4000-8000-000000000005",
-			"name": "Enviar plantilla",
+			"name": "Send Template",
 			"type": "n8n-nodes-liveconnect.liveConnect",
 			"typeVersion": 1,
 			"position": [
@@ -79,7 +79,7 @@
 				"amount": 2
 			},
 			"id": "b2000000-0000-4000-8000-000000000006",
-			"name": "Pausa anti-límite",
+			"name": "Rate-Limit Pause",
 			"type": "n8n-nodes-base.wait",
 			"typeVersion": 1.1,
 			"position": [
@@ -90,7 +90,7 @@
 		{
 			"parameters": {},
 			"id": "b2000000-0000-4000-8000-000000000007",
-			"name": "Fin",
+			"name": "Done",
 			"type": "n8n-nodes-base.noOp",
 			"typeVersion": 1,
 			"position": [
@@ -100,62 +100,62 @@
 		}
 	],
 	"connections": {
-		"Ejecutar manualmente": {
+		"Run Manually": {
 			"main": [
 				[
 					{
-						"node": "Destinatarios (demo)",
+						"node": "Recipients (demo)",
 						"type": "main",
 						"index": 0
 					}
 				]
 			]
 		},
-		"Destinatarios (demo)": {
+		"Recipients (demo)": {
 			"main": [
 				[
 					{
-						"node": "Por lotes",
+						"node": "In Batches",
 						"type": "main",
 						"index": 0
 					}
 				]
 			]
 		},
-		"Por lotes": {
+		"In Batches": {
 			"main": [
 				[
 					{
-						"node": "Fin",
+						"node": "Done",
 						"type": "main",
 						"index": 0
 					}
 				],
 				[
 					{
-						"node": "Enviar plantilla",
+						"node": "Send Template",
 						"type": "main",
 						"index": 0
 					}
 				]
 			]
 		},
-		"Enviar plantilla": {
+		"Send Template": {
 			"main": [
 				[
 					{
-						"node": "Pausa anti-límite",
+						"node": "Rate-Limit Pause",
 						"type": "main",
 						"index": 0
 					}
 				]
 			]
 		},
-		"Pausa anti-límite": {
+		"Rate-Limit Pause": {
 			"main": [
 				[
 					{
-						"node": "Por lotes",
+						"node": "In Batches",
 						"type": "main",
 						"index": 0
 					}

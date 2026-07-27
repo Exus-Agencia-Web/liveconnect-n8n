@@ -1,14 +1,14 @@
 {
-	"name": "LiveConnect 04 — Chatbot IA que crea negociaciones en el CRM",
+	"name": "LiveConnect 04 — AI Chatbot That Creates CRM Deals",
 	"nodes": [
 		{
 			"parameters": {
-				"content": "## Chatbot vendedor: califica leads y crea la negociación en el CRM\n\nEl AI Agent usa el nodo LiveConnect como **herramienta** (usableAsTool): decide solo cuándo buscar el contacto y cuándo crear el deal.\n\n**Requisitos:**\n1. En el servidor n8n: `N8N_COMMUNITY_PACKAGES_ALLOW_TOOL_USAGE=true` (permite usar nodos comunitarios como tools).\n2. Workflow **01** ejecutado apuntando a la URL de este Webhook.\n3. Credenciales OpenAI y LiveConnect API.\n4. En **Crear negociación (tool)** reemplaza los IDs fijos:\n   - `id_pipeline` y `id_etapa_pipeline`: consúltalos con `CRM · Get Pipelines` y `CRM · Get Stages`\n   - `id_responsable`: `User · Get Many`\n   - `origen_lead`: `CRM · Get Lead Origins`\n   - `moneda`: código de tu moneda (ej. COP, USD)",
+				"content": "## Sales chatbot: qualifies leads and creates the deal in the CRM\n\nThe AI Agent uses the LiveConnect node as a **tool** (usableAsTool): it decides on its own when to look up the contact and when to create the deal.\n\n**Requirements:**\n1. On the n8n server: `N8N_COMMUNITY_PACKAGES_ALLOW_TOOL_USAGE=true` (allows using community nodes as tools).\n2. Workflow **01** run, pointing to this Webhook's URL.\n3. OpenAI and LiveConnect API credentials.\n4. In **Create Deal (tool)** replace the fixed IDs:\n   - `id_pipeline` and `id_etapa_pipeline`: look them up with `CRM · Get Pipelines` and `CRM · Get Stages`\n   - `id_responsable`: `User · Get Many`\n   - `origen_lead`: `CRM · Get Lead Origins`\n   - `moneda`: your currency code (e.g. COP, USD)",
 				"height": 420,
 				"width": 480
 			},
 			"id": "b4000000-0000-4000-8000-000000000001",
-			"name": "Instrucciones",
+			"name": "Instructions",
 			"type": "n8n-nodes-base.stickyNote",
 			"typeVersion": 1,
 			"position": [
@@ -24,7 +24,7 @@
 				"options": {}
 			},
 			"id": "b4000000-0000-4000-8000-000000000002",
-			"name": "Webhook LiveConnect",
+			"name": "LiveConnect Webhook",
 			"type": "n8n-nodes-base.webhook",
 			"typeVersion": 2,
 			"position": [
@@ -34,10 +34,10 @@
 		},
 		{
 			"parameters": {
-				"jsCode": "// Payload real de LiveConnect: {chat, inputs, userInput, intent}\nconst raw = $input.first().json;\nconst body = raw.body ?? raw;\nconst chat = body.chat ?? {};\nconst inputs = body.inputs ?? {};\nconst mensaje = String(body.userInput || inputs.mensaje_inicial || '').trim();\n\nreturn [{\n\tjson: {\n\t\tmensaje,\n\t\tid_conversacion: String(chat.id ?? ''),\n\t\tid_canal: chat.id_canal ?? null,\n\t\tcontacto_id: chat.contacto?.id ?? null,\n\t\tcontacto_nombre: chat.contacto?.nombre || 'Cliente',\n\t\tcontacto_celular: chat.contacto?.celular || inputs.celular || '',\n\t},\n}];"
+				"jsCode": "// Real LiveConnect payload: {chat, inputs, userInput, intent}\nconst raw = $input.first().json;\nconst body = raw.body ?? raw;\nconst chat = body.chat ?? {};\nconst inputs = body.inputs ?? {};\nconst mensaje = String(body.userInput || inputs.mensaje_inicial || '').trim();\n\nreturn [{\n\tjson: {\n\t\tmensaje,\n\t\tid_conversacion: String(chat.id ?? ''),\n\t\tid_canal: chat.id_canal ?? null,\n\t\tcontacto_id: chat.contacto?.id ?? null,\n\t\tcontacto_nombre: chat.contacto?.nombre || 'Customer',\n\t\tcontacto_celular: chat.contacto?.celular || inputs.celular || '',\n\t},\n}];"
 			},
 			"id": "b4000000-0000-4000-8000-000000000003",
-			"name": "Parsear mensaje",
+			"name": "Parse Message",
 			"type": "n8n-nodes-base.code",
 			"typeVersion": 2,
 			"position": [
@@ -50,11 +50,11 @@
 				"promptType": "define",
 				"text": "={{ $json.mensaje }}",
 				"options": {
-					"systemMessage": "Eres un asesor comercial por chat, en español, breve y cordial. El cliente se llama {{ $json.contacto_nombre }} (celular: {{ $json.contacto_celular }}).\n\nTu objetivo: entender qué producto o servicio le interesa y su presupuesto aproximado.\n\nCuando tengas claros (1) el interés del cliente y (2) un valor estimado, usa la herramienta 'crear_negociacion' UNA sola vez para registrar la oportunidad en el CRM, y confírmale al cliente que un asesor lo contactará. Si necesitas verificar si ya es cliente, usa 'buscar_contacto' con su celular. No inventes precios; si no sabes algo, ofrece pasar con un asesor humano."
+					"systemMessage": "You are a sales advisor over chat, in English, brief and friendly. The customer's name is {{ $json.contacto_nombre }} (phone: {{ $json.contacto_celular }}).\n\nYour goal: understand what product or service interests them and their approximate budget.\n\nOnce you are clear on (1) the customer's interest and (2) an estimated value, use the 'create_deal' tool ONCE to register the opportunity in the CRM, and confirm to the customer that an advisor will contact them. If you need to check whether they are already a customer, use 'find_contact' with their phone number. Do not make up prices; if you do not know something, offer to transfer them to a human advisor."
 				}
 			},
 			"id": "b4000000-0000-4000-8000-000000000004",
-			"name": "AI Agent Vendedor",
+			"name": "AI Sales Agent",
 			"type": "@n8n/n8n-nodes-langchain.agent",
 			"typeVersion": 1.9,
 			"position": [
@@ -84,10 +84,10 @@
 		{
 			"parameters": {
 				"sessionIdType": "customKey",
-				"sessionKey": "={{ $('Parsear mensaje').first().json.id_conversacion }}"
+				"sessionKey": "={{ $('Parse Message').first().json.id_conversacion }}"
 			},
 			"id": "b4000000-0000-4000-8000-000000000006",
-			"name": "Memoria por conversación",
+			"name": "Conversation Memory",
 			"type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
 			"typeVersion": 1.3,
 			"position": [
@@ -100,13 +100,13 @@
 				"resource": "contact",
 				"operation": "get",
 				"searchFields": {
-					"celular": "={{ $fromAI('celular', 'Celular del cliente a buscar', 'string') }}"
+					"celular": "={{ $fromAI('celular', 'Phone number of the customer to search for', 'string') }}"
 				},
 				"descriptionType": "manual",
-				"toolDescription": "buscar_contacto: busca un contacto de LiveConnect por su número de celular y devuelve sus datos (id, nombre, email, etiquetas)."
+				"toolDescription": "find_contact: looks up a LiveConnect contact by phone number and returns its data (id, name, email, tags)."
 			},
 			"id": "b4000000-0000-4000-8000-000000000007",
-			"name": "Buscar contacto (tool)",
+			"name": "Find Contact (tool)",
 			"type": "n8n-nodes-liveconnect.liveConnect",
 			"typeVersion": 1,
 			"position": [
@@ -118,20 +118,20 @@
 			"parameters": {
 				"resource": "deal",
 				"operation": "create",
-				"nombre": "={{ $fromAI('nombre', 'Título corto de la negociación, ej: Interés en Plan Pro — Ana', 'string') }}",
+				"nombre": "={{ $fromAI('nombre', 'Short deal title, e.g.: Interest in Pro Plan — Ana', 'string') }}",
 				"id_pipeline": "",
 				"id_etapa_pipeline": "",
 				"id_responsable": "",
-				"valor": "={{ $fromAI('valor', 'Valor estimado de la oportunidad, solo número', 'number') }}",
+				"valor": "={{ $fromAI('valor', 'Estimated value of the opportunity, number only', 'number') }}",
 				"moneda": "COP",
 				"origen_lead": "",
-				"descripcion": "={{ $fromAI('descripcion', 'Resumen del interés del cliente y contexto de la conversación', 'string') }}",
+				"descripcion": "={{ $fromAI('descripcion', 'Summary of customer interest and conversation context', 'string') }}",
 				"additionalFields": {},
 				"descriptionType": "manual",
-				"toolDescription": "crear_negociacion: registra una oportunidad de venta (deal) en el CRM de LiveConnect con nombre, valor estimado y descripción. Úsala una sola vez por conversación, cuando el interés del cliente esté claro."
+				"toolDescription": "create_deal: registers a sales opportunity (deal) in the LiveConnect CRM with a name, estimated value, and description. Use it only once per conversation, once the customer's interest is clear."
 			},
 			"id": "b4000000-0000-4000-8000-000000000008",
-			"name": "Crear negociación (tool)",
+			"name": "Create Deal (tool)",
 			"type": "n8n-nodes-liveconnect.liveConnect",
 			"typeVersion": 1,
 			"position": [
@@ -143,11 +143,11 @@
 			"parameters": {
 				"resource": "proxy",
 				"operation": "sendMessage",
-				"id_conversacion": "={{ $('Parsear mensaje').first().json.id_conversacion }}",
+				"id_conversacion": "={{ $('Parse Message').first().json.id_conversacion }}",
 				"mensaje": "={{ $json.output }}"
 			},
 			"id": "b4000000-0000-4000-8000-000000000009",
-			"name": "Responder al cliente",
+			"name": "Reply to Customer",
 			"type": "n8n-nodes-liveconnect.liveConnect",
 			"typeVersion": 1,
 			"position": [
@@ -172,33 +172,33 @@
 		}
 	],
 	"connections": {
-		"Webhook LiveConnect": {
+		"LiveConnect Webhook": {
 			"main": [
 				[
 					{
-						"node": "Parsear mensaje",
+						"node": "Parse Message",
 						"type": "main",
 						"index": 0
 					}
 				]
 			]
 		},
-		"Parsear mensaje": {
+		"Parse Message": {
 			"main": [
 				[
 					{
-						"node": "AI Agent Vendedor",
+						"node": "AI Sales Agent",
 						"type": "main",
 						"index": 0
 					}
 				]
 			]
 		},
-		"AI Agent Vendedor": {
+		"AI Sales Agent": {
 			"main": [
 				[
 					{
-						"node": "Responder al cliente",
+						"node": "Reply to Customer",
 						"type": "main",
 						"index": 0
 					}
@@ -209,47 +209,47 @@
 			"ai_languageModel": [
 				[
 					{
-						"node": "AI Agent Vendedor",
+						"node": "AI Sales Agent",
 						"type": "ai_languageModel",
 						"index": 0
 					}
 				]
 			]
 		},
-		"Memoria por conversación": {
+		"Conversation Memory": {
 			"ai_memory": [
 				[
 					{
-						"node": "AI Agent Vendedor",
+						"node": "AI Sales Agent",
 						"type": "ai_memory",
 						"index": 0
 					}
 				]
 			]
 		},
-		"Buscar contacto (tool)": {
+		"Find Contact (tool)": {
 			"ai_tool": [
 				[
 					{
-						"node": "AI Agent Vendedor",
+						"node": "AI Sales Agent",
 						"type": "ai_tool",
 						"index": 0
 					}
 				]
 			]
 		},
-		"Crear negociación (tool)": {
+		"Create Deal (tool)": {
 			"ai_tool": [
 				[
 					{
-						"node": "AI Agent Vendedor",
+						"node": "AI Sales Agent",
 						"type": "ai_tool",
 						"index": 0
 					}
 				]
 			]
 		},
-		"Responder al cliente": {
+		"Reply to Customer": {
 			"main": [
 				[
 					{

@@ -20,8 +20,9 @@ Todo cambio al nodo debe derivarse de ese spec. No inventar campos ni endpoints.
 | [docs/03-plantillas-waba.md](docs/03-plantillas-waba.md) | tocar `Enviar Plantilla` |
 | [docs/04-triggers-y-callbacks.md](docs/04-triggers-y-callbacks.md) | tocar triggers o respuestas de callback |
 | [docs/05-lecciones-n8n.md](docs/05-lecciones-n8n.md) | cualquier cambio de UI, routing, auth o ESLint |
-| [docs/06-mantenimiento.md](docs/06-mantenimiento.md) | actualizar desde el spec, probar o publicar |
+| [docs/06-mantenimiento.md](docs/06-mantenimiento.md) | actualizar desde el spec, probar, verificar o publicar |
 | [docs/07-historial-decisiones.md](docs/07-historial-decisiones.md) | proponer un rediseño |
+| [docs/08-paquete-espanol.md](docs/08-paquete-espanol.md) | tocar cualquier texto visible del nodo, o el paquete español |
 
 **Al terminar un cambio, actualiza la documentación en el mismo commit** (qué va en qué archivo: `docs/README.md` → "Cómo mantener esta documentación"). Si descubres algo que contradice este resumen, corrige los dos.
 
@@ -41,8 +42,10 @@ nodes/LiveConnect/
   LiveConnectCallbackResponse.node.ts       # constructor visual de actions; responde con sendResponse()
   descriptions/<Recurso>Description.ts      # 1 archivo por recurso: <camel>Operations + <camel>Fields
 scripts/verify-spec.mjs                     # diff dist/ vs OpenAPI (npm run verify)
-scripts/smoke-*.mjs                         # 109 pruebas de humo (npm run smoke)
-.github/workflows/                          # ci.yml (build+lint) · release.yml (release → npm publish)
+scripts/smoke-*.mjs                         # 114 pruebas de humo (npm run smoke)
+scripts/build-es-package.mjs + i18n-*.mjs   # genera dist-es/ (n8n-nodes-liveconnect-es) — ver docs/08-paquete-espanol.md
+eslint.config.mjs                           # config oficial del escáner de nodos verificados (npm run lint)
+.github/workflows/                          # ci.yml (build+lint+verify+smoke+build:es) · release.yml (release → publica LOS DOS paquetes a npm)
 ```
 
 18 recursos, 58 operaciones (todas las del spec menos `/account/token`, que la maneja la credencial), 2 triggers y 1 nodo de respuesta. `ContactDescription.ts` es el **template canónico** para recursos nuevos. Detalle en [docs/01-arquitectura.md](docs/01-arquitectura.md).
@@ -63,15 +66,15 @@ scripts/smoke-*.mjs                         # 109 pruebas de humo (npm run smoke
 4. Selectores dependientes: `loadOptionsDependsOn` con ruta relativa `&`.
 5. `npm install --ignore-scripts` SIEMPRE (isolated-vm no compila en Node ≥ 26).
 
-**UI en español** (desde v0.3.0): `displayName`, labels de `options`, `action`, `description` y placeholders en español; los `name`/`value` internos **no cambian nunca**. Preposiciones y artículos en minúscula ("ID del Canal", no "ID Del Canal").
+**UI en inglés** (desde que se preparó la verificación de nodos de n8n): `displayName` en Title Case, `description` en sentence case, `action`, labels de `options` y placeholders en inglés; los `name`/`value` internos **no cambian nunca**. Literales que exige el escáner: `Name or ID` y `Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>` en selectores dinámicos, `Max number of results to return` en `limit`, descripciones booleanas con `Whether`. Ya no hay reglas de ESLint desactivadas por idioma — detalle en [docs/05-lecciones-n8n.md](docs/05-lecciones-n8n.md) §11.
 
-⚠️ **`node-param-operation-option-action-miscased` debe seguir DESACTIVADA**: su autofix pasa cada `action` por `sentence-case` y **borra los diacríticos** (así se rompieron 25 actions en v0.3.0). Tras cualquier `npm run lintfix`:
+**El español se publica aparte**: `n8n-nodes-liveconnect-es`, generado desde este mismo código aplicando `i18n/es.json` en tiempo de build (`npm run build:es`). Detalle en [docs/08-paquete-espanol.md](docs/08-paquete-espanol.md).
 
-```bash
-grep -rho "action: '[^']*'" nodes/LiveConnect/descriptions/*.ts | grep -cE "[áéíóúñ]"   # debe dar 25
-```
+**Ícono**: `liveconnect2.svg` (claro) y `liveconnect2.dark.svg` (oscuro) — el escáner de nodos verificados prohíbe que las dos variantes `{light, dark}` apunten al mismo archivo. n8n cachea los íconos con fuerza — si se cambia el dibujo, **renombrar el archivo**.
 
-**Ícono**: `liveconnect2.svg`. n8n cachea los íconos con fuerza — si se cambia el dibujo, **renombrar el archivo**.
+## Verificación de n8n
+
+Guía: <https://docs.n8n.io/connect/create-nodes/build-your-node/reference/verification-guidelines>. Interfaz y documentación en inglés, sin dependencias runtime, licencia MIT, TypeScript, publicación desde GitHub Actions con provenance (obligatorio desde el 1 de mayo de 2026). Comprobación: `npx @n8n/scan-community-package n8n-nodes-liveconnect` (solo funciona contra una versión ya publicada; en local, `npm run lint` corre la misma config). Envío: <https://creators.n8n.io/nodes>. Detalle y resultado medido en [docs/06-mantenimiento.md](docs/06-mantenimiento.md) § Verificación de n8n.
 
 ## Plantillas WABA (lo mínimo)
 
@@ -83,9 +86,9 @@ Antes de rediseñar esta operación, lee [docs/03-plantillas-waba.md](docs/03-pl
 
 1. `npm install --ignore-scripts`
 2. `npm run build && npm run verify` — reporta `✗` (errores duros, exit 1), `~` (required no marcado) y `-` (propiedad no expuesta).
-3. Operación nueva → al `<Recurso>Description.ts` que toque (o archivo nuevo + export en `descriptions/index.ts` + import/spread en `LiveConnect.node.ts` + opción en el selector `resource`). Contrato en [docs/06-mantenimiento.md](docs/06-mantenimiento.md).
+3. Operación nueva → al `<Recurso>Description.ts` que toque (o archivo nuevo + export en `descriptions/index.ts` + import/spread en `LiveConnect.node.ts` + opción en el selector `resource`). Contrato en [docs/06-mantenimiento.md](docs/06-mantenimiento.md). Todo texto visible va en inglés; añade su traducción a `i18n/es.json` (`npm run i18n:status` dice qué falta) — ver [docs/08-paquete-espanol.md](docs/08-paquete-espanol.md).
 4. `npm run build && npm run lint && npm run verify && npm run smoke` hasta verde.
-5. Subir `version`, commit, push, `gh release create vX.Y.Z` → publica en npm.
+5. Subir `version`, commit, push, `gh release create vX.Y.Z` → publica en npm **los dos paquetes** (`n8n-nodes-liveconnect` y `n8n-nodes-liveconnect-es`).
 6. Actualizar `docs/` y añadir la entrada en `docs/07-historial-decisiones.md`.
 
 ## Comandos
@@ -93,9 +96,12 @@ Antes de rediseñar esta operación, lee [docs/03-plantillas-waba.md](docs/03-pl
 ```bash
 npm install --ignore-scripts   # instalar (NUNCA npm install a secas)
 npm run build                  # tsc + íconos
-npm run lint / npm run lintfix
+npm run build:es               # build + genera dist-es/ (paquete n8n-nodes-liveconnect-es)
+npm run lint / npm run lintfix # n8n-node lint — config oficial del escáner de nodos verificados
 npm run verify                 # diff dist/ vs OpenAPI del CDN (acepta un spec local como argumento)
-npm run smoke                  # 109 pruebas de humo (triggers, respuesta, token, selectores, plantillas)
+npm run smoke                  # 114 pruebas de humo (109 + 5 del paquete español)
+npm run i18n:status            # qué textos nuevos faltan traducir a español
+npm run scan                   # npx @n8n/scan-community-package (solo funciona contra una versión ya publicada)
 ```
 
-Repo: https://github.com/Exus-Agencia-Web/liveconnect-n8n · npm: `n8n-nodes-liveconnect`
+Repo: https://github.com/Exus-Agencia-Web/liveconnect-n8n · npm: `n8n-nodes-liveconnect` (inglés) y `n8n-nodes-liveconnect-es` (español, ver [docs/08-paquete-espanol.md](docs/08-paquete-espanol.md))

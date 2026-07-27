@@ -82,7 +82,7 @@ await test('POST loaders mandan body vacío (pipelines, orígenes, canales de le
 
 await test('getStages exige el pipeline y lo manda como número', async () => {
 	const sin = ctxFor({ response: { status: 1, data: [] } });
-	await assert.rejects(() => lo.getStages.call(sin.ctx), /Selecciona primero el Pipeline/);
+	await assert.rejects(() => lo.getStages.call(sin.ctx), /Select the Pipeline first/);
 
 	const con = ctxFor({
 		response: { status: 1, data: [{ id: 5, nombre: 'Ganado' }] },
@@ -136,13 +136,13 @@ await test('campo dependiente con expresión → error explicativo, no NaN', asy
 		response: { status: 1, data: [] },
 		params: { resource: 'deal', operation: 'create', id_pipeline: '={{ $json.pipe }}' },
 	});
-	await assert.rejects(() => lo.getStages.call(ctx), /use una expresión/);
+	await assert.rejects(() => lo.getStages.call(ctx), /uses an expression/);
 	assert.equal(calls.length, 0, 'no debe llamar al API con NaN');
 });
 
 await test('getWabaTemplates lee data.templates (respuesta anidada real del API)', async () => {
 	const sin = ctxFor({ response: { status: 1, data: { templates: [] } } });
-	await assert.rejects(() => lo.getWabaTemplates.call(sin.ctx), /Selecciona primero el Canal/);
+	await assert.rejects(() => lo.getWabaTemplates.call(sin.ctx), /Select the Channel first/);
 
 	const con = ctxFor({
 		// Forma REAL: data es un objeto { templates, paging }, no un array.
@@ -163,8 +163,8 @@ await test('getWabaTemplates lee data.templates (respuesta anidada real del API)
 	// El valor codifica el ID de LiveConnect + lo que pide la plantilla (controla qué
 	// campos se ven). Con el nombre el API responde "Invalid template id provided".
 	assert.deepEqual(options, [
-		{ name: 'bienvenida · es · sin variables', value: '123456789|v0|TEXT' },
-		{ name: 'aviso_pago · es_CO · sin variables · PENDING', value: '987654321|v0|TEXT' },
+		{ name: 'bienvenida · es · no variables', value: '123456789|v0|TEXT' },
+		{ name: 'aviso_pago · es_CO · no variables · PENDING', value: '987654321|v0|TEXT' },
 	]);
 	assert.deepEqual(con.calls[0].body, { id_canal: 67095 });
 });
@@ -189,9 +189,9 @@ await test('plantillas sin name: usa campos alternativos o el contenido, no el U
 	// "URL del Encabezado" se oculta igual con TEXT que con NONE).
 	assert.deepEqual(options, [
 		{ name: 'Hola {{1}}, tu pedido ya salió · 1 variable', value: 'uuid-3|v1|TEXT' },
-		{ name: 'pago_recibido · sin variables', value: 'uuid-2|v0|TEXT' },
-		{ name: 'recordatorio_cita · sin variables', value: 'uuid-1|v0|TEXT' },
-		{ name: 'ID uuid-4 · sin variables · FAILED', value: 'uuid-4|v0|TEXT' },
+		{ name: 'pago_recibido · no variables', value: 'uuid-2|v0|TEXT' },
+		{ name: 'recordatorio_cita · no variables', value: 'uuid-1|v0|TEXT' },
+		{ name: 'ID uuid-4 · no variables · FAILED', value: 'uuid-4|v0|TEXT' },
 	]);
 });
 
@@ -257,7 +257,7 @@ await test('nombres opacos de Meta ceden ante el contenido de la plantilla', asy
 	const byValue = Object.fromEntries(options.map((o) => [o.value, o.name]));
 	const nombres = options.map((o) => o.name);
 	assert.ok(nombres.includes('Hola {{1}}, tu cita quedó confirmada · 1 variable'), nombres.join(' , '));
-	assert.ok(nombres.includes('667058365993373_67d4976c2921a_9999 · sin variables'), nombres.join(' , '));
+	assert.ok(nombres.includes('667058365993373_67d4976c2921a_9999 · no variables'), nombres.join(' , '));
 });
 
 await test('envelope con status<0 → error con el mensaje del API', async () => {
@@ -289,14 +289,14 @@ await test('status -403 del selector → mensaje de token expirado', async () =>
 		response: { status: -403, status_message: 'Token no valido!' },
 		credentials: { cKey: 'cuenta-403-selector', privateKey: 'PK', sessionToken: 'x' },
 	});
-	await assert.rejects(() => lo.getUsers.call(ctx), /token de sesión de LiveConnect expiró/);
+	await assert.rejects(() => lo.getUsers.call(ctx), /LiveConnect session token expired/);
 });
 
 await test('fallo de red / credencial ausente → mensaje accionable', async () => {
 	const { ctx } = ctxFor({ fail: new Error('Credentials not found') });
 	await assert.rejects(
 		() => lo.getCategories.call(ctx),
-		/No se pudo cargar la lista desde LiveConnect/,
+		/Could not load the list from LiveConnect/,
 	);
 });
 

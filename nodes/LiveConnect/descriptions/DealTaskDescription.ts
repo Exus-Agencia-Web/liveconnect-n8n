@@ -4,7 +4,7 @@ import { handleLcResponse } from '../GenericFunctions';
 
 export const dealTaskOperations: INodeProperties[] = [
 	{
-		displayName: 'Operación',
+		displayName: 'Operation',
 		name: 'operation',
 		type: 'options',
 		noDataExpression: true,
@@ -15,33 +15,33 @@ export const dealTaskOperations: INodeProperties[] = [
 		},
 		options: [
 			{
-				name: 'Actualizar',
+				name: 'Update',
 				value: 'update',
-				action: 'Actualizar una tarea',
+				action: 'Update a task',
 				description:
-					'Edita el texto y/o la fecha de una tarea. Permite reasignar según el alcance de permisos de quien edita.',
+					'Edit the text and/or date of a task. Allows reassignment based on the permissions of the user making the edit.',
 				routing: {
 					request: { method: 'POST', url: '/crm/editTask' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
 			{
-				name: 'Crear',
+				name: 'Create',
 				value: 'create',
-				action: 'Crear una tarea',
+				action: 'Create a task',
 				description:
-					'Crea una nota-tarea y la vincula a la negociación. Si no se envía el ID del Contacto se toma de la negociación; si no se envía el ID del Usuario Asignado se asigna al responsable de la negociación.',
+					'Create a task note and link it to the deal. If the Contact ID is not sent, it is taken from the deal; if the Assigned User ID is not sent, it is assigned to the deal owner.',
 				routing: {
 					request: { method: 'POST', url: '/crm/addTask' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
 			{
-				name: 'Eliminar',
+				name: 'Delete',
 				value: 'delete',
-				action: 'Eliminar una tarea',
+				action: 'Delete a task',
 				description:
-					'Elimina el vínculo con la negociación y la nota asociada. Solo el asignado o el creador de la tarea pueden eliminarla.',
+					'Delete the link with the deal and the associated note. Only the assignee or the task creator can delete it.',
 				routing: {
 					request: { method: 'POST', url: '/crm/deleteTask' },
 					output: { postReceive: [handleLcResponse] },
@@ -57,12 +57,12 @@ export const dealTaskFields: INodeProperties[] = [
 	//         dealTask: create
 	// ----------------------------------
 	{
-		displayName: 'ID de la Negociación',
+		displayName: 'Deal ID',
 		name: 'id_deal',
 		type: 'number',
 		required: true,
 		default: 0,
-		description: 'Consecutivo de la negociación a la que se vincula la tarea',
+		description: 'Sequential number of the deal the task is linked to',
 		displayOptions: {
 			show: {
 				resource: ['dealTask'],
@@ -74,13 +74,13 @@ export const dealTaskFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Nota',
+		displayName: 'Note',
 		name: 'nota',
 		type: 'string',
 		required: true,
 		typeOptions: { rows: 3 },
 		default: '',
-		description: 'Texto de la tarea',
+		description: 'Text of the task',
 		displayOptions: {
 			show: {
 				resource: ['dealTask'],
@@ -92,13 +92,13 @@ export const dealTaskFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Fecha',
+		displayName: 'Date',
 		name: 'fecha',
 		type: 'string',
 		required: true,
 		default: '',
 		placeholder: 'YYYY-MM-DD HH:mm:ss',
-		description: 'Fecha y hora de la tarea',
+		description: 'Date and time of the task',
 		displayOptions: {
 			show: {
 				resource: ['dealTask'],
@@ -110,10 +110,10 @@ export const dealTaskFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Campos Adicionales',
+		displayName: 'Additional Fields',
 		name: 'additionalFields',
 		type: 'collection',
-		placeholder: 'Agregar Campo',
+		placeholder: 'Add Field',
 		default: {},
 		displayOptions: {
 			show: {
@@ -123,29 +123,28 @@ export const dealTaskFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'ID del Contacto',
+				displayName: 'Contact ID',
 				name: 'id_contacto',
 				type: 'number',
 				default: 0,
-				description: 'Contacto de la tarea; por defecto el contacto de la negociación',
+				description: 'Contact for the task; defaults to the deal contact',
 				routing: { send: { type: 'body', property: 'id_contacto' } },
 			},
 			{
-				displayName: 'ID del Usuario Asignado',
+				displayName: 'Assigned User Name or ID',
 				name: 'id_usuario',
 				type: 'options',
 				typeOptions: { loadOptionsMethod: 'getUsers' },
 				default: '',
-				description:
-					'Usuario asignado; por defecto el responsable de la negociación. Elige de la lista o especifica un ID con una expresión.',
+				description: 'Assigned user; defaults to the deal owner. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 				routing: { send: { type: 'body', property: 'id_usuario' } },
 			},
 			{
-				displayName: 'ID Interno de la Negociación',
+				displayName: 'Internal Deal ID',
 				name: 'id_interno',
 				type: 'number',
 				default: 0,
-				description: 'ID interno de la negociación (alternativa al ID de la Negociación/consecutivo)',
+				description: 'Internal ID of the deal (alternative to Deal ID/sequential number)',
 				routing: { send: { type: 'body', property: 'id_interno' } },
 			},
 		],
@@ -155,12 +154,12 @@ export const dealTaskFields: INodeProperties[] = [
 	//         dealTask: delete
 	// ----------------------------------
 	{
-		displayName: 'ID de la Tarea',
+		displayName: 'Task ID',
 		name: 'id',
 		type: 'number',
 		required: true,
 		default: 0,
-		description: 'ID de la tarea a eliminar',
+		description: 'ID of the task to delete',
 		displayOptions: {
 			show: {
 				resource: ['dealTask'],
@@ -176,12 +175,12 @@ export const dealTaskFields: INodeProperties[] = [
 	//         dealTask: update
 	// ----------------------------------
 	{
-		displayName: 'ID de la Tarea',
+		displayName: 'Task ID',
 		name: 'id',
 		type: 'number',
 		required: true,
 		default: 0,
-		description: 'ID de la tarea (no el consecutivo de la negociación)',
+		description: 'ID of the task, not the sequential number of the deal',
 		displayOptions: {
 			show: {
 				resource: ['dealTask'],
@@ -193,10 +192,10 @@ export const dealTaskFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Campos a Actualizar',
+		displayName: 'Update Fields',
 		name: 'updateFields',
 		type: 'collection',
-		placeholder: 'Agregar Campo',
+		placeholder: 'Add Field',
 		default: {},
 		displayOptions: {
 			show: {
@@ -206,41 +205,39 @@ export const dealTaskFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Fecha',
+				displayName: 'Date',
 				name: 'fecha',
 				type: 'string',
 				default: '',
 				placeholder: 'YYYY-MM-DD HH:mm:ss',
-				description: 'Fecha y hora de la tarea',
+				description: 'Date and time of the task',
 				routing: { send: { type: 'body', property: 'fecha' } },
 			},
 			{
-				displayName: 'ID del Asignado',
+				displayName: 'Assignee Name or ID',
 				name: 'id_asignado',
 				type: 'options',
 				typeOptions: { loadOptionsMethod: 'getUsers' },
 				default: '',
-				description:
-					'Alias del ID del Usuario Asignado para reasignar la tarea. Elige de la lista o especifica un ID con una expresión.',
+				description: 'Alias of Assigned User ID to reassign the task. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 				routing: { send: { type: 'body', property: 'id_asignado' } },
 			},
 			{
-				displayName: 'ID del Usuario Asignado',
+				displayName: 'Assigned User Name or ID',
 				name: 'id_usuario',
 				type: 'options',
 				typeOptions: { loadOptionsMethod: 'getUsers' },
 				default: '',
-				description:
-					'Reasigna la tarea a este usuario (alias: id_asignado). Elige de la lista o especifica un ID con una expresión.',
+				description: 'Reassigns the task to this user (alias: id_asignado). Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 				routing: { send: { type: 'body', property: 'id_usuario' } },
 			},
 			{
-				displayName: 'Nota',
+				displayName: 'Note',
 				name: 'nota',
 				type: 'string',
 				typeOptions: { rows: 3 },
 				default: '',
-				description: 'Texto de la tarea',
+				description: 'Text of the task',
 				routing: { send: { type: 'body', property: 'nota' } },
 			},
 		],

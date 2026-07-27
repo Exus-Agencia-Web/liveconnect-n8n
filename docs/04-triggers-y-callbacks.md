@@ -24,7 +24,7 @@ Puntos que costaron:
 
 ## 2. LiveConnect Callback Trigger
 
-Recibe los callbacks del chatbot (Flowbot). **No tiene `webhookMethods`**: no existe API de registro, la URL de producción se pega a mano en el Flowbot.
+Recibe los callbacks del chatbot (Flowbot). El Flowbot no expone API de registro de webhooks: la URL de producción se pega a mano en su configuración. Aun así **sí declara `webhookMethods`** — los tres métodos como no-ops honestos que devuelven `true` sin llamar a ningún API — porque la regla `webhook-lifecycle-complete` del escáner de nodos verificados exige implementarlos aunque no haga falta ningún registro (ver [05-lecciones-n8n.md](05-lecciones-n8n.md) §10).
 
 ### Contrato del callback (verificado)
 
@@ -50,7 +50,7 @@ LiveConnect espera **en la misma petición**:
 
 ### Ruta del webhook (ambos triggers)
 
-La URL que registra n8n es `<base>/webhook/<webhookId>/<ruta>` (`node-helpers.js`, `getNodeWebhookPath`). El `webhookId` lo asigna n8n al crear el nodo y **no es editable desde la UI**; la `ruta` sí: es el parámetro **Ruta del Webhook** (`path`, default `webhook`), declarado como `path: '={{$parameter["path"] || "webhook"}}'` en `webhooks[0]`.
+La URL que registra n8n es `<base>/webhook/<webhookId>/<ruta>` (`node-helpers.js`, `getNodeWebhookPath`). El `webhookId` lo asigna n8n al crear el nodo y **no es editable desde la UI**; la `ruta` sí: es el parámetro **Webhook Path** (`path`, default `webhook`), declarado como `path: '={{$parameter["path"] || "webhook"}}'` en `webhooks[0]`.
 
 - El default reproduce la URL de las versiones anteriores a la 0.9.2, así que nadie tiene que volver a pegar nada en su Flowbot.
 - Ruta vacía → cae al default; nunca se genera una URL terminada en `/`.
@@ -67,11 +67,11 @@ Verificado en `scripts/smoke-triggers.mjs` con el `Workflow` y el `NodeHelpers` 
 
 ### Reglas de ESLint específicas de triggers
 
-El plugin los detecta por el nombre de archivo `*Trigger.node.ts` y exige: `name`/`displayName` con sufijo `Trigger`, `inputs: []`, `outputs: ['main']`, **el parámetro de simplificación debe llamarse `simple`** con la descripción literal en inglés `Whether to return a simplified version of the response instead of the raw data`, y **sin** `subtitle`.
+La regla `trigger-node-conventions` (del escáner oficial, `@n8n/eslint-plugin-community-nodes`) detecta los triggers por el nombre de archivo `*Trigger.node.ts` y exige `name`/`displayName` con sufijo `Trigger` e `inputs: []`. A eso se suman reglas generales que también aplican aquí: `outputs` debe usar `NodeConnectionTypes.Main`, no el literal `'main'` (regla `node-connection-type-literal` — ver [05-lecciones-n8n.md](05-lecciones-n8n.md) §10), y el parámetro de simplificación debe llamarse `simple` con la descripción exacta `Whether to return a simplified version of the response instead of the raw data`. Los dos triggers **sí llevan `subtitle`** (`={{$parameter["path"]}}`), igual que los otros nodos: no hay ninguna regla que lo prohíba para triggers.
 
 ### Trampa de tipos
 
-En n8n-workflow 1.120 el tipo de `webhookMethods.default` **exige los tres métodos**. Si un trigger no necesita registro (como el de callback), hay que **omitir el bloque entero**, no declarar métodos vacíos.
+En n8n-workflow 1.120 el tipo de `webhookMethods.default` **exige los tres métodos** cuando el bloque existe (eso no cambió). Lo que cambió es que ya **no se puede omitir el bloque entero** en un trigger sin API de registro (como el de callback): la regla `webhook-lifecycle-complete` del escáner de nodos verificados lo exige siempre. La solución es declarar los tres métodos como no-ops honestos que devuelven `true` sin hacer nada, con un comentario que explique por qué existen.
 
 ## 3. LiveConnect Respuesta al Callback
 
@@ -81,6 +81,7 @@ Constructor visual de las actions, para no depender de un nodo Code.
 - `toAction` valida lo obligatorio: IDs enteros > 0 (rechazando `''` **antes** de `Number()`, porque `Number('') === 0` pasaría un `!isNaN`), URLs `http(s)`, y campos de texto que no sean objetos ni arrays (error típico de una expresión mal apuntada).
 - `applyClosingRule` aplica la regla del `input` de cierre: si hay delegación, **elimina** los `input`; si no, garantiza uno al final.
 - `buildEnvelope` arma `{status:1, status_message:'Ok', data:{actions}}`.
+- Cualquier error (de `toAction` o de la falta de acciones sin `autoInput`) se relanza siempre envuelto en `NodeOperationError`, **incluso si ya era uno**: la regla `require-node-api-error` del escáner de nodos verificados prohíbe relanzar un error tal cual (`throw error`). `NodeOperationError` conserva el mensaje original, así que el texto que ve el usuario no cambia.
 - **Responde el webhook él mismo** con `this.sendResponse({body, headers, statusCode})` — API pública de `IExecuteFunctions` (`interfaces.d.ts:733`). Sin webhook esperando (ejecución manual) es **no-op**, no lanza.
 - **No copiar el guard "No Webhook node found" del core**: su lista de triggers reconocidos no incluye nodos comunitarios, así que rechazaría una respuesta perfectamente válida.
 - Requiere que el Callback Trigger esté en `responseMode: responseNode` (su valor por defecto).

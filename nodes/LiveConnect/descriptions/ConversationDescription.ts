@@ -4,7 +4,7 @@ import { handleLcResponse } from '../GenericFunctions';
 
 export const conversationOperations: INodeProperties[] = [
 	{
-		displayName: 'Operación',
+		displayName: 'Operation',
 		name: 'operation',
 		type: 'options',
 		noDataExpression: true,
@@ -15,11 +15,11 @@ export const conversationOperations: INodeProperties[] = [
 		},
 		options: [
 			{
-				name: 'Crear',
+				name: 'Create',
 				value: 'create',
-				action: 'Crear una conversación',
+				action: 'Create a conversation',
 				description:
-					'Abre una conversación en el canal indicado. Si ya existe una conversación activa con el contacto, no la duplica: devuelve la existente y agrega al usuario como participante.',
+					'Open a conversation in the specified channel. If an active conversation with the contact already exists, it is not duplicated: the existing one is returned and the user is added as a participant.',
 				routing: {
 					request: { method: 'POST', url: '/conversation/create' },
 					output: { postReceive: [handleLcResponse] },
@@ -35,14 +35,13 @@ export const conversationFields: INodeProperties[] = [
 	//         conversation: create
 	// ----------------------------------
 	{
-		displayName: 'ID del Canal',
+		displayName: 'Channel Name or ID',
 		name: 'id_canal',
 		type: 'options',
 		typeOptions: { loadOptionsMethod: 'getChannels' },
 		required: true,
 		default: '',
-		description:
-			'ID del canal de la cuenta por el que se inicia la conversación. Elige de la lista o especifica un ID con una expresión.',
+		description: 'ID of the account channel through which the conversation is started. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 		displayOptions: {
 			show: {
 				resource: ['conversation'],
@@ -54,13 +53,13 @@ export const conversationFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Contacto',
+		displayName: 'Contact',
 		name: 'contacto',
 		type: 'json',
 		required: true,
 		default: '{}',
 		description:
-			'Identifica al contacto por al menos uno de estos campos: celular, username o numero',
+			'Identify the contact by at least one of these fields: celular, username or numero',
 		displayOptions: {
 			show: {
 				resource: ['conversation'],
@@ -76,12 +75,12 @@ export const conversationFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Usuario',
+		displayName: 'User',
 		name: 'usuario',
 		type: 'json',
 		required: true,
 		default: '{}',
-		description: 'Agente que inicia la conversación. Requiere id_equipo, o ID + nombre. Si se envía id_equipo sin ID, la conversación queda sin agente asignado (solo equipo).',
+		description: 'Agent who starts the conversation. Requires id_equipo, or ID + nombre. If id_equipo is sent without ID, the conversation is left without an assigned agent (team only).',
 		displayOptions: {
 			show: {
 				resource: ['conversation'],
@@ -97,10 +96,10 @@ export const conversationFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Campos Adicionales',
+		displayName: 'Additional Fields',
 		name: 'additionalFields',
 		type: 'collection',
-		placeholder: 'Agregar Campo',
+		placeholder: 'Add Field',
 		default: {},
 		displayOptions: {
 			show: {
@@ -110,11 +109,11 @@ export const conversationFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Plantilla',
+				displayName: 'Template',
 				name: 'template',
 				type: 'json',
 				default: '{}',
-				description: 'Plantilla a enviar (WABA), en vez de texto',
+				description: 'Template to send (WABA), instead of text',
 				routing: {
 					send: {
 						type: 'body',
@@ -124,12 +123,12 @@ export const conversationFields: INodeProperties[] = [
 				},
 			},
 			{
-				displayName: 'Texto',
+				displayName: 'Text',
 				name: 'texto',
 				type: 'string',
 				typeOptions: { rows: 3 },
 				default: '',
-				description: 'Mensaje inicial (opcional)',
+				description: 'Initial message (optional)',
 				routing: { send: { type: 'body', property: 'texto' } },
 			},
 		],

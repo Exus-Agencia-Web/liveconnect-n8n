@@ -77,7 +77,7 @@ await test('expresión que devuelve objeto/array en campo de texto → error cla
 		const { ctx } = executeCtx({
 			params: { acciones: acciones([{ tipo: 'sendText', text: bad }]), autoInput: true },
 		});
-		await assert.rejects(() => node.execute.call(ctx), /devolvió un (objeto|array)/);
+		await assert.rejects(() => node.execute.call(ctx), /returned an (object|array)/);
 	}
 	const varCase = executeCtx({
 		params: {
@@ -85,7 +85,7 @@ await test('expresión que devuelve objeto/array en campo de texto → error cla
 			autoInput: true,
 		},
 	});
-	await assert.rejects(() => node.execute.call(varCase.ctx), /devolvió un objeto/);
+	await assert.rejects(() => node.execute.call(varCase.ctx), /returned an object/);
 });
 
 await test('IDs booleanos o arrays rechazados (no coerción fantasma)', async () => {
@@ -93,7 +93,7 @@ await test('IDs booleanos o arrays rechazados (no coerción fantasma)', async ()
 		const { ctx } = executeCtx({
 			params: { acciones: acciones([{ tipo: 'addTag', id_tag: bad }]), autoInput: true },
 		});
-		await assert.rejects(() => node.execute.call(ctx), /no es un ID válido/);
+		await assert.rejects(() => node.execute.call(ctx), /is not a valid ID/);
 	}
 });
 
@@ -116,14 +116,14 @@ await test('delegación elimina inputs configurados (gana la delegación)', asyn
 	]);
 });
 
-await test('userDelegate sin user_name → error en español con posición', async () => {
+await test('userDelegate sin user_name → error en inglés con posición', async () => {
 	const { ctx } = executeCtx({
 		params: {
 			acciones: acciones([{ tipo: 'userDelegate', id_user: 5, user_name: '' }]),
 			autoInput: true,
 		},
 	});
-	await assert.rejects(() => node.execute.call(ctx), /Acción #1 \(Delegar a Usuario\).*user_name/);
+	await assert.rejects(() => node.execute.call(ctx), /Action #1 \(Delegate to User\).*user_name/);
 });
 
 await test('IDs: castea "12"→12; rechaza "", "abc" y 0', async () => {
@@ -137,7 +137,7 @@ await test('IDs: castea "12"→12; rechaza "", "abc" y 0', async () => {
 		const { ctx } = executeCtx({
 			params: { acciones: acciones([{ tipo: 'addTag', id_tag: bad }]), autoInput: true },
 		});
-		await assert.rejects(() => node.execute.call(ctx), /Acción #1 \(Agregar Etiqueta\)/);
+		await assert.rejects(() => node.execute.call(ctx), /Action #1 \(Add Tag\)/);
 	}
 });
 
@@ -147,7 +147,7 @@ await test('0 acciones: autoInput=true → keep-alive; false → error', async (
 	assert.deepEqual(actions, [{ type: 'input', input: '' }]);
 
 	const bad = executeCtx({ params: { acciones: {}, autoInput: false } });
-	await assert.rejects(() => node.execute.call(bad.ctx), /al menos una acción/);
+	await assert.rejects(() => node.execute.call(bad.ctx), /at least one action/);
 });
 
 await test('respondWebhook=false → no llama sendResponse, passthrough intacto', async () => {
@@ -182,7 +182,7 @@ await test('sendImage con URL inválida → error', async () => {
 		const { ctx } = executeCtx({
 			params: { acciones: acciones([{ tipo: 'sendImage', url: bad }]), autoInput: true },
 		});
-		await assert.rejects(() => node.execute.call(ctx), /URL http\(s\) válida/);
+		await assert.rejects(() => node.execute.call(ctx), /valid http\(s\) URL/);
 	}
 });
 

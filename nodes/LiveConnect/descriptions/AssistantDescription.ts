@@ -4,7 +4,7 @@ import { handleLcResponse } from '../GenericFunctions';
 
 export const assistantOperations: INodeProperties[] = [
 	{
-		displayName: 'Operación',
+		displayName: 'Operation',
 		name: 'operation',
 		type: 'options',
 		noDataExpression: true,
@@ -15,30 +15,30 @@ export const assistantOperations: INodeProperties[] = [
 		},
 		options: [
 			{
-				name: 'Actualizar',
+				name: 'Update',
 				value: 'update',
-				action: 'Actualizar un asistente',
-				description: 'Actualiza el nombre y/o las reglas de un asistente existente',
+				action: 'Update an assistant',
+				description: 'Update the name and/or rules of an existing assistant',
 				routing: {
 					request: { method: 'POST', url: '/assistant/edtAssistant' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
 			{
-				name: 'Crear',
+				name: 'Create',
 				value: 'create',
-				action: 'Crear un asistente',
-				description: 'Crea un asistente de IA en la cuenta',
+				action: 'Create an assistant',
+				description: 'Create an AI assistant in the account',
 				routing: {
 					request: { method: 'POST', url: '/assistant/addAssistant' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
 			{
-				name: 'Obtener Varios',
+				name: 'Get Many',
 				value: 'getMany',
-				action: 'Obtener varios asistentes',
-				description: 'Lista los asistentes de IA de la cuenta, opcionalmente filtrados por ID',
+				action: 'Get many assistants',
+				description: 'List the AI assistants in the account, optionally filtered by ID',
 				routing: {
 					request: { method: 'GET', url: '/assistant/listAssistant' },
 					output: { postReceive: [handleLcResponse] },
@@ -54,12 +54,12 @@ export const assistantFields: INodeProperties[] = [
 	//         assistant: create
 	// ----------------------------------
 	{
-		displayName: 'Nombre',
+		displayName: 'Name',
 		name: 'nombre',
 		type: 'string',
 		required: true,
 		default: '',
-		description: 'Nombre del asistente',
+		description: 'Name of the assistant',
 		displayOptions: {
 			show: {
 				resource: ['assistant'],
@@ -71,10 +71,10 @@ export const assistantFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Campos Adicionales',
+		displayName: 'Additional Fields',
 		name: 'additionalFields',
 		type: 'collection',
-		placeholder: 'Agregar Campo',
+		placeholder: 'Add Field',
 		default: {},
 		displayOptions: {
 			show: {
@@ -84,19 +84,19 @@ export const assistantFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'ID de la Plantilla de Cerebro',
+				displayName: 'Brain Template ID',
 				name: 'brainSelected',
 				type: 'number',
 				default: 0,
-				description: 'ID de la plantilla de cerebro a aplicar como reglas iniciales',
+				description: 'ID of the brain template to apply as initial rules',
 				routing: { send: { type: 'body', property: 'brainSelected' } },
 			},
 			{
-				displayName: 'Memoria',
+				displayName: 'Memory',
 				name: 'memory',
 				type: 'json',
 				default: '{}',
-				description: 'Memoria inicial a asignar (ignorada cuando el tipo es Omitir Memoria Inicial)',
+				description: 'Initial memory to assign (ignored when Type is Skip Initial Memory)',
 				routing: {
 					send: {
 						type: 'body',
@@ -106,16 +106,16 @@ export const assistantFields: INodeProperties[] = [
 				},
 			},
 			{
-				displayName: 'Tipo',
+				displayName: 'Type',
 				name: 'type',
 				type: 'options',
 				options: [
-					{ name: 'Estándar', value: 0 },
-					{ name: 'Omitir Memoria Inicial', value: 1 },
+					{ name: 'Standard', value: 0 },
+					{ name: 'Skip Initial Memory', value: 1 },
 				],
 				default: 0,
 				description:
-					'Tipo de creación del asistente. Omitir Memoria Inicial fuerza la creación sin asignar memorias iniciales.',
+					'Creation type of the assistant. Skip Initial Memory forces creation without assigning initial memories.',
 				routing: { send: { type: 'body', property: 'type' } },
 			},
 		],
@@ -125,10 +125,10 @@ export const assistantFields: INodeProperties[] = [
 	//         assistant: getMany
 	// ----------------------------------
 	{
-		displayName: 'Filtros',
+		displayName: 'Filters',
 		name: 'filters',
 		type: 'collection',
-		placeholder: 'Agregar Filtro',
+		placeholder: 'Add Filter',
 		default: {},
 		displayOptions: {
 			show: {
@@ -138,11 +138,11 @@ export const assistantFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'ID del Asistente',
+				displayName: 'Assistant ID',
 				name: 'id',
 				type: 'number',
 				default: 0,
-				description: 'Filtra por ID de asistente',
+				description: 'Filter by assistant ID',
 				routing: { send: { type: 'query', property: 'id' } },
 			},
 		],
@@ -152,12 +152,12 @@ export const assistantFields: INodeProperties[] = [
 	//         assistant: update
 	// ----------------------------------
 	{
-		displayName: 'ID del Asistente',
+		displayName: 'Assistant ID',
 		name: 'id',
 		type: 'number',
 		required: true,
 		default: 0,
-		description: 'ID del asistente a editar',
+		description: 'ID of the assistant to edit',
 		displayOptions: {
 			show: {
 				resource: ['assistant'],
@@ -169,10 +169,10 @@ export const assistantFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Campos a Actualizar',
+		displayName: 'Update Fields',
 		name: 'updateFields',
 		type: 'collection',
-		placeholder: 'Agregar Campo',
+		placeholder: 'Add Field',
 		default: {},
 		displayOptions: {
 			show: {
@@ -182,19 +182,19 @@ export const assistantFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Nombre',
+				displayName: 'Name',
 				name: 'nombre',
 				type: 'string',
 				default: '',
-				description: 'Nombre del asistente',
+				description: 'Name of the assistant',
 				routing: { send: { type: 'body', property: 'nombre' } },
 			},
 			{
-				displayName: 'Reglas',
+				displayName: 'Rules',
 				name: 'reglas',
 				type: 'json',
 				default: '{}',
-				description: 'Configuración/reglas del asistente',
+				description: 'Configuration/rules of the assistant',
 				routing: {
 					send: {
 						type: 'body',

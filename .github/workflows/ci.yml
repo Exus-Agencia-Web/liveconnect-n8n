@@ -17,11 +17,25 @@ jobs:
         with:
           node-version: 22
 
+      # --ignore-scripts: isolated-vm (transitiva de n8n-workflow) no compila en
+      # runners sin toolchain nativa.
       - name: Install dependencies
         run: npm ci --ignore-scripts
 
       - name: Build
         run: npm run build
 
+      # Las mismas reglas que aplica el escáner oficial de nodos verificados.
       - name: Lint
         run: npm run lint
+
+      - name: Verify against the LiveConnect OpenAPI spec
+        run: npm run verify
+
+      - name: Smoke tests
+        run: npm run smoke
+
+      # El paquete español se genera desde el compilado: si el diccionario deja de
+      # encajar con las descripciones, esto falla antes que la publicación.
+      - name: Build Spanish package
+        run: npm run build:es
