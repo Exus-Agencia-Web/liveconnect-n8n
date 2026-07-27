@@ -4,7 +4,7 @@ import { handleLcResponse } from '../GenericFunctions';
 
 export const groupOperations: INodeProperties[] = [
 	{
-		displayName: 'Operación',
+		displayName: 'Operation',
 		name: 'operation',
 		type: 'options',
 		noDataExpression: true,
@@ -15,10 +15,10 @@ export const groupOperations: INodeProperties[] = [
 		},
 		options: [
 			{
-				name: 'Obtener Varios',
+				name: 'Get Many',
 				value: 'getMany',
-				action: 'Obtener varios grupos',
-				description: 'Lista los grupos de agentes configurados en la cuenta, con filtros opcionales',
+				action: 'Get many teams',
+				description: 'List the agent teams configured in the account, with optional filters',
 				routing: {
 					request: { method: 'GET', url: '/groups/list' },
 					output: { postReceive: [handleLcResponse] },
@@ -34,10 +34,10 @@ export const groupFields: INodeProperties[] = [
 	//         group: getMany
 	// ----------------------------------
 	{
-		displayName: 'Filtros',
+		displayName: 'Filters',
 		name: 'filters',
 		type: 'collection',
-		placeholder: 'Agregar Filtro',
+		placeholder: 'Add Filter',
 		default: {},
 		displayOptions: {
 			show: {
@@ -47,35 +47,35 @@ export const groupFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Archivado',
+				displayName: 'Archived',
 				name: 'archivado',
 				type: 'options',
 				options: [
 					{ name: 'No', value: 0 },
-					{ name: 'Sí', value: 1 },
+					{ name: 'Yes', value: 1 },
 				],
 				default: 0,
-				description: 'Filtra por grupos archivados',
+				description: 'Filter by archived teams',
 				routing: { send: { type: 'query', property: 'archivado' } },
 			},
 			{
-				displayName: 'ID del Grupo',
+				displayName: 'Team ID',
 				name: 'id',
 				type: 'number',
 				default: 0,
-				description: 'Filtra por ID de grupo',
+				description: 'Filter by team ID',
 				routing: { send: { type: 'query', property: 'id' } },
 			},
 			{
-				displayName: 'Público',
+				displayName: 'Public',
 				name: 'publico',
 				type: 'options',
 				options: [
 					{ name: 'No', value: 0 },
-					{ name: 'Sí', value: 1 },
+					{ name: 'Yes', value: 1 },
 				],
 				default: 1,
-				description: 'Filtra por grupos públicos',
+				description: 'Filter by public teams',
 				routing: { send: { type: 'query', property: 'publico' } },
 			},
 		],

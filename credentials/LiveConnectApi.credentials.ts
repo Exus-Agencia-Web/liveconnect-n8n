@@ -1,5 +1,6 @@
 import type {
 	IAuthenticate,
+	Icon,
 	ICredentialDataDecryptedObject,
 	ICredentialTestRequest,
 	ICredentialType,
@@ -18,6 +19,13 @@ export class LiveConnectApi implements ICredentialType {
 	name = 'liveConnectApi';
 
 	displayName = 'LiveConnect API';
+
+	// Mismo ícono de los nodos: dist/credentials/ y dist/nodes/LiveConnect/ son
+	// hermanos bajo dist/, de ahí el "../" (gulpfile.js copia ambos svg tal cual).
+	icon: Icon = {
+		light: 'file:../nodes/LiveConnect/liveconnect2.svg',
+		dark: 'file:../nodes/LiveConnect/liveconnect2.svg',
+	};
 
 	documentationUrl = 'https://cdn.liveconnect.chat/liveconnect/public-openapi.json';
 
@@ -44,7 +52,7 @@ export class LiveConnectApi implements ICredentialType {
 			displayName: 'Session Token',
 			name: 'sessionToken',
 			type: 'hidden',
-			typeOptions: { expirable: true },
+			typeOptions: { expirable: true, password: true },
 			default: '',
 		},
 	];

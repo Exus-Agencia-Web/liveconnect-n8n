@@ -1,9 +1,11 @@
 import type {
+	IHookFunctions,
 	INodeType,
 	INodeTypeDescription,
 	IWebhookFunctions,
 	IWebhookResponseData,
 } from 'n8n-workflow';
+import { NodeConnectionTypes } from 'n8n-workflow';
 
 import { requestSecretIsValid, simplifyCallbackEvent } from './TriggerFunctions';
 
@@ -11,9 +13,10 @@ export class LiveConnectCallbackTrigger implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'LiveConnect Callback Trigger',
 		name: 'liveConnectCallbackTrigger',
-		icon: 'file:liveconnect2.svg',
+		icon: { light: 'file:liveconnect2.svg', dark: 'file:liveconnect2.svg' },
 		group: ['trigger'],
 		version: 1,
+		subtitle: '={{$parameter["path"]}}',
 		description: 'Recibe los callbacks del chatbot (Flowbot) de LiveConnect',
 		activationMessage:
 			'Pega la URL de producción de este webhook en la acción de callback de tu Flowbot de LiveConnect.',
@@ -21,7 +24,8 @@ export class LiveConnectCallbackTrigger implements INodeType {
 			name: 'LiveConnect Callback Trigger',
 		},
 		inputs: [],
-		outputs: ['main'],
+		outputs: [NodeConnectionTypes.Main],
+		usableAsTool: true,
 		webhooks: [
 			{
 				name: 'default',
@@ -99,8 +103,23 @@ export class LiveConnectCallbackTrigger implements INodeType {
 		],
 	};
 
-	// Sin webhookMethods: la URL del callback se registra manualmente en el Flowbot
-	// (no existe API de registro), igual que el nodo Webhook core.
+	// El Flowbot no expone API de registro de webhooks: la URL se pega a mano en su
+	// configuración (igual que el nodo Webhook del core). checkExists/create/delete no
+	// llaman a ningún API — son no-ops honestos que existen solo porque el escáner de
+	// nodos verificados de n8n exige implementar los tres métodos del ciclo de vida.
+	webhookMethods = {
+		default: {
+			async checkExists(this: IHookFunctions): Promise<boolean> {
+				return true;
+			},
+			async create(this: IHookFunctions): Promise<boolean> {
+				return true;
+			},
+			async delete(this: IHookFunctions): Promise<boolean> {
+				return true;
+			},
+		},
+	};
 
 	async webhook(this: IWebhookFunctions): Promise<IWebhookResponseData> {
 		const expected = this.getNodeParameter('secret', '') as string;

@@ -4,7 +4,7 @@ import { handleLcResponse } from '../GenericFunctions';
 
 export const crmOperations: INodeProperties[] = [
 	{
-		displayName: 'Operación',
+		displayName: 'Operation',
 		name: 'operation',
 		type: 'options',
 		noDataExpression: true,
@@ -15,42 +15,42 @@ export const crmOperations: INodeProperties[] = [
 		},
 		options: [
 			{
-				name: 'Obtener Canales de Lead',
+				name: 'Get Lead Channels',
 				value: 'getLeadChannels',
-				action: 'Obtener canales de lead',
+				action: 'Get lead channels',
 				description:
-					'Catálogo de canales de origen de lead activos de la cuenta autenticada. Sin parámetros.',
+					'Catalog of active lead source channels for the authenticated account. No parameters.',
 				routing: {
 					request: { method: 'POST', url: '/crm/getLeadChannels' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
 			{
-				name: 'Obtener Etapas',
+				name: 'Get Stages',
 				value: 'getStages',
-				action: 'Obtener etapas',
-				description: 'Etapas activas del pipeline indicado, ordenadas por posición',
+				action: 'Get stages',
+				description: 'Active stages of the specified pipeline, ordered by position',
 				routing: {
 					request: { method: 'POST', url: '/crm/getStages' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
 			{
-				name: 'Obtener Orígenes de Lead',
+				name: 'Get Lead Origins',
 				value: 'getLeadOrigins',
-				action: 'Obtener orígenes de lead',
+				action: 'Get lead origins',
 				description:
-					'Catálogo de orígenes de lead activos de la cuenta autenticada. Sin parámetros.',
+					'Catalog of active lead origins for the authenticated account. No parameters.',
 				routing: {
 					request: { method: 'POST', url: '/crm/getLeadOrigins' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
 			{
-				name: 'Obtener Pipelines',
+				name: 'Get Pipelines',
 				value: 'getPipelines',
-				action: 'Obtener pipelines',
-				description: 'Catálogo de pipelines activos de la cuenta autenticada. Sin parámetros.',
+				action: 'Get pipelines',
+				description: 'Catalog of active pipelines for the authenticated account. No parameters.',
 				routing: {
 					request: { method: 'POST', url: '/crm/getPipelines' },
 					output: { postReceive: [handleLcResponse] },
@@ -66,14 +66,14 @@ export const crmFields: INodeProperties[] = [
 	//         crm: getStages
 	// ----------------------------------
 	{
-		displayName: 'ID del Pipeline',
+		displayName: 'Pipeline Name or ID',
 		name: 'id_pipeline',
 		type: 'options',
 		typeOptions: { loadOptionsMethod: 'getPipelines' },
 		required: true,
 		default: '',
 		description:
-			'ID del pipeline del que se listan las etapas. Elige de la lista o especifica un ID con una expresión.',
+			'ID of the pipeline whose stages are listed. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 		displayOptions: {
 			show: {
 				resource: ['crm'],

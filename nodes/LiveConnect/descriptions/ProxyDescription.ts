@@ -4,7 +4,7 @@ import { handleLcResponse } from '../GenericFunctions';
 
 export const proxyOperations: INodeProperties[] = [
 	{
-		displayName: 'Operación',
+		displayName: 'Operation',
 		name: 'operation',
 		type: 'options',
 		noDataExpression: true,
@@ -15,72 +15,72 @@ export const proxyOperations: INodeProperties[] = [
 		},
 		options: [
 			{
-				name: 'Configurar Webhook',
+				name: 'Set Webhook',
 				value: 'setWebhook',
-				action: 'Configurar un webhook',
-				description: 'Con estado 1 da de alta (o reemplaza) el webhook del canal en DynamoDB; con cualquier otro valor lo elimina',
+				action: 'Set a webhook',
+				description: 'With status 1, creates (or replaces) the channel webhook in DynamoDB; any other value removes it',
 				routing: {
 					request: { method: 'POST', url: '/proxy/setWebhook' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
 			{
-				name: 'Consultar Saldo',
+				name: 'Get Balance',
 				value: 'getBalance',
-				action: 'Consultar el saldo del proxy',
-				description: 'Retorna el saldo disponible y la configuración del proxy de conversaciones de la cuenta autenticada',
+				action: 'Get the proxy balance',
+				description: 'Returns the available balance and the conversation proxy configuration for the authenticated account',
 				routing: {
 					request: { method: 'GET', url: '/proxy/balance' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
 			{
-				name: 'Consultar Webhook',
+				name: 'Get Webhook',
 				value: 'getWebhook',
-				action: 'Consultar un webhook',
-				description: 'Retorna la configuración de webhook (DynamoDB) asociada al canal indicado, si existe',
+				action: 'Get a webhook',
+				description: 'Returns the webhook configuration (DynamoDB) associated with the specified channel, if any',
 				routing: {
 					request: { method: 'POST', url: '/proxy/getWebhook' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
 			{
-				name: 'Enviar Archivo',
+				name: 'Send File',
 				value: 'sendFile',
-				action: 'Enviar un archivo',
+				action: 'Send a file',
 				description:
-					'Descuenta saldo del proxy de la cuenta y encola el archivo hacia la conversación indicada. Solo permite las extensiones jpg, png, gif, pdf, doc, docx, xls, xlsx, ppt y pptx.',
+					'Deducts balance from the account proxy and queues the file to the specified conversation. Only allows the extensions jpg, png, gif, pdf, doc, docx, xls, xlsx, ppt, and pptx.',
 				routing: {
 					request: { method: 'POST', url: '/proxy/sendFile' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
 			{
-				name: 'Enviar Mensaje',
+				name: 'Send Message',
 				value: 'sendMessage',
-				action: 'Enviar un mensaje',
-				description: 'Descuenta saldo del proxy de la cuenta y encola el mensaje hacia la conversación indicada',
+				action: 'Send a message',
+				description: 'Deducts balance from the account proxy and queues the message to the specified conversation',
 				routing: {
 					request: { method: 'POST', url: '/proxy/sendMessage' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
 			{
-				name: 'Enviar Respuesta Rápida',
+				name: 'Send Quick Reply',
 				value: 'sendQuickAnswer',
-				action: 'Enviar una respuesta rápida',
-				description: 'Busca la respuesta rápida por su ID, reemplaza sus variables y la envía (texto y/o archivo adjunto) a la conversación indicada',
+				action: 'Send a quick reply',
+				description: 'Looks up the quick reply by its ID, replaces its variables, and sends it (text and/or attachment) to the specified conversation',
 				routing: {
 					request: { method: 'POST', url: '/proxy/sendQuickAnswer' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
 			{
-				name: 'Transferir',
+				name: 'Transfer',
 				value: 'transfer',
-				action: 'Transferir una conversación',
+				action: 'Transfer a conversation',
 				description:
-					'Con estado 1 marca la conversación como transferida al proxy (crea la conversación en LiveConnect y, si se envía mensaje, el primer mensaje) y establece el tiempo de vida según la configuración de la cuenta. Con cualquier otro valor libera la transferencia.',
+					'With status 1, marks the conversation as transferred to the proxy (creates the conversation in LiveConnect and, if a message is sent, the first message) and sets the time to live according to the account configuration. Any other value releases the transfer.',
 				routing: {
 					request: { method: 'POST', url: '/proxy/transfer' },
 					output: { postReceive: [handleLcResponse] },
@@ -96,14 +96,14 @@ export const proxyFields: INodeProperties[] = [
 	//         proxy: getWebhook
 	// ----------------------------------
 	{
-		displayName: 'ID del Canal',
+		displayName: 'Channel Name or ID',
 		name: 'id_canal',
 		type: 'options',
 		typeOptions: { loadOptionsMethod: 'getChannels' },
 		required: true,
 		default: '',
 		description:
-			'ID del canal de la cuenta. Elige de la lista o especifica un ID con una expresión.',
+			'ID of the channel for the account. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 		displayOptions: {
 			show: {
 				resource: ['proxy'],
@@ -119,12 +119,12 @@ export const proxyFields: INodeProperties[] = [
 	//         proxy: sendFile
 	// ----------------------------------
 	{
-		displayName: 'ID de la Conversación',
+		displayName: 'Conversation ID',
 		name: 'id_conversacion',
 		type: 'string',
 		required: true,
 		default: '',
-		description: 'ID de conversación de LiveConnect',
+		description: 'LiveConnect conversation ID',
 		displayOptions: {
 			show: {
 				resource: ['proxy'],
@@ -136,12 +136,12 @@ export const proxyFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'URL del Archivo',
+		displayName: 'File URL',
 		name: 'url',
 		type: 'string',
 		required: true,
 		default: '',
-		description: 'URL pública del archivo a enviar',
+		description: 'Public URL of the file to send',
 		displayOptions: {
 			show: {
 				resource: ['proxy'],
@@ -153,10 +153,10 @@ export const proxyFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Campos Adicionales',
+		displayName: 'Additional Fields',
 		name: 'additionalFields',
 		type: 'collection',
-		placeholder: 'Agregar Campo',
+		placeholder: 'Add Field',
 		default: {},
 		displayOptions: {
 			show: {
@@ -166,19 +166,19 @@ export const proxyFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Extensión',
+				displayName: 'Extension',
 				name: 'extension',
 				type: 'string',
 				default: '',
-				description: 'Extensión del archivo (por defecto, se infiere de la URL)',
+				description: 'File extension (by default, inferred from the URL)',
 				routing: { send: { type: 'body', property: 'extension' } },
 			},
 			{
-				displayName: 'Nombre',
+				displayName: 'Name',
 				name: 'nombre',
 				type: 'string',
 				default: '',
-				description: 'Nombre/título del archivo (por defecto, el del archivo en la URL)',
+				description: 'File name/title (by default, the one from the file in the URL)',
 				routing: { send: { type: 'body', property: 'nombre' } },
 			},
 		],
@@ -188,12 +188,12 @@ export const proxyFields: INodeProperties[] = [
 	//         proxy: sendMessage
 	// ----------------------------------
 	{
-		displayName: 'ID de la Conversación',
+		displayName: 'Conversation ID',
 		name: 'id_conversacion',
 		type: 'string',
 		required: true,
 		default: '',
-		description: 'ID de conversación de LiveConnect',
+		description: 'LiveConnect conversation ID',
 		displayOptions: {
 			show: {
 				resource: ['proxy'],
@@ -205,13 +205,13 @@ export const proxyFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Mensaje',
+		displayName: 'Message',
 		name: 'mensaje',
 		type: 'string',
 		typeOptions: { rows: 3 },
 		required: true,
 		default: '',
-		description: 'Texto a enviar',
+		description: 'Text to send',
 		displayOptions: {
 			show: {
 				resource: ['proxy'],
@@ -227,12 +227,12 @@ export const proxyFields: INodeProperties[] = [
 	//         proxy: sendQuickAnswer
 	// ----------------------------------
 	{
-		displayName: 'ID de la Conversación',
+		displayName: 'Conversation ID',
 		name: 'id_conversacion',
 		type: 'string',
 		required: true,
 		default: '',
-		description: 'ID de conversación de LiveConnect',
+		description: 'LiveConnect conversation ID',
 		displayOptions: {
 			show: {
 				resource: ['proxy'],
@@ -244,12 +244,12 @@ export const proxyFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'ID de la Respuesta Rápida',
+		displayName: 'Quick Reply ID',
 		name: 'id_respuesta',
 		type: 'number',
 		required: true,
 		default: 0,
-		description: 'ID de la respuesta rápida (lc_respuestasrapidas)',
+		description: 'ID of the quick reply (lc_respuestasrapidas)',
 		displayOptions: {
 			show: {
 				resource: ['proxy'],
@@ -261,10 +261,10 @@ export const proxyFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Campos Adicionales',
+		displayName: 'Additional Fields',
 		name: 'additionalFields',
 		type: 'collection',
-		placeholder: 'Agregar Campo',
+		placeholder: 'Add Field',
 		default: {},
 		displayOptions: {
 			show: {
@@ -278,7 +278,7 @@ export const proxyFields: INodeProperties[] = [
 				name: 'variables',
 				type: 'json',
 				default: '{}',
-				description: 'Valores para reemplazar los marcadores {clave} del texto',
+				description: 'Values to replace the {key} markers in the text',
 				routing: {
 					send: {
 						type: 'body',
@@ -294,14 +294,14 @@ export const proxyFields: INodeProperties[] = [
 	//         proxy: setWebhook
 	// ----------------------------------
 	{
-		displayName: 'ID del Canal',
+		displayName: 'Channel Name or ID',
 		name: 'id_canal',
 		type: 'options',
 		typeOptions: { loadOptionsMethod: 'getChannels' },
 		required: true,
 		default: '',
 		description:
-			'ID del canal de la cuenta. Elige de la lista o especifica un ID con una expresión.',
+			'ID of the channel for the account. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 		displayOptions: {
 			show: {
 				resource: ['proxy'],
@@ -313,12 +313,12 @@ export const proxyFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'URL del Webhook',
+		displayName: 'Webhook URL',
 		name: 'url',
 		type: 'string',
 		required: true,
 		default: '',
-		description: 'URL del webhook a notificar',
+		description: 'URL of the webhook to notify',
 		displayOptions: {
 			show: {
 				resource: ['proxy'],
@@ -330,16 +330,16 @@ export const proxyFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Estado',
+		displayName: 'Status',
 		name: 'estado',
 		type: 'options',
 		options: [
 			{ name: 'No', value: 0 },
-			{ name: 'Sí', value: 1 },
+			{ name: 'Yes', value: 1 },
 		],
 		required: true,
 		default: 1,
-		description: 'Sí establece el webhook; No lo elimina',
+		description: 'Yes sets the webhook; No removes it',
 		displayOptions: {
 			show: {
 				resource: ['proxy'],
@@ -351,13 +351,13 @@ export const proxyFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Secreto',
+		displayName: 'Secret',
 		name: 'secret',
 		type: 'string',
 		typeOptions: { password: true },
 		required: true,
 		default: '',
-		description: 'Secreto enviado en cada notificación del webhook',
+		description: 'Secret sent with every webhook notification',
 		displayOptions: {
 			show: {
 				resource: ['proxy'],
@@ -373,12 +373,12 @@ export const proxyFields: INodeProperties[] = [
 	//         proxy: transfer
 	// ----------------------------------
 	{
-		displayName: 'ID de la Conversación',
+		displayName: 'Conversation ID',
 		name: 'id_conversacion',
 		type: 'string',
 		required: true,
 		default: '',
-		description: 'ID de conversación de LiveConnect',
+		description: 'LiveConnect conversation ID',
 		displayOptions: {
 			show: {
 				resource: ['proxy'],
@@ -390,16 +390,16 @@ export const proxyFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Estado',
+		displayName: 'Status',
 		name: 'estado',
 		type: 'options',
 		options: [
 			{ name: 'No', value: 0 },
-			{ name: 'Sí', value: 1 },
+			{ name: 'Yes', value: 1 },
 		],
 		required: true,
 		default: 1,
-		description: 'Sí transfiere la conversación al proxy; No libera la transferencia',
+		description: 'Yes transfers the conversation to the proxy; No releases the transfer',
 		displayOptions: {
 			show: {
 				resource: ['proxy'],
@@ -411,10 +411,10 @@ export const proxyFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Campos Adicionales',
+		displayName: 'Additional Fields',
 		name: 'additionalFields',
 		type: 'collection',
-		placeholder: 'Agregar Campo',
+		placeholder: 'Add Field',
 		default: {},
 		displayOptions: {
 			show: {
@@ -424,11 +424,11 @@ export const proxyFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Agente',
+				displayName: 'Agent',
 				name: 'usuario',
 				type: 'json',
 				default: '{}',
-				description: 'Agente a asignar a la conversación (objeto con ID)',
+				description: 'Agent to assign to the conversation (object with ID)',
 				routing: {
 					send: {
 						type: 'body',
@@ -438,11 +438,11 @@ export const proxyFields: INodeProperties[] = [
 				},
 			},
 			{
-				displayName: 'Contacto',
+				displayName: 'Contact',
 				name: 'contacto',
 				type: 'json',
 				default: '{}',
-				description: 'Datos del contacto (nombre, correo, celular, etc.)',
+				description: 'Contact details (name, email, phone number, etc.)',
 				routing: {
 					send: {
 						type: 'body',
@@ -452,32 +452,32 @@ export const proxyFields: INodeProperties[] = [
 				},
 			},
 			{
-				displayName: 'ID del Canal',
+				displayName: 'Channel Name or ID',
 				name: 'id_canal',
 				type: 'options',
 				typeOptions: { loadOptionsMethod: 'getChannels' },
 				default: '',
 				description:
-					'ID del canal (requerido al transferir la conversación al proxy). Elige de la lista o especifica un ID con una expresión.',
+					'ID of the channel (required when transferring the conversation to the proxy). Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 				routing: { send: { type: 'body', property: 'id_canal' } },
 			},
 			{
-				displayName: 'ID del Grupo',
+				displayName: 'Team Name or ID',
 				name: 'id_grupo',
 				type: 'options',
 				typeOptions: { loadOptionsMethod: 'getGroups' },
 				default: '',
 				description:
-					'ID del grupo de agentes a asignar. Elige de la lista o especifica un ID con una expresión.',
+					'ID of the team of agents to assign. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 				routing: { send: { type: 'body', property: 'id_grupo' } },
 			},
 			{
-				displayName: 'IDs de Etiquetas',
+				displayName: 'Tag IDs',
 				name: 'etiquetas',
 				type: 'string',
 				default: '',
 				placeholder: '1,2,3',
-				description: 'IDs de etiquetas a aplicar al contacto, separados por comas',
+				description: 'IDs of the tags to apply to the contact, separated by commas',
 				routing: {
 					send: {
 						type: 'body',
@@ -488,20 +488,20 @@ export const proxyFields: INodeProperties[] = [
 				},
 			},
 			{
-				displayName: 'Mensaje',
+				displayName: 'Message',
 				name: 'mensaje',
 				type: 'string',
 				typeOptions: { rows: 3 },
 				default: '',
-				description: 'Mensaje inicial a enviar al crear la conversación',
+				description: 'Initial message to send when creating the conversation',
 				routing: { send: { type: 'body', property: 'mensaje' } },
 			},
 			{
-				displayName: 'Nota de Origen',
+				displayName: 'Source Note',
 				name: 'info_mensaje',
 				type: 'string',
 				default: '',
-				description: 'Nota interna sobre el origen de la transferencia',
+				description: 'Internal note about the source of the transfer',
 				routing: { send: { type: 'body', property: 'info_mensaje' } },
 			},
 		],

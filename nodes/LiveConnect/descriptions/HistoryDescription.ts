@@ -4,7 +4,7 @@ import { handleLcResponse } from '../GenericFunctions';
 
 export const historyOperations: INodeProperties[] = [
 	{
-		displayName: 'Operación',
+		displayName: 'Operation',
 		name: 'operation',
 		type: 'options',
 		noDataExpression: true,
@@ -15,50 +15,50 @@ export const historyOperations: INodeProperties[] = [
 		},
 		options: [
 			{
-				name: 'Obtener Anexos',
+				name: 'Get Attachments',
 				value: 'getAttachments',
-				action: 'Obtener los anexos de una conversación',
-				description: 'Lista los anexos (archivos) de una conversación',
+				action: 'Get the attachments of a conversation',
+				description: 'Lists the attachments (files) of a conversation',
 				routing: {
 					request: { method: 'POST', url: '/history/attachments' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
 			{
-				name: 'Obtener Conversación',
+				name: 'Get Conversation',
 				value: 'getConversation',
-				action: 'Obtener una conversación',
-				description: 'Retorna una conversación junto con sus mensajes, anexos y participantes',
+				action: 'Get a conversation',
+				description: 'Returns a conversation along with its messages, attachments, and participants',
 				routing: {
 					request: { method: 'POST', url: '/history/conversation' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
 			{
-				name: 'Obtener Mensajes',
+				name: 'Get Messages',
 				value: 'getMessages',
-				action: 'Obtener los mensajes de una conversación',
-				description: 'Lista los mensajes de una conversación',
+				action: 'Get the messages of a conversation',
+				description: 'Lists the messages of a conversation',
 				routing: {
 					request: { method: 'POST', url: '/history/messages' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
 			{
-				name: 'Obtener Participantes',
+				name: 'Get Participants',
 				value: 'getParticipants',
-				action: 'Obtener los participantes de una conversación',
-				description: 'Lista los participantes (agentes) de una conversación',
+				action: 'Get the participants of a conversation',
+				description: 'Lists the participants (agents) of a conversation',
 				routing: {
 					request: { method: 'POST', url: '/history/participants' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
 			{
-				name: 'Obtener Varias Conversaciones',
+				name: 'Get Many Conversations',
 				value: 'getManyConversations',
-				action: 'Obtener varias conversaciones',
-				description: 'Lista las conversaciones históricas de la cuenta, paginadas y con filtros opcionales',
+				action: 'Get many conversations',
+				description: 'Lists the historical conversations of the account, paginated and with optional filters',
 				routing: {
 					request: { method: 'POST', url: '/history/conversations' },
 					output: { postReceive: [handleLcResponse] },
@@ -74,12 +74,12 @@ export const historyFields: INodeProperties[] = [
 	//         history: getAttachments
 	// ----------------------------------
 	{
-		displayName: 'Filtros',
+		displayName: 'Filters',
 		name: 'filters',
 		type: 'collection',
-		placeholder: 'Agregar Filtro',
+		placeholder: 'Add Filter',
 		default: {},
-		description: 'Requiere el ID de la conversación o el ID de conversación en Firebase',
+		description: 'Requires the conversation ID or the Firebase conversation ID',
 		displayOptions: {
 			show: {
 				resource: ['history'],
@@ -88,42 +88,42 @@ export const historyFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Desplazamiento',
+				displayName: 'Offset',
 				name: 'initFrom',
 				type: 'number',
 				default: 0,
-				description: 'Desplazamiento de paginación',
+				description: 'Pagination offset',
 				routing: { send: { type: 'body', property: 'initFrom' } },
 			},
 			{
-				displayName: 'ID de Conversación en Firebase',
+				displayName: 'Firebase Conversation ID',
 				name: 'id_conversacion_fb',
 				type: 'string',
 				default: '',
 				routing: { send: { type: 'body', property: 'id_conversacion_fb' } },
 			},
 			{
-				displayName: 'ID de la Conversación',
+				displayName: 'Conversation ID',
 				name: 'id_conversacion',
 				type: 'number',
 				default: 0,
 				routing: { send: { type: 'body', property: 'id_conversacion' } },
 			},
 			{
-				displayName: 'ID del Anexo',
+				displayName: 'Attachment ID',
 				name: 'id',
 				type: 'number',
 				default: 0,
-				description: 'ID del anexo (retorna un único objeto)',
+				description: 'ID of the attachment (returns a single object)',
 				routing: { send: { type: 'body', property: 'id' } },
 			},
 			{
-				displayName: 'Límite',
+				displayName: 'Limit',
 				name: 'limit',
 				type: 'number',
 				typeOptions: { minValue: 1 },
 				default: 50,
-				description: 'Cantidad máxima de resultados a devolver',
+				description: 'Max number of results to return',
 				routing: { send: { type: 'body', property: 'limit' } },
 			},
 		],
@@ -133,12 +133,12 @@ export const historyFields: INodeProperties[] = [
 	//         history: getConversation
 	// ----------------------------------
 	{
-		displayName: 'Campos de Búsqueda',
+		displayName: 'Search Fields',
 		name: 'searchFields',
 		type: 'collection',
-		placeholder: 'Agregar Campo',
+		placeholder: 'Add Field',
 		default: {},
-		description: 'Requiere el ID de la conversación o el ID de conversación en Firebase',
+		description: 'Requires the conversation ID or the Firebase conversation ID',
 		displayOptions: {
 			show: {
 				resource: ['history'],
@@ -147,14 +147,14 @@ export const historyFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'ID de Conversación en Firebase',
+				displayName: 'Firebase Conversation ID',
 				name: 'id_conversacion_fb',
 				type: 'string',
 				default: '',
 				routing: { send: { type: 'body', property: 'id_conversacion_fb' } },
 			},
 			{
-				displayName: 'ID de la Conversación',
+				displayName: 'Conversation ID',
 				name: 'id',
 				type: 'number',
 				default: 0,
@@ -167,10 +167,10 @@ export const historyFields: INodeProperties[] = [
 	//         history: getManyConversations
 	// ----------------------------------
 	{
-		displayName: 'Filtros',
+		displayName: 'Filters',
 		name: 'filters',
 		type: 'collection',
-		placeholder: 'Agregar Filtro',
+		placeholder: 'Add Filter',
 		default: {},
 		displayOptions: {
 			show: {
@@ -180,74 +180,74 @@ export const historyFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Desplazamiento',
+				displayName: 'Offset',
 				name: 'initFrom',
 				type: 'number',
 				default: 0,
-				description: 'Desplazamiento de paginación',
+				description: 'Pagination offset',
 				routing: { send: { type: 'body', property: 'initFrom' } },
 			},
 			{
-				displayName: 'ID de Conversación en Firebase',
+				displayName: 'Firebase Conversation ID',
 				name: 'id_conversacion_fb',
 				type: 'string',
 				default: '',
-				description: 'ID de conversación en Firebase (retorna un único objeto)',
+				description: 'Firebase conversation ID (returns a single object)',
 				routing: { send: { type: 'body', property: 'id_conversacion_fb' } },
 			},
 			{
-				displayName: 'ID de la Conversación',
+				displayName: 'Conversation ID',
 				name: 'id',
 				type: 'number',
 				default: 0,
-				description: 'ID de la conversación (retorna un único objeto)',
+				description: 'Conversation ID (returns a single object)',
 				routing: { send: { type: 'body', property: 'id' } },
 			},
 			{
-				displayName: 'ID del Canal',
+				displayName: 'Channel Name or ID',
 				name: 'id_canal',
 				type: 'options',
 				typeOptions: { loadOptionsMethod: 'getChannels' },
 				default: '',
 				description:
-					'Filtra por canal. Elige de la lista o especifica un ID con una expresión.',
+					'Filter by channel. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 				routing: { send: { type: 'body', property: 'id_canal' } },
 			},
 			{
-				displayName: 'ID del Contacto',
+				displayName: 'Contact ID',
 				name: 'id_contacto',
 				type: 'number',
 				default: 0,
-				description: 'Filtra por contacto',
+				description: 'Filter by contact',
 				routing: { send: { type: 'body', property: 'id_contacto' } },
 			},
 			{
-				displayName: 'ID del Grupo',
+				displayName: 'Team Name or ID',
 				name: 'id_grupo',
 				type: 'options',
 				typeOptions: { loadOptionsMethod: 'getGroups' },
 				default: '',
 				description:
-					'Filtra por equipo/grupo. Elige de la lista o especifica un ID con una expresión.',
+					'Filter by team. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 				routing: { send: { type: 'body', property: 'id_grupo' } },
 			},
 			{
-				displayName: 'ID del Usuario',
+				displayName: 'User Name or ID',
 				name: 'id_usuario',
 				type: 'options',
 				typeOptions: { loadOptionsMethod: 'getUsers' },
 				default: '',
 				description:
-					'Filtra por agente asignado. Elige de la lista o especifica un ID con una expresión.',
+					'Filter by assigned agent. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 				routing: { send: { type: 'body', property: 'id_usuario' } },
 			},
 			{
-				displayName: 'IDs de Etiquetas',
+				displayName: 'Tag IDs',
 				name: 'etiquetas',
 				type: 'string',
 				default: '',
 				placeholder: '1,2,3',
-				description: 'Filtra por IDs de etiquetas asociadas, separados por comas',
+				description: 'Filter by associated tag IDs, comma-separated',
 				routing: {
 					send: {
 						type: 'body',
@@ -258,12 +258,12 @@ export const historyFields: INodeProperties[] = [
 				},
 			},
 			{
-				displayName: 'Límite',
+				displayName: 'Limit',
 				name: 'limit',
 				type: 'number',
 				typeOptions: { minValue: 1 },
 				default: 50,
-				description: 'Cantidad máxima de resultados a devolver',
+				description: 'Max number of results to return',
 				routing: { send: { type: 'body', property: 'limit' } },
 			},
 		],
@@ -273,12 +273,12 @@ export const historyFields: INodeProperties[] = [
 	//         history: getMessages
 	// ----------------------------------
 	{
-		displayName: 'Filtros',
+		displayName: 'Filters',
 		name: 'filters',
 		type: 'collection',
-		placeholder: 'Agregar Filtro',
+		placeholder: 'Add Filter',
 		default: {},
-		description: 'Requiere el ID de la conversación o el ID de conversación en Firebase',
+		description: 'Requires the conversation ID or the Firebase conversation ID',
 		displayOptions: {
 			show: {
 				resource: ['history'],
@@ -287,42 +287,42 @@ export const historyFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Desplazamiento',
+				displayName: 'Offset',
 				name: 'initFrom',
 				type: 'number',
 				default: 0,
-				description: 'Desplazamiento de paginación',
+				description: 'Pagination offset',
 				routing: { send: { type: 'body', property: 'initFrom' } },
 			},
 			{
-				displayName: 'ID de Conversación en Firebase',
+				displayName: 'Firebase Conversation ID',
 				name: 'id_conversacion_fb',
 				type: 'string',
 				default: '',
 				routing: { send: { type: 'body', property: 'id_conversacion_fb' } },
 			},
 			{
-				displayName: 'ID de la Conversación',
+				displayName: 'Conversation ID',
 				name: 'id_conversacion',
 				type: 'number',
 				default: 0,
 				routing: { send: { type: 'body', property: 'id_conversacion' } },
 			},
 			{
-				displayName: 'ID del Mensaje',
+				displayName: 'Message ID',
 				name: 'id',
 				type: 'number',
 				default: 0,
-				description: 'ID del mensaje (retorna un único objeto)',
+				description: 'ID of the message (returns a single object)',
 				routing: { send: { type: 'body', property: 'id' } },
 			},
 			{
-				displayName: 'Límite',
+				displayName: 'Limit',
 				name: 'limit',
 				type: 'number',
 				typeOptions: { minValue: 1 },
 				default: 50,
-				description: 'Cantidad máxima de resultados a devolver',
+				description: 'Max number of results to return',
 				routing: { send: { type: 'body', property: 'limit' } },
 			},
 		],
@@ -332,12 +332,12 @@ export const historyFields: INodeProperties[] = [
 	//         history: getParticipants
 	// ----------------------------------
 	{
-		displayName: 'Filtros',
+		displayName: 'Filters',
 		name: 'filters',
 		type: 'collection',
-		placeholder: 'Agregar Filtro',
+		placeholder: 'Add Filter',
 		default: {},
-		description: 'Requiere el ID de la conversación o el ID de conversación en Firebase',
+		description: 'Requires the conversation ID or the Firebase conversation ID',
 		displayOptions: {
 			show: {
 				resource: ['history'],
@@ -346,42 +346,42 @@ export const historyFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Desplazamiento',
+				displayName: 'Offset',
 				name: 'initFrom',
 				type: 'number',
 				default: 0,
-				description: 'Desplazamiento de paginación',
+				description: 'Pagination offset',
 				routing: { send: { type: 'body', property: 'initFrom' } },
 			},
 			{
-				displayName: 'ID de Conversación en Firebase',
+				displayName: 'Firebase Conversation ID',
 				name: 'id_conversacion_fb',
 				type: 'string',
 				default: '',
 				routing: { send: { type: 'body', property: 'id_conversacion_fb' } },
 			},
 			{
-				displayName: 'ID de la Conversación',
+				displayName: 'Conversation ID',
 				name: 'id_conversacion',
 				type: 'number',
 				default: 0,
 				routing: { send: { type: 'body', property: 'id_conversacion' } },
 			},
 			{
-				displayName: 'ID del Participante',
+				displayName: 'Participant ID',
 				name: 'id',
 				type: 'number',
 				default: 0,
-				description: 'ID del participante (retorna un único objeto)',
+				description: 'ID of the participant (returns a single object)',
 				routing: { send: { type: 'body', property: 'id' } },
 			},
 			{
-				displayName: 'Límite',
+				displayName: 'Limit',
 				name: 'limit',
 				type: 'number',
 				typeOptions: { minValue: 1 },
 				default: 50,
-				description: 'Cantidad máxima de resultados a devolver',
+				description: 'Max number of results to return',
 				routing: { send: { type: 'body', property: 'limit' } },
 			},
 		],

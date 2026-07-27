@@ -5,7 +5,7 @@ import type {
 	INodeType,
 	INodeTypeDescription,
 } from 'n8n-workflow';
-import { NodeOperationError } from 'n8n-workflow';
+import { NodeApiError, NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 
 import { applyClosingRule, buildEnvelope, toAction } from './ActionsFunctions';
 import { getGroups, getUsers } from './LoadOptions';
@@ -19,16 +19,19 @@ export class LiveConnectCallbackResponse implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'LiveConnect Respuesta al Callback',
 		name: 'liveConnectCallbackResponse',
-		icon: 'file:liveconnect2.svg',
+		icon: { light: 'file:liveconnect2.svg', dark: 'file:liveconnect2.svg' },
 		group: ['transform'],
 		version: 1,
+		subtitle:
+			'={{$parameter["acciones"]?.accion?.length ? $parameter["acciones"].accion.length + " actions" : "response"}}',
 		description:
 			'Construye visualmente la respuesta de actions del callback del Flowbot y responde el webhook',
 		defaults: {
 			name: 'LiveConnect Respuesta al Callback',
 		},
-		inputs: ['main'],
-		outputs: ['main'],
+		inputs: [NodeConnectionTypes.Main],
+		outputs: [NodeConnectionTypes.Main],
+		usableAsTool: true,
 		// Credencial opcional: solo se usa para poblar los selectores de agente y equipo.
 		// El nodo funciona sin ella (no llama al API para construir la respuesta).
 		credentials: [
@@ -290,7 +293,12 @@ export class LiveConnectCallbackResponse implements INodeType {
 					returnData.push({ json: { error: (error as Error).message }, pairedItem: { item: i } });
 					continue;
 				}
-				throw error;
+				// toAction() ya lanza NodeOperationError con el itemIndex correcto: se
+				// relanza tal cual para no perder contexto ni envolverlo dos veces.
+				if (error instanceof NodeOperationError || error instanceof NodeApiError) {
+					throw error;
+				}
+				throw new NodeOperationError(this.getNode(), error as Error, { itemIndex: i });
 			}
 		}
 

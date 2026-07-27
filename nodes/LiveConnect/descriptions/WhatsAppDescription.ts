@@ -4,7 +4,7 @@ import { handleLcResponse } from '../GenericFunctions';
 
 export const whatsAppOperations: INodeProperties[] = [
 	{
-		displayName: 'Operación',
+		displayName: 'Operation',
 		name: 'operation',
 		type: 'options',
 		noDataExpression: true,
@@ -15,44 +15,44 @@ export const whatsAppOperations: INodeProperties[] = [
 		},
 		options: [
 			{
-				name: 'Enviar Archivo',
+				name: 'Send File',
 				value: 'sendFile',
-				action: 'Enviar un archivo',
+				action: 'Send a file',
 				description:
-					'Envía un archivo (imagen, documento, etc.) por URL al número destino a través del canal WhatsApp QR indicado',
+					'Sends a file (image, document, etc.) by URL to the destination number through the specified WhatsApp QR channel',
 				routing: {
 					request: { method: 'POST', url: '/direct/wa/sendFile' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
 			{
-				name: 'Enviar Mensaje',
+				name: 'Send Message',
 				value: 'sendMessage',
-				action: 'Enviar un mensaje',
+				action: 'Send a message',
 				description:
-					'Envía un mensaje de texto al número destino a través del canal WhatsApp QR indicado',
+					'Sends a text message to the destination number through the specified WhatsApp QR channel',
 				routing: {
 					request: { method: 'POST', url: '/direct/wa/sendMessage' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
 			{
-				name: 'Enviar Respuesta Rápida',
+				name: 'Send Quick Reply',
 				value: 'sendQuickAnswer',
-				action: 'Enviar una respuesta rápida',
+				action: 'Send a quick reply',
 				description:
-					'Envía una respuesta rápida al número destino, reemplazando las variables indicadas en el texto. Si la respuesta rápida tiene archivo adjunto, lo envía además del texto.',
+					'Sends a quick reply to the destination number, replacing the specified variables in the text. If the quick reply has an attached file, it is sent along with the text.',
 				routing: {
 					request: { method: 'POST', url: '/direct/wa/sendQuickAnswer' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
 			{
-				name: 'Verificar Número',
+				name: 'Check Number',
 				value: 'checkNumber',
-				action: 'Verificar un número',
+				action: 'Check a number',
 				description:
-					'Verifica, contra el canal WhatsApp QR indicado, si el número destino es un usuario válido de WhatsApp',
+					'Checks, against the specified WhatsApp QR channel, whether the destination number is a valid WhatsApp user',
 				routing: {
 					request: { method: 'POST', url: '/direct/wa/checkNumber' },
 					output: { postReceive: [handleLcResponse] },
@@ -68,14 +68,14 @@ export const whatsAppFields: INodeProperties[] = [
 	//         whatsapp: checkNumber
 	// ----------------------------------
 	{
-		displayName: 'ID del Canal',
+		displayName: 'Channel Name or ID',
 		name: 'id_canal',
 		type: 'options',
 		typeOptions: { loadOptionsMethod: 'getWhatsAppChannels' },
 		required: true,
 		default: '',
 		description:
-			'ID del canal WhatsApp QR (tabla wa_instances). Elige de la lista o especifica un ID con una expresión.',
+			'WhatsApp QR channel ID (table wa_instances). Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 		displayOptions: {
 			show: {
 				resource: ['whatsapp'],
@@ -87,12 +87,12 @@ export const whatsAppFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Número de Teléfono',
+		displayName: 'Phone Number',
 		name: 'numero',
 		type: 'string',
 		required: true,
 		default: '',
-		description: 'Número celular a validar',
+		description: 'Phone number to validate',
 		displayOptions: {
 			show: {
 				resource: ['whatsapp'],
@@ -108,14 +108,14 @@ export const whatsAppFields: INodeProperties[] = [
 	//         whatsapp: sendFile
 	// ----------------------------------
 	{
-		displayName: 'ID del Canal',
+		displayName: 'Channel Name or ID',
 		name: 'id_canal',
 		type: 'options',
 		typeOptions: { loadOptionsMethod: 'getWhatsAppChannels' },
 		required: true,
 		default: '',
 		description:
-			'ID del canal WhatsApp QR (tabla wa_instances). Elige de la lista o especifica un ID con una expresión.',
+			'WhatsApp QR channel ID (table wa_instances). Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 		displayOptions: {
 			show: {
 				resource: ['whatsapp'],
@@ -127,12 +127,12 @@ export const whatsAppFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Número de Teléfono',
+		displayName: 'Phone Number',
 		name: 'numero',
 		type: 'string',
 		required: true,
 		default: '',
-		description: 'Número celular destino',
+		description: 'Destination phone number',
 		displayOptions: {
 			show: {
 				resource: ['whatsapp'],
@@ -144,12 +144,12 @@ export const whatsAppFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'URL del Archivo',
+		displayName: 'File URL',
 		name: 'url',
 		type: 'string',
 		required: true,
 		default: '',
-		description: 'URL pública del archivo a enviar',
+		description: 'Public URL of the file to send',
 		displayOptions: {
 			show: {
 				resource: ['whatsapp'],
@@ -161,10 +161,10 @@ export const whatsAppFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Campos Adicionales',
+		displayName: 'Additional Fields',
 		name: 'additionalFields',
 		type: 'collection',
-		placeholder: 'Agregar Campo',
+		placeholder: 'Add Field',
 		default: {},
 		displayOptions: {
 			show: {
@@ -174,27 +174,27 @@ export const whatsAppFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Extensión del Archivo',
+				displayName: 'File Extension',
 				name: 'extension',
 				type: 'string',
 				default: '',
-				description: 'Extensión del archivo (opcional, solo canales EC2)',
+				description: 'File extension (optional, EC2 channels only)',
 				routing: { send: { type: 'body', property: 'extension' } },
 			},
 			{
-				displayName: 'Nombre del Archivo',
+				displayName: 'File Name',
 				name: 'nombre',
 				type: 'string',
 				default: '',
-				description: 'Caption o nombre del archivo',
+				description: 'Caption or file name',
 				routing: { send: { type: 'body', property: 'nombre' } },
 			},
 			{
-				displayName: 'Responder A',
+				displayName: 'Reply To',
 				name: 'replyTo',
 				type: 'string',
 				default: '',
-				description: 'ID del mensaje al que se responde',
+				description: 'ID of the message being replied to',
 				routing: { send: { type: 'body', property: 'replyTo' } },
 			},
 		],
@@ -204,14 +204,14 @@ export const whatsAppFields: INodeProperties[] = [
 	//         whatsapp: sendMessage
 	// ----------------------------------
 	{
-		displayName: 'ID del Canal',
+		displayName: 'Channel Name or ID',
 		name: 'id_canal',
 		type: 'options',
 		typeOptions: { loadOptionsMethod: 'getWhatsAppChannels' },
 		required: true,
 		default: '',
 		description:
-			'ID del canal WhatsApp QR (tabla wa_instances). Elige de la lista o especifica un ID con una expresión.',
+			'WhatsApp QR channel ID (table wa_instances). Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 		displayOptions: {
 			show: {
 				resource: ['whatsapp'],
@@ -223,12 +223,12 @@ export const whatsAppFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Número de Teléfono',
+		displayName: 'Phone Number',
 		name: 'numero',
 		type: 'string',
 		required: true,
 		default: '',
-		description: 'Número celular destino',
+		description: 'Destination phone number',
 		displayOptions: {
 			show: {
 				resource: ['whatsapp'],
@@ -240,13 +240,13 @@ export const whatsAppFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Mensaje',
+		displayName: 'Message',
 		name: 'mensaje',
 		type: 'string',
 		typeOptions: { rows: 3 },
 		required: true,
 		default: '',
-		description: 'Texto del mensaje',
+		description: 'Message text',
 		displayOptions: {
 			show: {
 				resource: ['whatsapp'],
@@ -258,10 +258,10 @@ export const whatsAppFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Campos Adicionales',
+		displayName: 'Additional Fields',
 		name: 'additionalFields',
 		type: 'collection',
-		placeholder: 'Agregar Campo',
+		placeholder: 'Add Field',
 		default: {},
 		displayOptions: {
 			show: {
@@ -271,11 +271,11 @@ export const whatsAppFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Responder A',
+				displayName: 'Reply To',
 				name: 'replyTo',
 				type: 'string',
 				default: '',
-				description: 'ID del mensaje al que se responde',
+				description: 'ID of the message being replied to',
 				routing: { send: { type: 'body', property: 'replyTo' } },
 			},
 		],
@@ -285,14 +285,14 @@ export const whatsAppFields: INodeProperties[] = [
 	//         whatsapp: sendQuickAnswer
 	// ----------------------------------
 	{
-		displayName: 'ID del Canal',
+		displayName: 'Channel Name or ID',
 		name: 'id_canal',
 		type: 'options',
 		typeOptions: { loadOptionsMethod: 'getWhatsAppChannels' },
 		required: true,
 		default: '',
 		description:
-			'ID del canal WhatsApp QR (tabla wa_instances). Elige de la lista o especifica un ID con una expresión.',
+			'WhatsApp QR channel ID (table wa_instances). Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 		displayOptions: {
 			show: {
 				resource: ['whatsapp'],
@@ -304,12 +304,12 @@ export const whatsAppFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Número de Teléfono',
+		displayName: 'Phone Number',
 		name: 'numero',
 		type: 'string',
 		required: true,
 		default: '',
-		description: 'Número celular destino',
+		description: 'Destination phone number',
 		displayOptions: {
 			show: {
 				resource: ['whatsapp'],
@@ -321,12 +321,12 @@ export const whatsAppFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'ID de la Respuesta Rápida',
+		displayName: 'Quick Reply ID',
 		name: 'id_respuesta',
 		type: 'number',
 		required: true,
 		default: 0,
-		description: 'ID de la respuesta rápida (tabla lc_respuestasrapidas)',
+		description: 'ID of the quick reply (table lc_respuestasrapidas)',
 		displayOptions: {
 			show: {
 				resource: ['whatsapp'],
@@ -338,10 +338,10 @@ export const whatsAppFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Campos Adicionales',
+		displayName: 'Additional Fields',
 		name: 'additionalFields',
 		type: 'collection',
-		placeholder: 'Agregar Campo',
+		placeholder: 'Add Field',
 		default: {},
 		displayOptions: {
 			show: {
@@ -355,7 +355,7 @@ export const whatsAppFields: INodeProperties[] = [
 				name: 'variables',
 				type: 'json',
 				default: '{}',
-				description: 'Variables a reemplazar en el texto, formato {clave: valor}',
+				description: 'Variables to replace in the text, format {key: value}',
 				routing: {
 					send: {
 						type: 'body',

@@ -1,4 +1,5 @@
 import type { INodeType, INodeTypeDescription } from 'n8n-workflow';
+import { NodeConnectionTypes } from 'n8n-workflow';
 
 import { LIVECONNECT_BASE_URL, refreshTokenIfExpired } from './GenericFunctions';
 import { liveConnectLoadOptions } from './LoadOptions';
@@ -50,7 +51,7 @@ export class LiveConnect implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'LiveConnect',
 		name: 'liveConnect',
-		icon: 'file:liveconnect2.svg',
+		icon: { light: 'file:liveconnect2.svg', dark: 'file:liveconnect2.svg' },
 		group: ['transform'],
 		version: 1,
 		subtitle: '={{$parameter["operation"] + ": " + $parameter["resource"]}}',
@@ -58,8 +59,8 @@ export class LiveConnect implements INodeType {
 		defaults: {
 			name: 'LiveConnect',
 		},
-		inputs: ['main'],
-		outputs: ['main'],
+		inputs: [NodeConnectionTypes.Main],
+		outputs: [NodeConnectionTypes.Main],
 		usableAsTool: true,
 		credentials: [
 			{

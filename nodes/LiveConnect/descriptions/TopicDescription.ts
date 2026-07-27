@@ -4,7 +4,7 @@ import { handleLcResponse } from '../GenericFunctions';
 
 export const topicOperations: INodeProperties[] = [
 	{
-		displayName: 'Operación',
+		displayName: 'Operation',
 		name: 'operation',
 		type: 'options',
 		noDataExpression: true,
@@ -15,30 +15,30 @@ export const topicOperations: INodeProperties[] = [
 		},
 		options: [
 			{
-				name: 'Actualizar',
+				name: 'Update',
 				value: 'update',
-				action: 'Actualizar un tópico',
-				description: 'Actualiza los campos de una memoria existente',
+				action: 'Update a topic',
+				description: 'Update the fields of an existing memory',
 				routing: {
 					request: { method: 'POST', url: '/assistant/edtTopic' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
 			{
-				name: 'Crear',
+				name: 'Create',
 				value: 'create',
-				action: 'Crear un tópico',
-				description: 'Crea un tópico (memoria) asociado a un asistente',
+				action: 'Create a topic',
+				description: 'Create a topic (memory) associated with an assistant',
 				routing: {
 					request: { method: 'POST', url: '/assistant/addTopic' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
 			{
-				name: 'Obtener Varios',
+				name: 'Get Many',
 				value: 'getMany',
-				action: 'Obtener varios tópicos',
-				description: 'Lista los tópicos (memorias) de los asistentes de la cuenta',
+				action: 'Get many topics',
+				description: 'List the topics (memories) of the assistants in the account',
 				routing: {
 					request: { method: 'GET', url: '/assistant/listTopic' },
 					output: { postReceive: [handleLcResponse] },
@@ -54,12 +54,12 @@ export const topicFields: INodeProperties[] = [
 	//         topic: create
 	// ----------------------------------
 	{
-		displayName: 'Nombre',
+		displayName: 'Name',
 		name: 'nombre',
 		type: 'string',
 		required: true,
 		default: '',
-		description: 'Nombre del tópico',
+		description: 'Name of the topic',
 		displayOptions: {
 			show: {
 				resource: ['topic'],
@@ -71,10 +71,10 @@ export const topicFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Campos Adicionales',
+		displayName: 'Additional Fields',
 		name: 'additionalFields',
 		type: 'collection',
-		placeholder: 'Agregar Campo',
+		placeholder: 'Add Field',
 		default: {},
 		displayOptions: {
 			show: {
@@ -84,29 +84,29 @@ export const topicFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Detalles',
+				displayName: 'Details',
 				name: 'detalles',
 				type: 'string',
 				default: '',
-				description: 'Contenido de la memoria',
+				description: 'Content of the memory',
 				routing: { send: { type: 'body', property: 'detalles' } },
 			},
 			{
-				displayName: 'Grupo',
+				displayName: 'Group',
 				name: 'grupo',
 				type: 'string',
 				default: '',
-				description: 'Grupo del tópico',
+				description: 'Group of the topic',
 				routing: { send: { type: 'body', property: 'grupo' } },
 			},
 			{
-				displayName: 'ID del Asistente',
+				displayName: 'Assistant Name or ID',
 				name: 'id_assistant',
 				type: 'options',
 				typeOptions: { loadOptionsMethod: 'getAssistants' },
 				default: '',
 				description:
-					'ID del asistente dueño del tópico. Elige de la lista o especifica un ID con una expresión.',
+					'ID of the assistant that owns the topic. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 				routing: { send: { type: 'body', property: 'id_assistant' } },
 			},
 		],
@@ -116,10 +116,10 @@ export const topicFields: INodeProperties[] = [
 	//         topic: getMany
 	// ----------------------------------
 	{
-		displayName: 'Filtros',
+		displayName: 'Filters',
 		name: 'filters',
 		type: 'collection',
-		placeholder: 'Agregar Filtro',
+		placeholder: 'Add Filter',
 		default: {},
 		displayOptions: {
 			show: {
@@ -129,21 +129,21 @@ export const topicFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'ID del Asistente',
+				displayName: 'Assistant Name or ID',
 				name: 'id_assistant',
 				type: 'options',
 				typeOptions: { loadOptionsMethod: 'getAssistants' },
 				default: '',
 				description:
-					'Filtra por asistente dueño del tópico. Elige de la lista o especifica un ID con una expresión.',
+					'Filter by the assistant that owns the topic. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 				routing: { send: { type: 'query', property: 'id_assistant' } },
 			},
 			{
-				displayName: 'ID del Tópico',
+				displayName: 'Topic ID',
 				name: 'id',
 				type: 'number',
 				default: 0,
-				description: 'Filtra por ID de tópico',
+				description: 'Filter by topic ID',
 				routing: { send: { type: 'query', property: 'id' } },
 			},
 		],
@@ -153,12 +153,12 @@ export const topicFields: INodeProperties[] = [
 	//         topic: update
 	// ----------------------------------
 	{
-		displayName: 'ID del Tópico',
+		displayName: 'Topic ID',
 		name: 'id',
 		type: 'number',
 		required: true,
 		default: 0,
-		description: 'ID del tópico a editar',
+		description: 'ID of the topic to edit',
 		displayOptions: {
 			show: {
 				resource: ['topic'],
@@ -170,10 +170,10 @@ export const topicFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Campos a Actualizar',
+		displayName: 'Update Fields',
 		name: 'updateFields',
 		type: 'collection',
-		placeholder: 'Agregar Campo',
+		placeholder: 'Add Field',
 		default: {},
 		displayOptions: {
 			show: {
@@ -183,37 +183,37 @@ export const topicFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Detalles',
+				displayName: 'Details',
 				name: 'detalles',
 				type: 'string',
 				default: '',
-				description: 'Contenido de la memoria',
+				description: 'Content of the memory',
 				routing: { send: { type: 'body', property: 'detalles' } },
 			},
 			{
-				displayName: 'Grupo',
+				displayName: 'Group',
 				name: 'grupo',
 				type: 'string',
 				default: '',
-				description: 'Grupo del tópico',
+				description: 'Group of the topic',
 				routing: { send: { type: 'body', property: 'grupo' } },
 			},
 			{
-				displayName: 'ID del Asistente',
+				displayName: 'Assistant Name or ID',
 				name: 'id_assistant',
 				type: 'options',
 				typeOptions: { loadOptionsMethod: 'getAssistants' },
 				default: '',
 				description:
-					'ID del asistente dueño del tópico. Elige de la lista o especifica un ID con una expresión.',
+					'ID of the assistant that owns the topic. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 				routing: { send: { type: 'body', property: 'id_assistant' } },
 			},
 			{
-				displayName: 'Nombre',
+				displayName: 'Name',
 				name: 'nombre',
 				type: 'string',
 				default: '',
-				description: 'Nombre del tópico',
+				description: 'Name of the topic',
 				routing: { send: { type: 'body', property: 'nombre' } },
 			},
 		],

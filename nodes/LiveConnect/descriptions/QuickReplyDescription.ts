@@ -4,7 +4,7 @@ import { handleLcResponse } from '../GenericFunctions';
 
 export const quickReplyOperations: INodeProperties[] = [
 	{
-		displayName: 'Operación',
+		displayName: 'Operation',
 		name: 'operation',
 		type: 'options',
 		noDataExpression: true,
@@ -15,22 +15,22 @@ export const quickReplyOperations: INodeProperties[] = [
 		},
 		options: [
 			{
-				name: 'Actualizar',
+				name: 'Update',
 				value: 'update',
-				action: 'Actualizar una respuesta rápida',
+				action: 'Update a quick reply',
 				description:
-					'Actualiza una respuesta rápida existente de la cuenta autenticada. Rechaza el cambio si el nuevo par grupo/atajo ya está en uso por otra respuesta rápida.',
+					'Update an existing quick reply for the authenticated account. Rejects the change if the new group/shortcut pair is already used by another quick reply.',
 				routing: {
 					request: { method: 'POST', url: '/quickAnswers/edtQuickReply' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
 			{
-				name: 'Crear',
+				name: 'Create',
 				value: 'create',
-				action: 'Crear una respuesta rápida',
+				action: 'Create a quick reply',
 				description:
-					'Crea un atajo de respuesta rápida en la cuenta autenticada. Rechaza el alta si ya existe un atajo con el mismo nombre dentro del mismo grupo.',
+					'Create a quick reply shortcut for the authenticated account. Rejects creation if a shortcut with the same name already exists within the same group.',
 				routing: {
 					request: { method: 'POST', url: '/quickAnswers/addQuickReply' },
 					output: { postReceive: [handleLcResponse] },
@@ -46,12 +46,12 @@ export const quickReplyFields: INodeProperties[] = [
 	//         quickReply: create
 	// ----------------------------------
 	{
-		displayName: 'Grupo',
+		displayName: 'Group',
 		name: 'grupo',
 		type: 'string',
 		required: true,
 		default: '',
-		description: 'Grupo/carpeta al que pertenece el atajo',
+		description: 'Group/folder the shortcut belongs to',
 		displayOptions: {
 			show: {
 				resource: ['quickReply'],
@@ -63,12 +63,12 @@ export const quickReplyFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Atajo',
+		displayName: 'Shortcut',
 		name: 'atajo',
 		type: 'string',
 		required: true,
 		default: '',
-		description: 'Nombre del atajo (único por grupo dentro de la cuenta)',
+		description: 'Name of the shortcut (unique per group within the account)',
 		displayOptions: {
 			show: {
 				resource: ['quickReply'],
@@ -80,13 +80,13 @@ export const quickReplyFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Respuesta',
+		displayName: 'Reply',
 		name: 'respuesta',
 		type: 'string',
 		typeOptions: { rows: 3 },
 		required: true,
 		default: '',
-		description: 'Texto de la respuesta rápida',
+		description: 'Text of the quick reply',
 		displayOptions: {
 			show: {
 				resource: ['quickReply'],
@@ -98,10 +98,10 @@ export const quickReplyFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Campos Adicionales',
+		displayName: 'Additional Fields',
 		name: 'additionalFields',
 		type: 'collection',
-		placeholder: 'Agregar Campo',
+		placeholder: 'Add Field',
 		default: {},
 		displayOptions: {
 			show: {
@@ -111,29 +111,29 @@ export const quickReplyFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'ID del Archivo',
+				displayName: 'File ID',
 				name: 'file',
 				type: 'number',
 				default: 0,
-				description: 'ID del archivo adjunto (lc_storage)',
+				description: 'ID of the attached file (lc_storage)',
 				routing: { send: { type: 'body', property: 'file' } },
 			},
 			{
-				displayName: 'ID del Supervisor',
+				displayName: 'Supervisor Name or ID',
 				name: 'idSupervisor',
 				type: 'options',
 				typeOptions: { loadOptionsMethod: 'getUsers' },
 				default: '',
 				description:
-					'ID del usuario creador (se guarda como id_creador). Elige de la lista o especifica un ID con una expresión.',
+					'ID of the creating user (saved as id_creador). Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 				routing: { send: { type: 'body', property: 'idSupervisor' } },
 			},
 			{
-				displayName: 'URL del Archivo',
+				displayName: 'File URL',
 				name: 'fileurl',
 				type: 'string',
 				default: '',
-				description: 'URL del archivo adjunto',
+				description: 'URL of the attached file',
 				routing: { send: { type: 'body', property: 'fileurl' } },
 			},
 		],
@@ -143,12 +143,12 @@ export const quickReplyFields: INodeProperties[] = [
 	//         quickReply: update
 	// ----------------------------------
 	{
-		displayName: 'ID de la Respuesta Rápida',
+		displayName: 'Quick Reply ID',
 		name: 'id',
 		type: 'number',
 		required: true,
 		default: 0,
-		description: 'ID de la respuesta rápida a editar',
+		description: 'ID of the quick reply to edit',
 		displayOptions: {
 			show: {
 				resource: ['quickReply'],
@@ -160,10 +160,10 @@ export const quickReplyFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Campos a Actualizar',
+		displayName: 'Update Fields',
 		name: 'updateFields',
 		type: 'collection',
-		placeholder: 'Agregar Campo',
+		placeholder: 'Add Field',
 		default: {},
 		displayOptions: {
 			show: {
@@ -173,54 +173,54 @@ export const quickReplyFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Atajo',
+				displayName: 'Shortcut',
 				name: 'atajo',
 				type: 'string',
 				default: '',
-				description: 'Nombre del atajo (único por grupo dentro de la cuenta)',
+				description: 'Name of the shortcut (unique per group within the account)',
 				routing: { send: { type: 'body', property: 'atajo' } },
 			},
 			{
-				displayName: 'Grupo',
+				displayName: 'Group',
 				name: 'grupo',
 				type: 'string',
 				default: '',
-				description: 'Grupo/carpeta al que pertenece el atajo',
+				description: 'Group/folder the shortcut belongs to',
 				routing: { send: { type: 'body', property: 'grupo' } },
 			},
 			{
-				displayName: 'ID del Archivo',
+				displayName: 'File ID',
 				name: 'file',
 				type: 'number',
 				default: 0,
-				description: 'ID del archivo adjunto (lc_storage)',
+				description: 'ID of the attached file (lc_storage)',
 				routing: { send: { type: 'body', property: 'file' } },
 			},
 			{
-				displayName: 'ID del Editor',
+				displayName: 'Editor Name or ID',
 				name: 'id_usuario',
 				type: 'options',
 				typeOptions: { loadOptionsMethod: 'getUsers' },
 				default: '',
 				description:
-					'ID del usuario que edita. Elige de la lista o especifica un ID con una expresión.',
+					'ID of the editing user. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
 				routing: { send: { type: 'body', property: 'id_usuario' } },
 			},
 			{
-				displayName: 'Respuesta',
+				displayName: 'Reply',
 				name: 'respuesta',
 				type: 'string',
 				typeOptions: { rows: 3 },
 				default: '',
-				description: 'Texto de la respuesta rápida',
+				description: 'Text of the quick reply',
 				routing: { send: { type: 'body', property: 'respuesta' } },
 			},
 			{
-				displayName: 'URL del Archivo',
+				displayName: 'File URL',
 				name: 'fileurl',
 				type: 'string',
 				default: '',
-				description: 'URL del archivo adjunto',
+				description: 'URL of the attached file',
 				routing: { send: { type: 'body', property: 'fileurl' } },
 			},
 		],

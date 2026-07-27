@@ -9,7 +9,7 @@ import type {
 	IWebhookResponseData,
 	JsonObject,
 } from 'n8n-workflow';
-import { NodeApiError } from 'n8n-workflow';
+import { NodeApiError, NodeConnectionTypes } from 'n8n-workflow';
 
 import { getChannels } from './LoadOptions';
 import type { LcEnvelope } from './TriggerFunctions';
@@ -34,16 +34,18 @@ export class LiveConnectProxyTrigger implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'LiveConnect Proxy Trigger',
 		name: 'liveConnectProxyTrigger',
-		icon: 'file:liveconnect2.svg',
+		icon: { light: 'file:liveconnect2.svg', dark: 'file:liveconnect2.svg' },
 		group: ['trigger'],
 		version: 1,
+		subtitle: '={{$parameter["path"]}}',
 		description:
 			'Se dispara cuando llega una notificación del proxy de conversaciones de LiveConnect',
 		defaults: {
 			name: 'LiveConnect Proxy Trigger',
 		},
 		inputs: [],
-		outputs: ['main'],
+		outputs: [NodeConnectionTypes.Main],
+		usableAsTool: true,
 		credentials: [
 			{
 				name: 'liveConnectApi',

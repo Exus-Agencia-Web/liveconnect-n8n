@@ -4,7 +4,7 @@ import { handleLcResponse } from '../GenericFunctions';
 
 export const categoryOperations: INodeProperties[] = [
 	{
-		displayName: 'Operación',
+		displayName: 'Operation',
 		name: 'operation',
 		type: 'options',
 		noDataExpression: true,
@@ -15,30 +15,30 @@ export const categoryOperations: INodeProperties[] = [
 		},
 		options: [
 			{
-				name: 'Actualizar',
+				name: 'Update',
 				value: 'update',
-				action: 'Actualizar una categoría',
-				description: 'Actualiza los campos enviados de una categoría existente',
+				action: 'Update a category',
+				description: 'Update the sent fields of an existing category',
 				routing: {
 					request: { method: 'POST', url: '/catalogue/edtCategory' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
 			{
-				name: 'Crear',
+				name: 'Create',
 				value: 'create',
-				action: 'Crear una categoría',
-				description: 'Agrega una categoría al catálogo de la cuenta',
+				action: 'Create a category',
+				description: 'Add a category to the account catalog',
 				routing: {
 					request: { method: 'POST', url: '/catalogue/addCategory' },
 					output: { postReceive: [handleLcResponse] },
 				},
 			},
 			{
-				name: 'Obtener Varios',
+				name: 'Get Many',
 				value: 'getMany',
-				action: 'Obtener varias categorías',
-				description: 'Lista las categorías del catálogo de la cuenta, opcionalmente filtradas por ID',
+				action: 'Get many categories',
+				description: 'List the categories in the account catalog, optionally filtered by ID',
 				routing: {
 					request: { method: 'GET', url: '/catalogue/listCategories' },
 					output: { postReceive: [handleLcResponse] },
@@ -54,12 +54,12 @@ export const categoryFields: INodeProperties[] = [
 	//         category: create
 	// ----------------------------------
 	{
-		displayName: 'Nombre',
+		displayName: 'Name',
 		name: 'nombre',
 		type: 'string',
 		required: true,
 		default: '',
-		description: 'Nombre de la categoría',
+		description: 'Name of the category',
 		displayOptions: {
 			show: {
 				resource: ['category'],
@@ -75,10 +75,10 @@ export const categoryFields: INodeProperties[] = [
 	//         category: getMany
 	// ----------------------------------
 	{
-		displayName: 'Filtros',
+		displayName: 'Filters',
 		name: 'filters',
 		type: 'collection',
-		placeholder: 'Agregar Filtro',
+		placeholder: 'Add Filter',
 		default: {},
 		displayOptions: {
 			show: {
@@ -88,11 +88,11 @@ export const categoryFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'ID de la Categoría',
+				displayName: 'Category ID',
 				name: 'id',
 				type: 'number',
 				default: 0,
-				description: 'Filtra por ID de categoría',
+				description: 'Filter by category ID',
 				routing: { send: { type: 'query', property: 'id' } },
 			},
 		],
@@ -102,12 +102,12 @@ export const categoryFields: INodeProperties[] = [
 	//         category: update
 	// ----------------------------------
 	{
-		displayName: 'ID de la Categoría',
+		displayName: 'Category ID',
 		name: 'id',
 		type: 'number',
 		required: true,
 		default: 0,
-		description: 'ID de la categoría a editar',
+		description: 'ID of the category to edit',
 		displayOptions: {
 			show: {
 				resource: ['category'],
@@ -119,12 +119,12 @@ export const categoryFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Nombre',
+		displayName: 'Name',
 		name: 'nombre',
 		type: 'string',
 		required: true,
 		default: '',
-		description: 'Nombre de la categoría',
+		description: 'Name of the category',
 		displayOptions: {
 			show: {
 				resource: ['category'],
@@ -136,10 +136,10 @@ export const categoryFields: INodeProperties[] = [
 		},
 	},
 	{
-		displayName: 'Campos a Actualizar',
+		displayName: 'Update Fields',
 		name: 'updateFields',
 		type: 'collection',
-		placeholder: 'Agregar Campo',
+		placeholder: 'Add Field',
 		default: {},
 		displayOptions: {
 			show: {
@@ -149,19 +149,19 @@ export const categoryFields: INodeProperties[] = [
 		},
 		options: [
 			{
-				displayName: 'Foto',
+				displayName: 'Photo',
 				name: 'foto',
 				type: 'string',
 				default: '',
-				description: 'URL de la foto de la categoría',
+				description: 'URL of the category photo',
 				routing: { send: { type: 'body', property: 'foto' } },
 			},
 			{
-				displayName: 'Orden',
+				displayName: 'Order',
 				name: 'orden',
 				type: 'number',
 				default: 0,
-				description: 'Orden de la categoría',
+				description: 'Order of the category',
 				routing: { send: { type: 'body', property: 'orden' } },
 			},
 		],
