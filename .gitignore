@@ -3,3 +3,7 @@ dist
 .DS_Store
 *.tsbuildinfo
 npm-debug.log*
+
+# workspace de ejecución (no se publica)
+.superpowers/
+dist-es/
