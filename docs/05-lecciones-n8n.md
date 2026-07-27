@@ -33,7 +33,7 @@ Todos los ítems de la ejecución arrancan sus preSend **en paralelo**. Cualquie
 - No hay forma de que la UI consulte el API para decidir qué campos mostrar.
 - Si el parámetro observado contiene una **expresión**, la condición se evalúa contra el texto de la expresión, no contra su resultado.
 
-**Patrón que sí funciona**: codificar en el `value` de la opción todo lo que la UI necesita saber (`<id>|v2|IMAGE`) y condicionar con `_cnd.regex`. Es lo que hace el nodo oficial de WhatsApp (`nombre|idioma`). Para el caso "el valor viene de una expresión", hay que ofrecer una salida alternativa (un campo genérico en Campos Adicionales).
+**Patrón que sí funciona**: codificar en el `value` de la opción todo lo que la UI necesita saber (`<id>|v2|IMAGE`) y condicionar con `_cnd.regex`. Es lo que hace el nodo oficial de WhatsApp (`nombre|idioma`). Para el caso "el valor viene de una expresión", hay que ofrecer una salida alternativa (un campo genérico en Additional Fields).
 
 Operadores disponibles en `_cnd`: `eq`, `not`, `gt`, `gte`, `lt`, `lte`, `between`, `startsWith`, `endsWith`, `includes`, `regex`, `exists`.
 
