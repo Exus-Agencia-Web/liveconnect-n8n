@@ -66,7 +66,7 @@ En la misma versión, con el dato de que **LiveConnect trabaja con varios provee
 ### 0.9.2 — Ruta del webhook configurable
 Los dos triggers tenían el `path` fijo en `'webhook'`, así que la única parte variable de la URL era el `webhookId`, que n8n no deja editar. Peor: los workflows de `examples/` traían un `webhookId` **fijo** (`liveconnect-callback-switch-demo`), de modo que dos importaciones del mismo ejemplo compartían URL sin remedio. Ahora hay un parámetro **Webhook Path** (default `webhook`, que conserva la URL anterior) y los ejemplos ya no fijan `webhookId`.
 
-### Sin publicar aún (rama `chore/n8n-verification-readiness`) — Interfaz en inglés + paquete español aparte
+### 1.0.0 — Interfaz en inglés + paquete español aparte (preparación para la verificación de n8n)
 n8n exige que la interfaz de un nodo comunitario **verificado** esté íntegramente en inglés, y lo comprueba con ESLint (`npx @n8n/scan-community-package`). Con la UI en español (doctrina de 0.3.0), el escáner reportaba **341 problemas (337 errores)**, de los que 319 eran exactamente el idioma: `displayName` sin Title Case, `action` en español, y faltaban los literales que exigen las reglas (`Name or ID`, `Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>`, `Max number of results to return`, descripciones booleanas con `Whether`). Se revierte esa doctrina:
 
 - Traducidos a inglés ~1.100 textos: las 18 descriptions, los 4 nodos, la credencial y los mensajes de error de `GenericFunctions`/`LoadOptions`/`TemplateFields`/`ActionsFunctions`. Los identificadores internos (`name` de propiedad, `value` de opción, `property` del routing, rutas del API) **no cambiaron**: los workflows existentes siguen funcionando.
