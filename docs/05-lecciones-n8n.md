@@ -71,6 +71,19 @@ Se declara con **ruta relativa `&`** — `['&id_canal']`, `['&id_pipeline']` —
 
 **No copiar el guard "No Webhook node found" del core**: su lista de triggers reconocidos **no incluye nodos comunitarios**, así que rechazaría respuestas válidas.
 
+## 9-bis. La URL de un webhook y el `webhookId`
+
+`getNodeWebhookUrl` / `getNodeWebhookPath` (`node-helpers.js`) construyen:
+
+- con `webhookId` → `<base>/<webhookId>/<path>`;
+- sin `webhookId` → `<base>/<workflowId>/<nombre-del-nodo>/<path>`;
+- con `isFullPath: true` → `<base>/<path>` (o el `webhookId` si el path está vacío).
+
+Dos consecuencias prácticas:
+
+1. **El `path` debe ser un parámetro**, como en el nodo Webhook core (`path: '={{$parameter["path"]}}'`). Fijarlo en el código deja al usuario sin ninguna palanca sobre su URL, porque el `webhookId` no se puede editar desde la UI.
+2. **Un `webhookId` fijo dentro de un workflow de ejemplo es un error**: todo el que importe ese JSON obtiene la misma URL. Al omitirlo, n8n genera uno nuevo en cada importación.
+
 ## 10. Tipos y runtime
 
 - n8n-workflow ≥ 1.9x: `NodeConnectionType` es **solo un tipo**; en runtime hay que usar los strings (`['main']`).

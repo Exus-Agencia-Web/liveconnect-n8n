@@ -11,7 +11,10 @@
 			"name": "Instrucciones",
 			"type": "n8n-nodes-base.stickyNote",
 			"typeVersion": 1,
-			"position": [0, -260]
+			"position": [
+				0,
+				-260
+			]
 		},
 		{
 			"parameters": {
@@ -24,8 +27,10 @@
 			"name": "Webhook alta",
 			"type": "n8n-nodes-base.webhook",
 			"typeVersion": 2,
-			"position": [540, 60],
-			"webhookId": "liveconnect-alta-contacto-demo"
+			"position": [
+				540,
+				60
+			]
 		},
 		{
 			"parameters": {
@@ -38,7 +43,10 @@
 			"name": "Verificar número",
 			"type": "n8n-nodes-liveconnect.liveConnect",
 			"typeVersion": 1,
-			"position": [760, 60]
+			"position": [
+				760,
+				60
+			]
 		},
 		{
 			"parameters": {
@@ -53,7 +61,11 @@
 						{
 							"leftValue": "={{ $json.existe ?? $json.exists ?? $json.valido ?? false }}",
 							"rightValue": "true",
-							"operator": { "type": "boolean", "operation": "true", "singleValue": true }
+							"operator": {
+								"type": "boolean",
+								"operation": "true",
+								"singleValue": true
+							}
 						}
 					],
 					"combinator": "and"
@@ -64,7 +76,10 @@
 			"name": "¿Número válido?",
 			"type": "n8n-nodes-base.if",
 			"typeVersion": 2.2,
-			"position": [980, 60]
+			"position": [
+				980,
+				60
+			]
 		},
 		{
 			"parameters": {
@@ -79,7 +94,10 @@
 			"name": "Crear contacto",
 			"type": "n8n-nodes-liveconnect.liveConnect",
 			"typeVersion": 1,
-			"position": [1200, 40]
+			"position": [
+				1200,
+				40
+			]
 		},
 		{
 			"parameters": {
@@ -94,7 +112,10 @@
 			"name": "Crear conversación",
 			"type": "n8n-nodes-liveconnect.liveConnect",
 			"typeVersion": 1,
-			"position": [1420, 40]
+			"position": [
+				1420,
+				40
+			]
 		},
 		{
 			"parameters": {
@@ -107,7 +128,10 @@
 			"name": "Mensaje de bienvenida",
 			"type": "n8n-nodes-liveconnect.liveConnect",
 			"typeVersion": 1,
-			"position": [1640, 40]
+			"position": [
+				1640,
+				40
+			]
 		},
 		{
 			"parameters": {
@@ -119,7 +143,10 @@
 			"name": "Respond OK",
 			"type": "n8n-nodes-base.respondToWebhook",
 			"typeVersion": 1.1,
-			"position": [1860, 60]
+			"position": [
+				1860,
+				60
+			]
 		},
 		{
 			"parameters": {
@@ -131,33 +158,92 @@
 			"name": "Respond número inválido",
 			"type": "n8n-nodes-base.respondToWebhook",
 			"typeVersion": 1.1,
-			"position": [1200, 220]
+			"position": [
+				1200,
+				220
+			]
 		}
 	],
 	"connections": {
 		"Webhook alta": {
-			"main": [[{ "node": "Verificar número", "type": "main", "index": 0 }]]
+			"main": [
+				[
+					{
+						"node": "Verificar número",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
 		},
 		"Verificar número": {
-			"main": [[{ "node": "¿Número válido?", "type": "main", "index": 0 }]]
+			"main": [
+				[
+					{
+						"node": "¿Número válido?",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
 		},
 		"¿Número válido?": {
 			"main": [
-				[{ "node": "Crear contacto", "type": "main", "index": 0 }],
-				[{ "node": "Respond número inválido", "type": "main", "index": 0 }]
+				[
+					{
+						"node": "Crear contacto",
+						"type": "main",
+						"index": 0
+					}
+				],
+				[
+					{
+						"node": "Respond número inválido",
+						"type": "main",
+						"index": 0
+					}
+				]
 			]
 		},
 		"Crear contacto": {
-			"main": [[{ "node": "Crear conversación", "type": "main", "index": 0 }]]
+			"main": [
+				[
+					{
+						"node": "Crear conversación",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
 		},
 		"Crear conversación": {
-			"main": [[{ "node": "Mensaje de bienvenida", "type": "main", "index": 0 }]]
+			"main": [
+				[
+					{
+						"node": "Mensaje de bienvenida",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
 		},
 		"Mensaje de bienvenida": {
-			"main": [[{ "node": "Respond OK", "type": "main", "index": 0 }]]
+			"main": [
+				[
+					{
+						"node": "Respond OK",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
 		}
 	},
-	"settings": { "executionOrder": "v1" },
+	"settings": {
+		"executionOrder": "v1"
+	},
 	"pinData": {},
-	"meta": { "templateCredsSetupCompleted": false }
+	"meta": {
+		"templateCredsSetupCompleted": false
+	}
 }

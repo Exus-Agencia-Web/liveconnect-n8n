@@ -28,7 +28,11 @@ export class LiveConnectCallbackTrigger implements INodeType {
 				httpMethod: 'POST',
 				responseMode: '={{$parameter["responseMode"]}}',
 				responseData: '={{$parameter["responseMode"] === "lastNode" ? "firstEntryJson" : undefined}}',
-				path: 'webhook',
+				// Ruta configurable (el default reproduce la URL de versiones anteriores).
+				// La URL completa es <base>/<webhookId>/<ruta>: el webhookId ya es único por
+				// nodo, así que esto no evita choques —no los hay— sino que permite una URL
+				// legible y estable para pegar en el Flowbot.
+				path: '={{$parameter["path"] || "webhook"}}',
 			},
 		],
 		properties: [
@@ -38,6 +42,15 @@ export class LiveConnectCallbackTrigger implements INodeType {
 				name: 'notice',
 				type: 'notice',
 				default: '',
+			},
+			{
+				displayName: 'Ruta del Webhook',
+				name: 'path',
+				type: 'string',
+				default: 'webhook',
+				placeholder: 'callback-ventas',
+				description:
+					'Último tramo de la URL del webhook, para identificarla cuando tienes varios chatbots. Al cambiarla, la URL cambia: actualízala también en el Flowbot.',
 			},
 			{
 				displayName: 'Secreto',

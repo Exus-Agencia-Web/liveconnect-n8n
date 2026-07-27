@@ -11,7 +11,10 @@
 			"name": "Instrucciones",
 			"type": "n8n-nodes-base.stickyNote",
 			"typeVersion": 1,
-			"position": [0, -220]
+			"position": [
+				0,
+				-220
+			]
 		},
 		{
 			"parameters": {
@@ -24,8 +27,10 @@
 			"name": "Webhook LiveConnect",
 			"type": "n8n-nodes-base.webhook",
 			"typeVersion": 2,
-			"position": [520, 60],
-			"webhookId": "liveconnect-chatbot-demo"
+			"position": [
+				520,
+				60
+			]
 		},
 		{
 			"parameters": {
@@ -35,7 +40,10 @@
 			"name": "Parsear mensaje",
 			"type": "n8n-nodes-base.code",
 			"typeVersion": 2,
-			"position": [740, 60]
+			"position": [
+				740,
+				60
+			]
 		},
 		{
 			"parameters": {
@@ -50,7 +58,11 @@
 						{
 							"leftValue": "={{ $json.mensaje }}",
 							"rightValue": "",
-							"operator": { "type": "string", "operation": "notEmpty", "singleValue": true }
+							"operator": {
+								"type": "string",
+								"operation": "notEmpty",
+								"singleValue": true
+							}
 						}
 					],
 					"combinator": "and"
@@ -61,7 +73,10 @@
 			"name": "¿Hay mensaje?",
 			"type": "n8n-nodes-base.if",
 			"typeVersion": 2.2,
-			"position": [960, 60]
+			"position": [
+				960,
+				60
+			]
 		},
 		{
 			"parameters": {
@@ -75,7 +90,10 @@
 			"name": "AI Agent",
 			"type": "@n8n/n8n-nodes-langchain.agent",
 			"typeVersion": 1.9,
-			"position": [1180, 40]
+			"position": [
+				1180,
+				40
+			]
 		},
 		{
 			"parameters": {
@@ -91,7 +109,10 @@
 			"name": "OpenAI Chat Model",
 			"type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
 			"typeVersion": 1.2,
-			"position": [1120, 280]
+			"position": [
+				1120,
+				280
+			]
 		},
 		{
 			"parameters": {
@@ -102,7 +123,10 @@
 			"name": "Memoria por conversación",
 			"type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
 			"typeVersion": 1.3,
-			"position": [1280, 280]
+			"position": [
+				1280,
+				280
+			]
 		},
 		{
 			"parameters": {
@@ -115,7 +139,10 @@
 			"name": "Responder al cliente",
 			"type": "n8n-nodes-liveconnect.liveConnect",
 			"typeVersion": 1,
-			"position": [1520, 40]
+			"position": [
+				1520,
+				40
+			]
 		},
 		{
 			"parameters": {
@@ -127,36 +154,103 @@
 			"name": "Respond OK",
 			"type": "n8n-nodes-base.respondToWebhook",
 			"typeVersion": 1.1,
-			"position": [1740, 60]
+			"position": [
+				1740,
+				60
+			]
 		}
 	],
 	"connections": {
 		"Webhook LiveConnect": {
-			"main": [[{ "node": "Parsear mensaje", "type": "main", "index": 0 }]]
+			"main": [
+				[
+					{
+						"node": "Parsear mensaje",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
 		},
 		"Parsear mensaje": {
-			"main": [[{ "node": "¿Hay mensaje?", "type": "main", "index": 0 }]]
+			"main": [
+				[
+					{
+						"node": "¿Hay mensaje?",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
 		},
 		"¿Hay mensaje?": {
 			"main": [
-				[{ "node": "AI Agent", "type": "main", "index": 0 }],
-				[{ "node": "Respond OK", "type": "main", "index": 0 }]
+				[
+					{
+						"node": "AI Agent",
+						"type": "main",
+						"index": 0
+					}
+				],
+				[
+					{
+						"node": "Respond OK",
+						"type": "main",
+						"index": 0
+					}
+				]
 			]
 		},
 		"AI Agent": {
-			"main": [[{ "node": "Responder al cliente", "type": "main", "index": 0 }]]
+			"main": [
+				[
+					{
+						"node": "Responder al cliente",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
 		},
 		"OpenAI Chat Model": {
-			"ai_languageModel": [[{ "node": "AI Agent", "type": "ai_languageModel", "index": 0 }]]
+			"ai_languageModel": [
+				[
+					{
+						"node": "AI Agent",
+						"type": "ai_languageModel",
+						"index": 0
+					}
+				]
+			]
 		},
 		"Memoria por conversación": {
-			"ai_memory": [[{ "node": "AI Agent", "type": "ai_memory", "index": 0 }]]
+			"ai_memory": [
+				[
+					{
+						"node": "AI Agent",
+						"type": "ai_memory",
+						"index": 0
+					}
+				]
+			]
 		},
 		"Responder al cliente": {
-			"main": [[{ "node": "Respond OK", "type": "main", "index": 0 }]]
+			"main": [
+				[
+					{
+						"node": "Respond OK",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
 		}
 	},
-	"settings": { "executionOrder": "v1" },
+	"settings": {
+		"executionOrder": "v1"
+	},
 	"pinData": {},
-	"meta": { "templateCredsSetupCompleted": false }
+	"meta": {
+		"templateCredsSetupCompleted": false
+	}
 }

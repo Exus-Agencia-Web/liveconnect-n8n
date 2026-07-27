@@ -41,7 +41,7 @@ nodes/LiveConnect/
   LiveConnectCallbackResponse.node.ts       # constructor visual de actions; responde con sendResponse()
   descriptions/<Recurso>Description.ts      # 1 archivo por recurso: <camel>Operations + <camel>Fields
 scripts/verify-spec.mjs                     # diff dist/ vs OpenAPI (npm run verify)
-scripts/smoke-*.mjs                         # 101 pruebas de humo (npm run smoke)
+scripts/smoke-*.mjs                         # 109 pruebas de humo (npm run smoke)
 .github/workflows/                          # ci.yml (build+lint) · release.yml (release → npm publish)
 ```
 
@@ -95,7 +95,7 @@ npm install --ignore-scripts   # instalar (NUNCA npm install a secas)
 npm run build                  # tsc + íconos
 npm run lint / npm run lintfix
 npm run verify                 # diff dist/ vs OpenAPI del CDN (acepta un spec local como argumento)
-npm run smoke                  # 101 pruebas de humo (triggers, respuesta, token, selectores, plantillas)
+npm run smoke                  # 109 pruebas de humo (triggers, respuesta, token, selectores, plantillas)
 ```
 
 Repo: https://github.com/Exus-Agencia-Web/liveconnect-n8n · npm: `n8n-nodes-liveconnect`

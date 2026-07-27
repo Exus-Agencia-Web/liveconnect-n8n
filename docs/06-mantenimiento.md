@@ -7,7 +7,7 @@ npm install --ignore-scripts   # instalar (NUNCA npm install a secas — ver lec
 npm run build                  # tsc + copia de íconos
 npm run lint / npm run lintfix
 npm run verify                 # diff de dist/ contra el OpenAPI del CDN (acepta un spec local como argumento)
-npm run smoke                  # 101 pruebas: triggers, nodo de respuesta, token, selectores, plantillas
+npm run smoke                  # 109 pruebas: triggers, nodo de respuesta, token, selectores, plantillas
 ```
 
 ## Actualizar el nodo cuando cambia el OpenAPI

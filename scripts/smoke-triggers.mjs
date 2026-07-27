@@ -15,6 +15,7 @@ import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const { LiveConnectCallbackTrigger } = require('../dist/nodes/LiveConnect/LiveConnectCallbackTrigger.node.js');
 const { LiveConnectProxyTrigger } = require('../dist/nodes/LiveConnect/LiveConnectProxyTrigger.node.js');
+const { Workflow, NodeHelpers } = require('n8n-workflow');
 
 // --- payload real de producción (contrato-request.md de la skill del gateway) ---
 const REAL_BODY = {
@@ -357,5 +358,61 @@ await test('delete manda estado 0 y limpia staticData solo si el borrado remoto 
 	assert.equal(await hooks.delete.call(fail.ctx), true);
 	assert.equal(fail.staticData.secret, 'auto-1');
 });
+
+// --- ruta del webhook configurable ---------------------------------------------------
+// Se evalúa con el propio Workflow de n8n: la URL es <base>/<webhookId>/<ruta> y el
+// default debe reproducir la de las versiones anteriores (`/webhook`).
+
+function webhookUrl(TipoNodo, parameters, webhookId) {
+	const type = new TipoNodo();
+	const nodeTypes = {
+		getByName: () => type,
+		getByNameAndVersion: () => type,
+		getKnownTypes: () => ({}),
+	};
+	const node = {
+		name: 'LiveConnect Callback Trigger1',
+		type: 'x',
+		typeVersion: 1,
+		position: [0, 0],
+		parameters,
+		...(webhookId !== undefined ? { webhookId } : {}),
+	};
+	const wf = new Workflow({ id: 'WF1', nodes: [node], connections: {}, active: false, nodeTypes });
+	const path = wf.expression.getSimpleParameterValue(
+		node,
+		type.description.webhooks[0].path,
+		'internal',
+		{},
+	);
+	return NodeHelpers.getNodeWebhookUrl('https://n8n.test/webhook', 'WF1', node, String(path), false);
+}
+
+for (const [nombre, Tipo] of [
+	['callback', LiveConnectCallbackTrigger],
+	['proxy', LiveConnectProxyTrigger],
+]) {
+	await test(`${nombre}: sin tocar la ruta, la URL no cambia respecto a versiones previas`, () => {
+		assert.equal(webhookUrl(Tipo, {}, 'uuid-A'), 'https://n8n.test/webhook/uuid-A/webhook');
+	});
+
+	await test(`${nombre}: la ruta configurada se usa en la URL`, () => {
+		assert.equal(
+			webhookUrl(Tipo, { path: 'callback-ventas' }, 'uuid-A'),
+			'https://n8n.test/webhook/uuid-A/callback-ventas',
+		);
+	});
+
+	await test(`${nombre}: ruta vacía cae al default y no deja la URL colgando`, () => {
+		assert.equal(webhookUrl(Tipo, { path: '' }, 'uuid-A'), 'https://n8n.test/webhook/uuid-A/webhook');
+	});
+
+	await test(`${nombre}: dos nodos con rutas distintas no comparten URL`, () => {
+		assert.notEqual(
+			webhookUrl(Tipo, { path: 'ventas' }, 'uuid-A'),
+			webhookUrl(Tipo, { path: 'soporte' }, 'uuid-A'),
+		);
+	});
+}
 
 console.log(`\n${passed} pruebas de humo OK`);

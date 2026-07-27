@@ -63,6 +63,9 @@ Probando 0.9.0 en vivo: una plantilla de 2 variables **se envió con las dos vac
 
 En la misma versión, con el dato de que **LiveConnect trabaja con varios proveedores**, el identificador pasó a decidirse por la forma de la fila: ID en Gupshup, nombre en Meta directo. Y la URL del encabezado dejó de ser obligatoria cuando la plantilla trae su propio `mediaUrl` (comprobado: una plantilla de video se envía sin URL y el API usa la suya).
 
+### 0.9.2 — Ruta del webhook configurable
+Los dos triggers tenían el `path` fijo en `'webhook'`, así que la única parte variable de la URL era el `webhookId`, que n8n no deja editar. Peor: los workflows de `examples/` traían un `webhookId` **fijo** (`liveconnect-callback-switch-demo`), de modo que dos importaciones del mismo ejemplo compartían URL sin remedio. Ahora hay un parámetro **Ruta del Webhook** (default `webhook`, que conserva la URL anterior) y los ejemplos ya no fijan `webhookId`.
+
 ## Decisiones de fondo que siguen vigentes
 
 - **Nodo declarativo, sin `execute()`**: menos código y menos superficie de error para 58 operaciones. Los triggers y el nodo de respuesta son programáticos porque n8n no ofrece otra vía.

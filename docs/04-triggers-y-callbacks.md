@@ -48,6 +48,19 @@ LiveConnect espera **en la misma petición**:
 - El `input` debe ser el **último** elemento: uno intermedio no cierra el turno.
 - El trigger **no** responde las actions: su `responseMode` es una expresión (`={{$parameter["responseMode"]}}`) con `responseNode` por defecto. La respuesta la construye el workflow.
 
+### Ruta del webhook (ambos triggers)
+
+La URL que registra n8n es `<base>/webhook/<webhookId>/<ruta>` (`node-helpers.js`, `getNodeWebhookPath`). El `webhookId` lo asigna n8n al crear el nodo y **no es editable desde la UI**; la `ruta` sí: es el parámetro **Ruta del Webhook** (`path`, default `webhook`), declarado como `path: '={{$parameter["path"] || "webhook"}}'` en `webhooks[0]`.
+
+- El default reproduce la URL de las versiones anteriores a la 0.9.2, así que nadie tiene que volver a pegar nada en su Flowbot.
+- Ruta vacía → cae al default; nunca se genera una URL terminada en `/`.
+- Si el nodo **no** tiene `webhookId` (importado sin él), n8n usa `<workflowId>/<nombre del nodo>/<ruta>`: ahí la URL depende del nombre autogenerado del nodo ("LiveConnect Callback Trigger1"), otro motivo para fijar una ruta legible.
+- En el **Proxy Trigger**, cambiar la ruta cambia la URL registrada: `checkExists` la ve distinta de la que tiene LiveConnect y vuelve a dar de alta el webhook solo.
+
+⚠️ **Nunca dejar un `webhookId` fijo en los workflows de `examples/`.** Los ejemplos lo traían (`liveconnect-callback-switch-demo`) y eso hacía que **dos importaciones del mismo ejemplo compartieran URL**, sin forma de cambiarla desde la UI. Se quitó en 0.9.2: sin `webhookId` en el JSON, n8n genera uno nuevo al importar.
+
+Verificado en `scripts/smoke-triggers.mjs` con el `Workflow` y el `NodeHelpers` reales de n8n.
+
 ### Secret inválido (en ambos triggers)
 
 `getResponseObject().status(403).json(...)` + `{ noWebhookResponse: true }` → el workflow no se ejecuta. La comparación usa `timingSafeEqual`.

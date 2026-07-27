@@ -11,20 +11,26 @@
 			"name": "Instrucciones",
 			"type": "n8n-nodes-base.stickyNote",
 			"typeVersion": 1,
-			"position": [0, -240]
+			"position": [
+				0,
+				-240
+			]
 		},
 		{
 			"parameters": {
 				"id_canal": "",
 				"secret": "",
-				"simple": true
+				"simple": true,
+				"path": "proxy-mensajes"
 			},
 			"id": "b8000000-0000-4000-8000-000000000002",
 			"name": "LiveConnect Proxy Trigger",
 			"type": "n8n-nodes-liveconnect.liveConnectProxyTrigger",
 			"typeVersion": 1,
-			"position": [540, 60],
-			"webhookId": "liveconnect-proxy-demo"
+			"position": [
+				540,
+				60
+			]
 		},
 		{
 			"parameters": {
@@ -39,12 +45,20 @@
 						{
 							"leftValue": "={{ $json.mensaje }}",
 							"rightValue": "",
-							"operator": { "type": "string", "operation": "notEmpty", "singleValue": true }
+							"operator": {
+								"type": "string",
+								"operation": "notEmpty",
+								"singleValue": true
+							}
 						},
 						{
 							"leftValue": "={{ $json.id_conversacion }}",
 							"rightValue": "",
-							"operator": { "type": "string", "operation": "notEmpty", "singleValue": true }
+							"operator": {
+								"type": "string",
+								"operation": "notEmpty",
+								"singleValue": true
+							}
 						}
 					],
 					"combinator": "and"
@@ -55,7 +69,10 @@
 			"name": "¿Mensaje con conversación?",
 			"type": "n8n-nodes-base.if",
 			"typeVersion": 2.2,
-			"position": [760, 60]
+			"position": [
+				760,
+				60
+			]
 		},
 		{
 			"parameters": {
@@ -68,7 +85,10 @@
 			"name": "Auto-respuesta",
 			"type": "n8n-nodes-liveconnect.liveConnect",
 			"typeVersion": 1,
-			"position": [1000, 40]
+			"position": [
+				1000,
+				40
+			]
 		},
 		{
 			"parameters": {},
@@ -76,21 +96,48 @@
 			"name": "Ignorar (sin mensaje)",
 			"type": "n8n-nodes-base.noOp",
 			"typeVersion": 1,
-			"position": [1000, 220]
+			"position": [
+				1000,
+				220
+			]
 		}
 	],
 	"connections": {
 		"LiveConnect Proxy Trigger": {
-			"main": [[{ "node": "¿Mensaje con conversación?", "type": "main", "index": 0 }]]
+			"main": [
+				[
+					{
+						"node": "¿Mensaje con conversación?",
+						"type": "main",
+						"index": 0
+					}
+				]
+			]
 		},
 		"¿Mensaje con conversación?": {
 			"main": [
-				[{ "node": "Auto-respuesta", "type": "main", "index": 0 }],
-				[{ "node": "Ignorar (sin mensaje)", "type": "main", "index": 0 }]
+				[
+					{
+						"node": "Auto-respuesta",
+						"type": "main",
+						"index": 0
+					}
+				],
+				[
+					{
+						"node": "Ignorar (sin mensaje)",
+						"type": "main",
+						"index": 0
+					}
+				]
 			]
 		}
 	},
-	"settings": { "executionOrder": "v1" },
+	"settings": {
+		"executionOrder": "v1"
+	},
 	"pinData": {},
-	"meta": { "templateCredsSetupCompleted": false }
+	"meta": {
+		"templateCredsSetupCompleted": false
+	}
 }

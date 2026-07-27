@@ -55,7 +55,10 @@ export class LiveConnectProxyTrigger implements INodeType {
 				name: 'default',
 				httpMethod: 'POST',
 				responseMode: 'onReceived',
-				path: 'webhook',
+				// Ruta configurable; el default reproduce la URL de versiones anteriores.
+				// Al cambiarla cambia la URL, y checkExists la ve distinta a la registrada
+				// en LiveConnect, así que el webhook se vuelve a dar de alta solo.
+				path: '={{$parameter["path"] || "webhook"}}',
 			},
 		],
 		properties: [
@@ -75,6 +78,15 @@ export class LiveConnectProxyTrigger implements INodeType {
 				default: '',
 				description:
 					'Canal cuyas notificaciones del proxy disparan el workflow. Elige de la lista o especifica un ID con una expresión.',
+			},
+			{
+				displayName: 'Ruta del Webhook',
+				name: 'path',
+				type: 'string',
+				default: 'webhook',
+				placeholder: 'proxy-soporte',
+				description:
+					'Último tramo de la URL del webhook, para identificarla cuando tienes varios canales. Al cambiarla, el webhook se vuelve a registrar en LiveConnect con la URL nueva.',
 			},
 			{
 				displayName: 'Secreto',
