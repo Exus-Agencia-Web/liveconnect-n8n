@@ -116,7 +116,7 @@ await test('delegación elimina inputs configurados (gana la delegación)', asyn
 	]);
 });
 
-await test('userDelegate sin user_name → error en español con posición', async () => {
+await test('userDelegate sin user_name → error en inglés con posición', async () => {
 	const { ctx } = executeCtx({
 		params: {
 			acciones: acciones([{ tipo: 'userDelegate', id_user: 5, user_name: '' }]),

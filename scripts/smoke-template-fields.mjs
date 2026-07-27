@@ -243,7 +243,7 @@ function camposVisibles(idPlantilla) {
 		resource: 'waba',
 		operation: 'sendTemplate',
 		id_canal: 4695,
-		numero: '573152887786',
+		numero: '573001112233',
 		id_plantilla: idPlantilla,
 	};
 	const node = { name: 'LC', type: 'x', typeVersion: 1, position: [0, 0], parameters: values };

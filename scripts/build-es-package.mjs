@@ -97,7 +97,7 @@ exports.${clase} = ${clase};
 	);
 }
 
-for (const icono of ['liveconnect2.svg']) {
+for (const icono of ['liveconnect2.svg', 'liveconnect2.dark.svg']) {
 	const origen = resolve(dist, 'nodes/LiveConnect', icono);
 	if (existsSync(origen)) cpSync(origen, resolve(salida, 'nodes/LiveConnect', icono));
 }
@@ -129,11 +129,9 @@ writeFileSync(
 	'utf8',
 );
 
-for (const archivo of ['LICENSE.md', 'README.es.md']) {
-	const origen = resolve(raiz, archivo);
-	if (existsSync(origen)) {
-		cpSync(origen, resolve(salida, archivo === 'README.es.md' ? 'README.md' : archivo));
-	}
-}
+// El README en español vive en i18n/ y no en la raíz: npm mete en el tarball
+// cualquier fichero que empiece por README, y el paquete inglés no debe llevarlo.
+cpSync(resolve(raiz, 'LICENSE.md'), resolve(salida, 'LICENSE.md'));
+cpSync(resolve(raiz, 'i18n/README.es.md'), resolve(salida, 'README.md'));
 
 console.log(`${NOMBRE_ES} generado en dist-es/ (${PIEZAS.length} clases envueltas)`);
