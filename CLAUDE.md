@@ -45,7 +45,7 @@ scripts/verify-spec.mjs                     # diff dist/ vs OpenAPI (npm run ver
 scripts/smoke-*.mjs                         # 114 pruebas de humo (npm run smoke)
 scripts/build-es-package.mjs + i18n-*.mjs   # genera dist-es/ (n8n-nodes-liveconnect-es) — ver docs/08-paquete-espanol.md
 eslint.config.mjs                           # config oficial del escáner de nodos verificados (npm run lint)
-.github/workflows/                          # ci.yml (build+lint) · release.yml (release → publica LOS DOS paquetes a npm)
+.github/workflows/                          # ci.yml (build+lint+verify+smoke+build:es) · release.yml (release → publica LOS DOS paquetes a npm)
 ```
 
 18 recursos, 58 operaciones (todas las del spec menos `/account/token`, que la maneja la credencial), 2 triggers y 1 nodo de respuesta. `ContactDescription.ts` es el **template canónico** para recursos nuevos. Detalle en [docs/01-arquitectura.md](docs/01-arquitectura.md).

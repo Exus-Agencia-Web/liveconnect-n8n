@@ -2,6 +2,15 @@
 
 La interfaz del paquete principal está en inglés (ver [01-arquitectura.md](01-arquitectura.md) § Idioma) porque lo exige la verificación de nodos comunitarios de n8n. Este documento explica cómo el español **no desaparece**: se publica como un segundo paquete, generado desde el mismo código.
 
+## Limitación conocida: los mensajes de error van en inglés
+
+El diccionario traduce **la interfaz declarada** (displayName, description, placeholder, action, labels de options). **No** traduce los textos que el código construye en tiempo de ejecución: los `NodeOperationError`/`NodeApiError` de `GenericFunctions.ts`, `LoadOptions.ts`, `ActionsFunctions.ts` y los `webhookMethods`, ni las etiquetas que arma `describeTemplateNeeds` para el selector de plantillas.
+
+Consecuencia práctica: en `n8n-nodes-liveconnect-es` los campos se ven en español pero un error dice *"Template promo_48h needs 2 variables and the value of {{2}} is missing"*. Antes de 1.0.0 ese mensaje salía en español.
+
+Traducirlos exigiría enrutar cada mensaje por una función de traducción con claves propias — un refactor de todos los `throw` del paquete. Si se hace, el sitio natural es una función `t(clave, params)` en `GenericFunctions.ts` que lea el mismo diccionario, y el criterio para decidirlo es cuánto molesta en la práctica al equipo que usa el paquete español.
+
+
 ## 1. Por qué es un paquete aparte
 
 n8n exige inglés para verificar un nodo comunitario, y **no soporta traducciones dentro de un mismo paquete comunitario**: su sistema de i18n es interno de `editor-ui` y no llega a los paquetes de terceros — no hay forma de que un usuario con n8n en español vea la interfaz de este nodo traducida automáticamente. La única forma de ofrecer una interfaz en español es publicar un paquete distinto que la lleve ya traducida: `n8n-nodes-liveconnect-es`.

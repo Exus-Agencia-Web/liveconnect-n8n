@@ -39,7 +39,7 @@ i18n/
 examples/                           workflows importables + su README
 docs/                               esta documentación
 eslint.config.mjs                   config oficial del escáner de nodos verificados (npm run lint)
-.github/workflows/                  ci.yml (build+lint) · release.yml (release de GitHub → publica los DOS paquetes a npm)
+.github/workflows/                  ci.yml (build+lint+verify+smoke+build:es, en cada push/PR) · release.yml (release de GitHub → publica los DOS paquetes a npm)
 ```
 
 El sistema de traducción (por qué el español es un paquete aparte, cómo se genera y cómo se mantiene el diccionario) tiene su propio documento: [08-paquete-espanol.md](08-paquete-espanol.md).

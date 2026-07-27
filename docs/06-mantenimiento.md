@@ -108,7 +108,7 @@ Guía oficial: <https://docs.n8n.io/connect/create-nodes/build-your-node/referen
   2. `npm run build:es` (genera `dist-es/`) → `npm publish --provenance --access public` con `working-directory: dist-es` para **`n8n-nodes-liveconnect-es`** (español, ver [08-paquete-espanol.md](08-paquete-espanol.md)).
 - El secret `NPM_TOKEN` debe ser un token npm **Automation** (classic) o granular con **Bypass 2FA**: un token de publicación normal falla con 403 si la cuenta exige 2FA. Se reutiliza para los dos `npm publish`.
 - El tarball del paquete inglés solo lleva `dist/` (campo `files` de `package.json`); los íconos los copia `gulp build:icons`. El del paquete español lleva `base/`, `i18n/`, `nodes/` y `credentials/` (ver [08-paquete-espanol.md](08-paquete-espanol.md)).
-- `prepublishOnly` corre `build` + `lint` — el mismo `n8n-node lint` de siempre, no una config aparte: los antiguos `.eslintrc.js` / `.eslintrc.prepublish.js` ya no los invoca ningún script.
+- `prepublishOnly` corre `build` + `lint` — el mismo `n8n-node lint` de siempre, no una config aparte: los antiguos `.eslintrc.js` / `.eslintrc.prepublish.js` se eliminaron del repo (dejaron de usarlos todos los scripts).
 
 ## Íconos
 

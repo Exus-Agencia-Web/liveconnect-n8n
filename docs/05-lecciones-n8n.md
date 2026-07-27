@@ -97,7 +97,7 @@ Dos consecuencias prácticas:
 - `@n8n/eslint-plugin-community-nodes` — reglas nuevas, específicas de la verificación: `node-usable-as-tool`, `node-connection-type-literal`, `webhook-lifecycle-complete`, `require-node-api-error`, `icon-validation` / `icon-prefer-themed-variants`, `credential-password-field`, `trigger-node-conventions`, entre otras.
 - `eslint-plugin-n8n-nodes-base` (la de siempre) — reglas de `nodes`/`credentials`/`package.json`, con solo 3 apagadas por el propio preset de `node-cli` (ninguna relacionada con idioma).
 
-Los `.eslintrc.js` y `.eslintrc.prepublish.js` de las versiones anteriores **ya no los usa ningún script** (`lint`, `lintfix` y `prepublishOnly` corren todos `n8n-node lint`); quedan en el repo pero no son la config vigente.
+Los `.eslintrc.js` y `.eslintrc.prepublish.js` de las versiones anteriores dejaron de usarlos `lint`, `lintfix` y `prepublishOnly` (los tres corren `n8n-node lint`) y se **eliminaron del repo**: ya no existen ni como referencia.
 
 ### Historia: por qué las tildes se rompían (y por qué ya no puede repetirse)
 

@@ -168,8 +168,8 @@ export class LiveConnectProxyTrigger implements INodeType {
 				});
 				if (typeof envelope.status === 'number' && envelope.status < 0) {
 					throw new NodeApiError(this.getNode(), envelope as JsonObject, {
-						message: envelope.status_message ?? 'LiveConnect rechazó el registro del webhook',
-						description: `LiveConnect devolvió status ${envelope.status} al registrar el webhook del canal ${idCanal}`,
+						message: envelope.status_message ?? 'LiveConnect rejected the webhook registration',
+						description: `LiveConnect returned status ${envelope.status} while registering the webhook for channel ${idCanal}`,
 					});
 				}
 
