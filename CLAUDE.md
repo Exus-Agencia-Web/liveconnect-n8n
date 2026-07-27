@@ -104,4 +104,4 @@ npm run i18n:status            # qué textos nuevos faltan traducir a español
 npm run scan                   # npx @n8n/scan-community-package (solo funciona contra una versión ya publicada)
 ```
 
-Repo: https://github.com/Exus-Agencia-Web/liveconnect-n8n · npm: `n8n-nodes-liveconnect`
+Repo: https://github.com/Exus-Agencia-Web/liveconnect-n8n · npm: `n8n-nodes-liveconnect` (inglés) y `n8n-nodes-liveconnect-es` (español, ver [docs/08-paquete-espanol.md](docs/08-paquete-espanol.md))

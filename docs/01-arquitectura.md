@@ -50,7 +50,7 @@ El sistema de traducción (por qué el español es un paquete aparte, cómo se g
 |---|---|---|
 | **LiveConnect** | Declarativo, sin `execute()` | 18 recursos y 58 operaciones; cada operación lleva `routing.request` y cada campo `routing.send`. Menos código, menos superficie de error |
 | **LiveConnect Proxy Trigger** | Programático (`webhook()` + `webhookMethods`) | Es la única forma de hacer triggers en n8n. Registra y elimina el webhook del canal por API |
-| **LiveConnect Callback Trigger** | Programático, sin `webhookMethods` | El Flowbot no tiene API de registro: la URL se pega a mano |
+| **LiveConnect Callback Trigger** | Programático, `webhookMethods` no-op | El Flowbot no tiene API de registro (la URL se pega a mano), pero el escáner de nodos verificados exige los tres métodos igual — ver [04-triggers-y-callbacks.md](04-triggers-y-callbacks.md) |
 | **LiveConnect Respuesta al Callback** | Programático con `execute()` | Construye las actions visualmente y responde el webhook con `sendResponse()` |
 
 Los tres nodos programáticos comparten helpers con el declarativo (token, envelope, selectores), así que un arreglo en `GenericFunctions.ts` los cubre a todos.
