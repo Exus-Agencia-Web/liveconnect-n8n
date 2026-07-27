@@ -107,6 +107,9 @@ export class LiveConnectCallbackTrigger implements INodeType {
 	// configuración (igual que el nodo Webhook del core). checkExists/create/delete no
 	// llaman a ningún API — son no-ops honestos que existen solo porque el escáner de
 	// nodos verificados de n8n exige implementar los tres métodos del ciclo de vida.
+	// OJO si algún día LiveConnect expone API de registro del Flowbot: como checkExists
+	// devuelve true siempre, n8n NUNCA llama a create(). Implementar create() sin tocar
+	// checkExists dejaría código muerto y sin ningún síntoma.
 	webhookMethods = {
 		default: {
 			async checkExists(this: IHookFunctions): Promise<boolean> {

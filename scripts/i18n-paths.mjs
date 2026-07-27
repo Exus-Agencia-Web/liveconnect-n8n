@@ -35,9 +35,17 @@ export function scopeDe(propiedad) {
  * Recorre las propiedades de una descripción y llama a `visitar(ruta, texto, ubicacion)`
  * por cada texto visible. `ubicacion` permite escribir de vuelta: { objeto, campo }.
  */
+/**
+ * Una expresión de n8n (`={{ … }}`) no es texto traducible: si alguien la "traduce" en el
+ * diccionario, rompe el subtítulo o el campo que la use.
+ */
+function esExpresion(texto) {
+	return typeof texto === 'string' && texto.startsWith('=');
+}
+
 export function recorrerTextos(descripcion, prefijo, visitar) {
 	for (const campo of ['displayName', 'description', 'subtitle']) {
-		if (typeof descripcion?.[campo] === 'string') {
+		if (typeof descripcion?.[campo] === 'string' && !esExpresion(descripcion[campo])) {
 			visitar(`${prefijo}.${campo}`, descripcion[campo], { objeto: descripcion, campo });
 		}
 	}
@@ -56,7 +64,7 @@ function recorrerPropiedades(propiedades, prefijo, scopeHeredado, visitar) {
 		const ruta = `${prefijo}.${scope}.${propiedad.name}`;
 
 		for (const campo of CAMPOS_VISIBLES) {
-			if (typeof propiedad[campo] === 'string') {
+			if (typeof propiedad[campo] === 'string' && !esExpresion(propiedad[campo])) {
 				visitar(`${ruta}.${campo}`, propiedad[campo], { objeto: propiedad, campo });
 			}
 		}

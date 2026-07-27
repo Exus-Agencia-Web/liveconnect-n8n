@@ -4,6 +4,8 @@ Nodo comunitario de [n8n](https://n8n.io) para la **API pública de LiveConnect*
 
 Cubre las 58 operaciones de la [especificación OpenAPI pública](https://cdn.liveconnect.chat/liveconnect/public-openapi.json) (la emisión de token es automática vía credenciales), más **dos triggers**: notificaciones del proxy de conversaciones y callbacks del chatbot (Flowbot).
 
+> ⚠️ **No instales `n8n-nodes-liveconnect` y `n8n-nodes-liveconnect-es` en la misma instancia de n8n.** Los tipos de nodo llevan el prefijo del paquete, pero **los de credencial no**: ambos declaran una credencial `liveConnectApi`, así que una de las dos ganaría y definiría el formulario (y su idioma) para las dos. Elige un paquete por instancia.
+
 ## Instalación
 
 En n8n: **Settings → Community Nodes → Install** e ingresa `n8n-nodes-liveconnect`.

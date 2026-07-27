@@ -81,14 +81,17 @@ for (const [archivo, clase, claveDiccionario] of PIEZAS) {
 // Generado por scripts/build-es-package.mjs — no editar a mano.
 Object.defineProperty(exports, "__esModule", { value: true });
 const base = require("${haciaRaiz}base/${archivo}");
-const { traducirDescripcion } = require("${haciaRaiz}i18n/translate.js");
+const { traducirDescripcion, clonarDescripcion } = require("${haciaRaiz}i18n/translate.js");
 const diccionario = require("${haciaRaiz}i18n/es.json");
 
 class ${clase} extends base.${clase} {
 \tconstructor() {
 \t\tsuper(...arguments);
-\t\tconst descripcion = this.description ?? this;
-\t\ttraducirDescripcion(descripcion, "${claveDiccionario}", diccionario);
+\t\t// Se clona ANTES de traducir: las properties del nodo son los mismos objetos que
+\t\t// exportan las descriptions, y traducirlas en sitio dejaría el paquete inglés en
+\t\t// español si ambos se cargan en el mismo proceso (ver clonarDescripcion).
+\t\tif (this.description !== undefined) this.description = clonarDescripcion(this.description);
+\t\ttraducirDescripcion(this.description ?? this, "${claveDiccionario}", diccionario);
 \t}
 }
 exports.${clase} = ${clase};

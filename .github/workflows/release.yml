@@ -58,15 +58,20 @@ jobs:
       - name: Check package contents
         run: npm pack --dry-run
 
+      # El paquete español se genera y se valida ANTES de publicar nada: si fallara
+      # después del primer publish, la release quedaría a medias con una versión que
+      # ya no se puede republicar.
+      - name: Build and validate Spanish package
+        run: npm run build:es
+
+      - name: Check Spanish package contents
+        run: npm pack --dry-run
+        working-directory: dist-es
+
       - name: Publish n8n-nodes-liveconnect
         run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      # El paquete español se genera desde el compilado en inglés aplicando el
-      # diccionario i18n/es.json: una sola base de código, dos interfaces.
-      - name: Build Spanish package
-        run: npm run build:es
 
       - name: Publish n8n-nodes-liveconnect-es
         run: npm publish --provenance --access public

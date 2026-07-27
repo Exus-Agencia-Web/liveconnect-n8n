@@ -6,6 +6,8 @@ It covers all 58 operations of the [public OpenAPI specification](https://cdn.li
 
 > This package is being prepared for submission to the n8n verified community nodes program.
 
+> ⚠️ **Do not install `n8n-nodes-liveconnect` and `n8n-nodes-liveconnect-es` in the same n8n instance.** Node types are namespaced per package, but **credential types are not**: both packages declare a credential named `liveConnectApi`, so one of them would win and define the credential form (and its language) for both. Pick one package per instance.
+
 ## What is LiveConnect
 
 [LiveConnect](https://liveconnect.chat) is an omnichannel customer communication platform: it centralizes WhatsApp, Facebook, Instagram, Telegram and web chat conversations, routes them to agents or bots, and includes a CRM with deals, tasks and automations. This node lets n8n read from and write to that platform.

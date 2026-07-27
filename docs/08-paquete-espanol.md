@@ -2,6 +2,18 @@
 
 La interfaz del paquete principal está en inglés (ver [01-arquitectura.md](01-arquitectura.md) § Idioma) porque lo exige la verificación de nodos comunitarios de n8n. Este documento explica cómo el español **no desaparece**: se publica como un segundo paquete, generado desde el mismo código.
 
+## Los dos paquetes NO pueden convivir en una instancia
+
+Los **tipos de nodo** llevan el prefijo del paquete (`n8n-nodes-liveconnect.liveConnect` vs `n8n-nodes-liveconnect-es.liveConnect`), pero **los tipos de credencial no**: n8n las indexa por `name` en un espacio global, y ambos paquetes declaran `liveConnectApi`. Instalados a la vez, una de las dos clases gana y define el formulario —y su idioma— para los dos. Hoy la lógica es idéntica, así que no se pierden datos; si algún día divergen, el fallo sería silencioso.
+
+**Por qué no se renombra la credencial del paquete español**: el nombre no vive solo en la clase. `GenericFunctions.ts` lo tiene en `LIVECONNECT_CREDENTIALS_NAME` y lo usan el refresco del token, los `loadOptions`, los `webhookMethods` y las consultas del preSend de plantillas. Renombrarlo en el paquete generado exigiría parchear también ese código compilado — mucha más superficie de fallo que el aviso en ambos README.
+
+Está avisado en los dos README. Si en el futuro hace falta que convivan, el cambio limpio es que el nombre de la credencial salga de una constante configurable en el propio código base, no de un parche en el generador.
+
+## Efecto secundario de `usableAsTool` en los triggers
+
+Los cuatro nodos declaran `usableAsTool: true` porque la regla oficial `node-usable-as-tool` lo exige (solo exime a los nodos con salida de tipo IA e `inputs: []`, y un trigger tiene `outputs: ['main']`). Consecuencia: n8n registra una variante «…Tool» por cada nodo, y la de los triggers no tiene `execute()` — aparecería en el selector de herramientas de un AI Agent y fallaría si alguien la eligiera. No se puede quitar sin romper el lint del escáner: **no lo "arregles"**.
+
 ## Limitación conocida: los mensajes de error van en inglés
 
 El diccionario traduce **la interfaz declarada** (displayName, description, placeholder, action, labels de options). **No** traduce los textos que el código construye en tiempo de ejecución: los `NodeOperationError`/`NodeApiError` de `GenericFunctions.ts`, `LoadOptions.ts`, `ActionsFunctions.ts` y los `webhookMethods`, ni las etiquetas que arma `describeTemplateNeeds` para el selector de plantillas.

@@ -86,13 +86,41 @@ test('lo que no está en el diccionario se queda en inglés, nunca vacío', () =
 	}
 });
 
-test('el paquete inglés NO queda traducido (los wrappers no mutan la clase base)', () => {
-	const claveEjemplo = Object.keys(diccionario).find((r) => r.endsWith('.displayName'));
-	assert.notEqual(
-		textosEn[claveEjemplo],
-		diccionario[claveEjemplo],
-		`la clase base quedó traducida en ${claveEjemplo}`,
+test('los wrappers no mutan los objetos compartidos del paquete base', () => {
+	// Comparar dist-es/base con dist/ no vale: son dos copias independientes y pasaría
+	// aunque la mutación fuera total. Lo que hay que mirar es el MISMO módulo que usan
+	// los wrappers: las properties del nodo son los objetos que exportan las
+	// descriptions, así que traducir en sitio los reescribiría para todo el proceso.
+	const descripciones = require(
+		resolve(distEs, 'base/nodes/LiveConnect/descriptions/ContactDescription.js'),
 	);
+	const campo = descripciones.contactFields[0];
+	assert.equal(
+		campo.displayName,
+		'Name',
+		`el módulo compartido quedó traducido: contactFields[0].displayName = ${campo.displayName}`,
+	);
+
+	// Y la clase base instanciada después del wrapper sigue en inglés.
+	const base = new (require(resolve(distEs, 'base/nodes/LiveConnect/LiveConnect.node.js')).LiveConnect)();
+	assert.equal(
+		base.description.properties.find((p) => p.name === 'resource').displayName,
+		'Resource',
+	);
+});
+
+test('el paquete español conserva las funciones del routing', () => {
+	const nodo = new (require(resolve(distEs, 'nodes/LiveConnect/LiveConnect.node.js')).LiveConnect)();
+	const conPreSend = nodo.description.properties.filter((p) => Array.isArray(p.routing?.send?.preSend));
+	assert.deepEqual(
+		conPreSend.map((p) => p.name),
+		['resource', 'numero'],
+		'el clon del wrapper perdió algún preSend',
+	);
+	const operacion = nodo.description.properties.find(
+		(p) => p.name === 'operation' && p.displayOptions?.show?.resource?.[0] === 'waba',
+	);
+	assert.equal(typeof operacion.options[0].routing.output.postReceive[0], 'function');
 });
 
 test('el package.json generado apunta a los wrappers y no al paquete base', () => {

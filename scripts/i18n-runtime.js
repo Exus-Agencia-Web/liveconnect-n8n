@@ -74,6 +74,28 @@ function recorrerPropiedades(propiedades, prefijo, scopeHeredado, diccionario) {
 	}
 }
 
+/**
+ * Copia profunda que pasa las funciones POR REFERENCIA.
+ *
+ * Imprescindible antes de traducir: `LiveConnect.node.ts` arma `properties` con
+ * `...contactFields, ...dealFields, …`, y el spread copia el ARRAY pero no los objetos —
+ * son los mismos singletons que exportan `descriptions/*.ts`. Traducir en sitio reescribe
+ * esos singletons del módulo, así que el paquete inglés cargado en el mismo proceso se
+ * vería en español.
+ *
+ * `JSON.parse(JSON.stringify(...))` NO sirve: borraría `routing.send.preSend` y
+ * `routing.output.postReceive`, que son funciones, y el nodo dejaría de funcionar.
+ */
+function clonarDescripcion(valor) {
+	if (Array.isArray(valor)) return valor.map(clonarDescripcion);
+	if (valor !== null && typeof valor === 'object') {
+		const copia = {};
+		for (const clave of Object.keys(valor)) copia[clave] = clonarDescripcion(valor[clave]);
+		return copia;
+	}
+	return valor; // funciones, primitivos, undefined
+}
+
 /** Traduce en sitio la descripción de un nodo o credencial. */
 function traducirDescripcion(descripcion, clave, diccionario) {
 	if (descripcion === null || typeof descripcion !== 'object') return descripcion;
@@ -85,4 +107,4 @@ function traducirDescripcion(descripcion, clave, diccionario) {
 	return descripcion;
 }
 
-module.exports = { traducirDescripcion };
+module.exports = { traducirDescripcion, clonarDescripcion };
