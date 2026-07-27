@@ -1,65 +1,65 @@
-# Workflows de ejemplo — n8n-nodes-liveconnect
+# Example Workflows — n8n-nodes-liveconnect
 
-Workflows importables que muestran casos de uso reales del nodo LiveConnect.
+Importable workflows showing real use cases for the LiveConnect node.
 
-## Cómo importar
+## How to import
 
-En n8n: **Workflow → ⋯ (menú) → Import from File** y selecciona el `.json`. Luego:
+In n8n: **Workflow → ⋯ (menu) → Import from File** and select the `.json` file. Then:
 
-1. Asigna tu credencial **LiveConnect API** en cada nodo LiveConnect (aparecen marcados en rojo).
-2. Para los chatbots (03/04): asigna tu credencial **OpenAI** en el nodo del modelo.
-3. Sigue la nota amarilla (sticky note) de cada workflow: ahí están los IDs que debes reemplazar.
+1. Assign your **LiveConnect API** credential on each LiveConnect node (they show up marked in red).
+2. For the chatbots (03/04): assign your **OpenAI** credential on the model node.
+3. Follow the yellow note (sticky note) in each workflow: it has the IDs you need to replace.
 
-## Los workflows
+## The workflows
 
-| # | Archivo | Qué hace |
+| # | File | What it does |
 |---|---|---|
-| 01 | `01-configurar-webhook-proxy.json` | **Paso 0 de los chatbots**: registra la URL de tu webhook n8n en el canal de LiveConnect (`Proxy · Set Webhook`). |
-| 02 | `02-envio-masivo-plantillas-waba.json` | Envío masivo de plantillas WABA por lotes con control de ritmo. Reemplaza la lista demo por Sheets/DB. |
-| 03 | `03-chatbot-ia.json` | Chatbot de soporte con AI Agent (OpenAI) + memoria por conversación. Responde por `Proxy · Send Message`. |
-| 04 | `04-chatbot-ia-crm.json` | Chatbot vendedor: el agente usa el nodo LiveConnect como **herramienta** para buscar el contacto y **crear la negociación en el CRM** cuando califica el lead. |
-| 05 | `05-reporte-diario-conversaciones.json` | Reporte diario 7:00 con métricas del historial de conversaciones (total, por canal, por agente). |
-| 06 | `06-verificar-numero-crear-contacto.json` | Alta validada: verifica el número en WhatsApp, crea contacto, abre conversación y envía bienvenida. |
-| 07 | `07-chatbot-callback-trigger.json` | Chatbot con el **LiveConnect Callback Trigger** (v0.2.0+): motor de reglas que responde `data.actions` con el `input` de cierre obligatorio. |
-| 08 | `08-mensajes-proxy-trigger.json` | Mensajes entrantes con el **LiveConnect Proxy Trigger** (v0.2.0+): registro automático del webhook del canal + auto-respuesta. |
-| 09 | `09-chatbot-callback-visual.json` | Chatbot **sin código** (v0.4.0+): el nodo **LiveConnect Respuesta al Callback** arma las actions visualmente y responde el webhook él mismo. |
-| 10 | `10-chatbot-ia-switch-respuestas.json` | Chatbot completo: **Callback Trigger → AI Agent (GPT) que clasifica → Switch por intención → una respuesta distinta por rama** (ventas, soporte con delegación a un humano, agenda y general). |
+| 01 | `01-configurar-webhook-proxy.json` | **Step 0 for the chatbots**: registers your n8n webhook URL on the LiveConnect channel (`Proxy · Set Webhook`). |
+| 02 | `02-envio-masivo-plantillas-waba.json` | Bulk WABA template sending in batches with pace control. Replace the demo list with Sheets/DB. |
+| 03 | `03-chatbot-ia.json` | Support chatbot with AI Agent (OpenAI) + per-conversation memory. Replies via `Proxy · Send Message`. |
+| 04 | `04-chatbot-ia-crm.json` | Sales chatbot: the agent uses the LiveConnect node as a **tool** to look up the contact and **create the deal in the CRM** once it qualifies the lead. |
+| 05 | `05-reporte-diario-conversaciones.json` | Daily 7:00 report with conversation history metrics (total, by channel, by agent). |
+| 06 | `06-verificar-numero-crear-contacto.json` | Validated signup: verifies the number on WhatsApp, creates the contact, opens a conversation, and sends a welcome message. |
+| 07 | `07-chatbot-callback-trigger.json` | Chatbot with the **LiveConnect Callback Trigger** (v0.2.0+): a rules engine that responds with `data.actions` and the mandatory closing `input`. |
+| 08 | `08-mensajes-proxy-trigger.json` | Incoming messages with the **LiveConnect Proxy Trigger** (v0.2.0+): automatic channel webhook registration + auto-reply. |
+| 09 | `09-chatbot-callback-visual.json` | **No-code** chatbot (v0.4.0+): the **LiveConnect Callback Response** node builds the actions visually and responds to the webhook itself. |
+| 10 | `10-chatbot-ia-switch-respuestas.json` | Full chatbot: **Callback Trigger → AI Agent (GPT) that classifies → Switch by intent → a different response per branch** (sales, support with delegation to a human, scheduling, and general). |
 
-## Requisito para el workflow 04 (nodo como herramienta de IA)
+## Requirement for workflow 04 (node as an AI tool)
 
-Para que el AI Agent pueda usar nodos comunitarios como tools, el servidor n8n necesita la variable de entorno:
+For the AI Agent to be able to use community nodes as tools, the n8n server needs the environment variable:
 
 ```bash
 N8N_COMMUNITY_PACKAGES_ALLOW_TOOL_USAGE=true
 ```
 
-(En Docker: agrégala al `environment` del contenedor y reinicia).
+(In Docker: add it to the container's `environment` and restart).
 
-## Payload del webhook de LiveConnect (chatbots)
+## LiveConnect webhook payload (chatbots)
 
-Cuando configuras el webhook del canal (workflow 01), LiveConnect envía POST con esta estructura (campos principales):
+When you configure the channel webhook (workflow 01), LiveConnect sends a POST with this structure (main fields):
 
 ```json
 {
 	"chat": {
-		"id": "ZMXRQ38...",          // ID de la conversación (para responder)
+		"id": "ZMXRQ38...",          // conversation ID (used to reply)
 		"id_canal": 67095,
 		"contacto": { "id": "...", "nombre": "...", "celular": "..." }
 	},
-	"inputs": { "mensaje_inicial": "Hola!" },  // primer turno
-	"userInput": "quiero información"          // turnos siguientes
+	"inputs": { "mensaje_inicial": "Hello!" },  // first turn
+	"userInput": "I want information"          // following turns
 }
 ```
 
-Regla de parseo (ya incluida en el nodo Code de los ejemplos): `mensaje = userInput || inputs.mensaje_inicial`.
+Parsing rule (already included in the examples' Code node): `mensaje = userInput || inputs.mensaje_inicial`.
 
-## IDs que vas a necesitar
+## IDs you will need
 
-| Dato | Cómo obtenerlo con el nodo |
+| Data | How to get it with the node |
 |---|---|
-| ID de canal | `Channel · Get Many` |
-| ID de plantilla WABA | `WABA · Get Many Templates` |
-| ID de pipeline y etapa | `CRM · Get Pipelines` / `CRM · Get Stages` |
-| ID de origen de lead | `CRM · Get Lead Origins` |
-| ID de usuario (responsable) | `User · Get Many` |
-| ID de grupo/equipo | `Group · Get Many` |
+| Channel ID | `Channel · Get Many` |
+| WABA template ID | `WABA · Get Many Templates` |
+| Pipeline and stage ID | `CRM · Get Pipelines` / `CRM · Get Stages` |
+| Lead origin ID | `CRM · Get Lead Origins` |
+| User ID (owner) | `User · Get Many` |
+| Team ID | `Team · Get Many` |

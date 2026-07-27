@@ -26,12 +26,14 @@ Evidencia:
 
 ## 2. Lo que ve el usuario
 
+La interfaz del nodo está en inglés (ver [01-arquitectura.md](01-arquitectura.md) § Idioma); el resto de este documento sigue en español, pero las etiquetas citadas abajo son las reales del código:
+
 ```
-ID del Canal · Número · ID de la Plantilla        ← siempre
-Variable {{1}} … Variable {{10}}                   ← tantas como pida la plantilla
-URL del Encabezado                                 ← solo si lleva imagen/video/documento
-▸ Campos Adicionales (botones, mensaje, delegar, variables del encabezado,
-                      Usar Datos de Ejemplo, Variables del Cuerpo Separadas por Comas)
+Channel Name or ID · Phone Number · Template Name or ID    ← siempre
+Variable {{1}} … Variable {{10}}                            ← tantas como pida la plantilla
+Header URL                                                  ← solo si lleva imagen/video/documento
+▸ Additional Fields (Buttons, Additional Message, Delegate Team Name or ID,
+                      Header Variables, Use Sample Data, Body Variables (Comma-Separated))
 ```
 
 La etiqueta del selector dice lo que hace falta antes de elegir: `promo_48h · es · 2 variables · video`. Las aprobadas van primero; las no aprobadas llevan su estado (`PENDING`, `FAILED`).
@@ -71,10 +73,10 @@ Qué hace, en orden:
 
 ### Validación que enseña
 
-En vez de un error abstracto, se nombra el hueco:
+En vez de un error abstracto, se nombra el hueco (mensaje real, en inglés — la interfaz del nodo lo está):
 
-> La plantilla «promo_48h» necesita 2 variables y falta el valor de {{2}}
-> *Llena el campo "Variable {{2}}" debajo del selector de plantilla. La plantilla trae este ejemplo: Ana, 12 de mayo.*
+> Template "promo_48h" needs 2 variables and is missing the value of {{2}}
+> *Fill in the field "Variable {{2}}" below the template selector. The template includes this example: Ana, May 12. You can also enable "Use Sample Data" in Additional Fields for a quick test.*
 
 ### Dos decisiones que parecen menores y no lo son
 

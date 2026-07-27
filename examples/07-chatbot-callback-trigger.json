@@ -1,14 +1,14 @@
 {
-	"name": "LiveConnect 07 — Chatbot con Callback Trigger (actions)",
+	"name": "LiveConnect 07 — Chatbot with Callback Trigger (actions)",
 	"nodes": [
 		{
 			"parameters": {
-				"content": "## Chatbot con el LiveConnect Callback Trigger\n\nUsa el trigger nativo del paquete (v0.2.0+): parsea el payload del Flowbot (mensaje, sessionId, esPrimerTurno, hayAgenteHumano) y valida el secret.\n\n**Configuración:**\n1. Activa el workflow y pega la URL Production del trigger en la acción de **callback** de tu Flowbot de LiveConnect.\n2. Pon el mismo `secret` en el Flowbot y en el trigger.\n\n**Regla de oro del callback:** la respuesta SIEMPRE es `{status:1, status_message:\"Ok\", data:{actions:[...]}}` y debe cerrar con una acción `input` (vacía sirve) — sin `input` LiveConnect abandona el callback. Única excepción: si delegas (`userDelegate`/`teamDelegate`) NO mandes `input`.\n\nPara IA: inserta un AI Agent entre el trigger y el nodo Code, y usa su salida como `sendText` (el Code ya garantiza el `input` de cierre).",
+				"content": "## Chatbot with the LiveConnect Callback Trigger\n\nUses the package's native trigger (v0.2.0+): it parses the Flowbot payload (mensaje, sessionId, esPrimerTurno, hayAgenteHumano) and validates the secret.\n\n**Setup:**\n1. Activate the workflow and paste the trigger's Production URL into the **callback** action of your LiveConnect Flowbot.\n2. Set the same `secret` on both the Flowbot and the trigger.\n\n**Callback golden rule:** the response is ALWAYS `{status:1, status_message:\"Ok\", data:{actions:[...]}}` and must close with an `input` action (an empty one works) — without `input` LiveConnect abandons the callback. The only exception: if you delegate (`userDelegate`/`teamDelegate`) do NOT send `input`.\n\nFor AI: insert an AI Agent between the trigger and the Code node, and use its output as `sendText` (the Code node already guarantees the closing `input`).",
 				"height": 420,
 				"width": 480
 			},
 			"id": "b7000000-0000-4000-8000-000000000001",
-			"name": "Instrucciones",
+			"name": "Instructions",
 			"type": "n8n-nodes-base.stickyNote",
 			"typeVersion": 1,
 			"position": [
@@ -18,7 +18,7 @@
 		},
 		{
 			"parameters": {
-				"secret": "cambia-este-secreto",
+				"secret": "change-this-secret",
 				"responseMode": "responseNode",
 				"simple": true,
 				"path": "callback-flowbot"
@@ -34,10 +34,10 @@
 		},
 		{
 			"parameters": {
-				"jsCode": "// Motor de reglas mínimo (patrón del gateway: reglas primero, IA como fallback).\n// Entrada simplificada del trigger: { mensaje, sessionId, esPrimerTurno, hayAgenteHumano, contacto, inputs, ... }\nconst e = $input.first().json;\nconst texto = String(e.mensaje || '').toLowerCase();\nconst has = (palabras) => palabras.some((p) => texto.includes(p));\n\nconst TYPES = ['sendText','sendImage','sendFile','addTag','userDelegate','teamDelegate','addVar','setVar','input','updateContact'];\nlet actions = [];\n\nif (e.esPrimerTurno) {\n\tactions = [\n\t\t{ type: 'sendText', text: `¡Hola${e.contacto?.nombre ? ' ' + e.contacto.nombre : ''}! Soy el asistente virtual. ¿En qué puedo ayudarte?` },\n\t];\n} else if (has(['humano', 'asesor', 'persona', 'agente'])) {\n\tactions = [\n\t\t{ type: 'sendText', text: 'Con gusto, te transfiero con nuestro equipo.' },\n\t\t{ type: 'teamDelegate', id_team: 0 }, // ← ID de tu equipo (Group · Get Many)\n\t];\n} else if (has(['precio', 'costo', 'cotiza', 'comprar', 'plan'])) {\n\tactions = [\n\t\t{ type: 'sendText', text: 'Claro, te ayudo con precios. ¿Qué producto o plan te interesa?' },\n\t\t{ type: 'addVar', varname: 'intencion', varvalue: 'precio' },\n\t];\n} else {\n\t// Fallback (aquí puedes enchufar la salida de un AI Agent)\n\tactions = [{ type: 'sendText', text: 'Cuéntame un poco más para poder ayudarte.' }];\n}\n\n// Saneo: solo tipos válidos, nunca vacío.\nactions = actions.filter((a) => a && TYPES.includes(a.type));\nif (actions.length === 0) {\n\tactions = [{ type: 'sendText', text: 'No pude procesar tu solicitud, dame más detalles.' }];\n}\n\n// CRÍTICO: input de cierre salvo delegación (sin input, LiveConnect sale del callback).\nconst delega = actions.some((a) => a.type === 'userDelegate' || a.type === 'teamDelegate');\nif (!delega && !actions.some((a) => a.type === 'input')) {\n\tactions.push({ type: 'input', input: '' });\n}\n\n// Envelope apiResp obligatorio: actions SIEMPRE bajo data.\nreturn [{ json: { status: 1, status_message: 'Ok', data: { actions } } }];"
+				"jsCode": "// Minimal rules engine (gateway pattern: rules first, AI as fallback).\n// Simplified trigger input: { mensaje, sessionId, esPrimerTurno, hayAgenteHumano, contacto, inputs, ... }\nconst e = $input.first().json;\nconst texto = String(e.mensaje || '').toLowerCase();\nconst has = (palabras) => palabras.some((p) => texto.includes(p));\n\nconst TYPES = ['sendText','sendImage','sendFile','addTag','userDelegate','teamDelegate','addVar','setVar','input','updateContact'];\nlet actions = [];\n\nif (e.esPrimerTurno) {\n\tactions = [\n\t\t{ type: 'sendText', text: `Hello${e.contacto?.nombre ? ' ' + e.contacto.nombre : ''}! I am the virtual assistant. How can I help you?` },\n\t];\n} else if (has(['human', 'advisor', 'agent', 'person'])) {\n\tactions = [\n\t\t{ type: 'sendText', text: 'Sure, let me transfer you to our team.' },\n\t\t{ type: 'teamDelegate', id_team: 0 }, // ← your team ID (Team · Get Many)\n\t];\n} else if (has(['price', 'cost', 'quote', 'buy', 'plan'])) {\n\tactions = [\n\t\t{ type: 'sendText', text: 'Sure, I can help you with pricing. Which product or plan are you interested in?' },\n\t\t{ type: 'addVar', varname: 'intencion', varvalue: 'precio' },\n\t];\n} else {\n\t// Fallback (you can plug the output of an AI Agent in here)\n\tactions = [{ type: 'sendText', text: 'Tell me a bit more so I can help you.' }];\n}\n\n// Sanitize: valid types only, never empty.\nactions = actions.filter((a) => a && TYPES.includes(a.type));\nif (actions.length === 0) {\n\tactions = [{ type: 'sendText', text: 'I could not process your request, please give me more details.' }];\n}\n\n// CRITICAL: closing input unless delegating (without input, LiveConnect exits the callback).\nconst delega = actions.some((a) => a.type === 'userDelegate' || a.type === 'teamDelegate');\nif (!delega && !actions.some((a) => a.type === 'input')) {\n\tactions.push({ type: 'input', input: '' });\n}\n\n// Mandatory apiResp envelope: actions ALWAYS under data.\nreturn [{ json: { status: 1, status_message: 'Ok', data: { actions } } }];"
 			},
 			"id": "b7000000-0000-4000-8000-000000000003",
-			"name": "Motor de reglas → actions",
+			"name": "Rules Engine → actions",
 			"type": "n8n-nodes-base.code",
 			"typeVersion": 2,
 			"position": [
@@ -52,7 +52,7 @@
 				"options": {}
 			},
 			"id": "b7000000-0000-4000-8000-000000000004",
-			"name": "Responder actions",
+			"name": "Respond Actions",
 			"type": "n8n-nodes-base.respondToWebhook",
 			"typeVersion": 1.1,
 			"position": [
@@ -66,18 +66,18 @@
 			"main": [
 				[
 					{
-						"node": "Motor de reglas → actions",
+						"node": "Rules Engine → actions",
 						"type": "main",
 						"index": 0
 					}
 				]
 			]
 		},
-		"Motor de reglas → actions": {
+		"Rules Engine → actions": {
 			"main": [
 				[
 					{
-						"node": "Responder actions",
+						"node": "Respond Actions",
 						"type": "main",
 						"index": 0
 					}

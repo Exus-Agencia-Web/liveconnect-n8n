@@ -1,14 +1,14 @@
 {
-	"name": "LiveConnect 06 — Verificar número y crear contacto + conversación",
+	"name": "LiveConnect 06 — Verify Number and Create Contact + Conversation",
 	"nodes": [
 		{
 			"parameters": {
-				"content": "## Alta validada de contactos por WhatsApp\n\nRecibe un formulario (webhook con `nombre` y `celular`), valida que el número exista en WhatsApp, crea el contacto, abre conversación y envía la bienvenida.\n\n**Configura:**\n- `id_canal` en **Verificar número** y **Crear conversación**: ID de tu canal WhatsApp QR (`Channel · Get Many`).\n- El campo `usuario` de **Crear conversación**: `{ \"id_equipo\": <ID> }` asigna a un equipo (`Group · Get Many`), o `{ \"id\": <ID>, \"nombre\": \"...\" }` a un agente.\n- La condición del IF valida contra la respuesta real de `Check Number` — revisa una ejecución y ajusta el nombre del campo si difiere.\n\nPrueba con: `curl -X POST <url-webhook> -H 'Content-Type: application/json' -d '{\"nombre\":\"Ana\",\"celular\":\"573001112233\"}'`",
+				"content": "## Validated WhatsApp contact signup\n\nReceives a form (webhook with `nombre` and `celular`), validates that the number exists on WhatsApp, creates the contact, opens a conversation, and sends the welcome message.\n\n**Configure:**\n- `id_canal` in **Verify Number** and **Create Conversation**: the ID of your WhatsApp QR channel (`Channel · Get Many`).\n- The `usuario` field of **Create Conversation**: `{ \"id_equipo\": <ID> }` assigns it to a team (`Team · Get Many`), or `{ \"id\": <ID>, \"nombre\": \"...\" }` to an agent.\n- The IF condition validates against the real response from `Check Number` — check one execution and adjust the field name if it differs.\n\nTest with: `curl -X POST <webhook-url> -H 'Content-Type: application/json' -d '{\"nombre\":\"Ana\",\"celular\":\"573001112233\"}'`",
 				"height": 400,
 				"width": 480
 			},
 			"id": "b6000000-0000-4000-8000-000000000001",
-			"name": "Instrucciones",
+			"name": "Instructions",
 			"type": "n8n-nodes-base.stickyNote",
 			"typeVersion": 1,
 			"position": [
@@ -24,7 +24,7 @@
 				"options": {}
 			},
 			"id": "b6000000-0000-4000-8000-000000000002",
-			"name": "Webhook alta",
+			"name": "Signup Webhook",
 			"type": "n8n-nodes-base.webhook",
 			"typeVersion": 2,
 			"position": [
@@ -40,7 +40,7 @@
 				"numero": "={{ $json.body.celular }}"
 			},
 			"id": "b6000000-0000-4000-8000-000000000003",
-			"name": "Verificar número",
+			"name": "Verify Number",
 			"type": "n8n-nodes-liveconnect.liveConnect",
 			"typeVersion": 1,
 			"position": [
@@ -73,7 +73,7 @@
 				"options": {}
 			},
 			"id": "b6000000-0000-4000-8000-000000000004",
-			"name": "¿Número válido?",
+			"name": "Is the Number Valid?",
 			"type": "n8n-nodes-base.if",
 			"typeVersion": 2.2,
 			"position": [
@@ -85,13 +85,13 @@
 			"parameters": {
 				"resource": "contact",
 				"operation": "create",
-				"nombre": "={{ $('Webhook alta').first().json.body.nombre }}",
+				"nombre": "={{ $('Signup Webhook').first().json.body.nombre }}",
 				"additionalFields": {
-					"celular": "={{ $('Webhook alta').first().json.body.celular }}"
+					"celular": "={{ $('Signup Webhook').first().json.body.celular }}"
 				}
 			},
 			"id": "b6000000-0000-4000-8000-000000000005",
-			"name": "Crear contacto",
+			"name": "Create Contact",
 			"type": "n8n-nodes-liveconnect.liveConnect",
 			"typeVersion": 1,
 			"position": [
@@ -109,7 +109,7 @@
 				"additionalFields": {}
 			},
 			"id": "b6000000-0000-4000-8000-000000000006",
-			"name": "Crear conversación",
+			"name": "Create Conversation",
 			"type": "n8n-nodes-liveconnect.liveConnect",
 			"typeVersion": 1,
 			"position": [
@@ -122,10 +122,10 @@
 				"resource": "proxy",
 				"operation": "sendMessage",
 				"id_conversacion": "={{ String($json.id ?? $json.id_conversacion) }}",
-				"mensaje": "=¡Hola {{ $('Webhook alta').first().json.body.nombre }}! 👋 Gracias por registrarte. Un asesor te atenderá en breve."
+				"mensaje": "=Hello {{ $('Signup Webhook').first().json.body.nombre }}! 👋 Thanks for signing up. An advisor will assist you shortly."
 			},
 			"id": "b6000000-0000-4000-8000-000000000007",
-			"name": "Mensaje de bienvenida",
+			"name": "Welcome Message",
 			"type": "n8n-nodes-liveconnect.liveConnect",
 			"typeVersion": 1,
 			"position": [
@@ -136,7 +136,7 @@
 		{
 			"parameters": {
 				"respondWith": "json",
-				"responseBody": "{ \"ok\": true, \"mensaje\": \"Contacto creado y bienvenida enviada\" }",
+				"responseBody": "{ \"ok\": true, \"mensaje\": \"Contact created and welcome message sent\" }",
 				"options": {}
 			},
 			"id": "b6000000-0000-4000-8000-000000000008",
@@ -151,11 +151,11 @@
 		{
 			"parameters": {
 				"respondWith": "json",
-				"responseBody": "{ \"ok\": false, \"error\": \"El número no está registrado en WhatsApp\" }",
+				"responseBody": "{ \"ok\": false, \"error\": \"The number is not registered on WhatsApp\" }",
 				"options": {}
 			},
 			"id": "b6000000-0000-4000-8000-000000000009",
-			"name": "Respond número inválido",
+			"name": "Respond Invalid Number",
 			"type": "n8n-nodes-base.respondToWebhook",
 			"typeVersion": 1.1,
 			"position": [
@@ -165,69 +165,69 @@
 		}
 	],
 	"connections": {
-		"Webhook alta": {
+		"Signup Webhook": {
 			"main": [
 				[
 					{
-						"node": "Verificar número",
+						"node": "Verify Number",
 						"type": "main",
 						"index": 0
 					}
 				]
 			]
 		},
-		"Verificar número": {
+		"Verify Number": {
 			"main": [
 				[
 					{
-						"node": "¿Número válido?",
+						"node": "Is the Number Valid?",
 						"type": "main",
 						"index": 0
 					}
 				]
 			]
 		},
-		"¿Número válido?": {
+		"Is the Number Valid?": {
 			"main": [
 				[
 					{
-						"node": "Crear contacto",
+						"node": "Create Contact",
 						"type": "main",
 						"index": 0
 					}
 				],
 				[
 					{
-						"node": "Respond número inválido",
+						"node": "Respond Invalid Number",
 						"type": "main",
 						"index": 0
 					}
 				]
 			]
 		},
-		"Crear contacto": {
+		"Create Contact": {
 			"main": [
 				[
 					{
-						"node": "Crear conversación",
+						"node": "Create Conversation",
 						"type": "main",
 						"index": 0
 					}
 				]
 			]
 		},
-		"Crear conversación": {
+		"Create Conversation": {
 			"main": [
 				[
 					{
-						"node": "Mensaje de bienvenida",
+						"node": "Welcome Message",
 						"type": "main",
 						"index": 0
 					}
 				]
 			]
 		},
-		"Mensaje de bienvenida": {
+		"Welcome Message": {
 			"main": [
 				[
 					{

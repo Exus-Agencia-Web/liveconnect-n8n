@@ -28,11 +28,21 @@ scripts/
   smoke-token.mjs                   humo del ciclo de vida del token
   smoke-loadoptions.mjs             humo de los selectores dinámicos
   smoke-template-fields.mjs         humo de plantillas WABA (incluye visibilidad real de campos)
+  smoke-i18n.mjs                    humo del paquete español generado (dist-es/)
+  build-es-package.mjs              genera dist-es/ (paquete n8n-nodes-liveconnect-es)
+  extract-i18n.mjs / i18n-status.mjs / i18n-paths.mjs / i18n-runtime.js   diccionario de traducción
+
+i18n/
+  es.json                            diccionario de traducción (1065 textos, 100% cobertura)
+  README.es.md                       README del paquete n8n-nodes-liveconnect-es
 
 examples/                           workflows importables + su README
 docs/                               esta documentación
-.github/workflows/                  ci.yml (build+lint) · release.yml (release de GitHub → npm)
+eslint.config.mjs                   config oficial del escáner de nodos verificados (npm run lint)
+.github/workflows/                  ci.yml (build+lint) · release.yml (release de GitHub → publica los DOS paquetes a npm)
 ```
+
+El sistema de traducción (por qué el español es un paquete aparte, cómo se genera y cómo se mantiene el diccionario) tiene su propio documento: [08-paquete-espanol.md](08-paquete-espanol.md).
 
 ## Los cuatro nodos
 
@@ -44,6 +54,8 @@ docs/                               esta documentación
 | **LiveConnect Respuesta al Callback** | Programático con `execute()` | Construye las actions visualmente y responde el webhook con `sendResponse()` |
 
 Los tres nodos programáticos comparten helpers con el declarativo (token, envelope, selectores), así que un arreglo en `GenericFunctions.ts` los cubre a todos.
+
+Los cuatro nodos declaran `usableAsTool: true` (utilizables como herramienta de un AI Agent) y `subtitle`. Los cuatro (y la credencial) usan `icon: { light, dark }` con dos archivos SVG distintos — el escáner de nodos verificados (`icon-validation` / `icon-prefer-themed-variants`) exige las dos variantes y prohíbe que apunten al mismo archivo, de ahí `liveconnect2.dark.svg` junto a `liveconnect2.svg`. La credencial declara su propio `icon` y el campo `sessionToken` lleva `typeOptions.password: true`.
 
 ## Cómo fluye una operación del nodo declarativo
 
@@ -58,4 +70,6 @@ Los tres nodos programáticos comparten helpers con el declarativo (token, envel
 
 ## Idioma
 
-La UI va en **español**: `displayName`, `description`, `action`, labels de `options`, placeholders. Los `name` y `value` internos (propiedades del API en snake_case, operaciones en camelCase) **no se traducen nunca**: cambiarlos rompe los workflows ya construidos. `docs-glosario-es.md` (raíz) fija el vocabulario.
+La interfaz del paquete principal va en **inglés** (`displayName` en Title Case, `description` en sentence case, `action`, labels de `options`, placeholders): lo exige la verificación de nodos comunitarios de n8n. Los `name` y `value` internos (propiedades del API en snake_case, operaciones en camelCase) **no se traducen nunca**: cambiarlos rompe los workflows ya construidos.
+
+El español no desapareció: se publica como paquete aparte, `n8n-nodes-liveconnect-es`, generado desde este mismo código en tiempo de build aplicando el diccionario `i18n/es.json`. Detalle completo en [08-paquete-espanol.md](08-paquete-espanol.md).

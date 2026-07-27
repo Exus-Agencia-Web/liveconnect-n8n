@@ -1,14 +1,14 @@
 {
-	"name": "LiveConnect 01 — Configurar webhook del proxy",
+	"name": "LiveConnect 01 — Configure the Proxy Webhook",
 	"nodes": [
 		{
 			"parameters": {
-				"content": "## Paso 0 — Configurar el webhook del canal\n\nRegistra la URL de tu chatbot (workflows 03/04) como webhook del canal en LiveConnect.\n\n1. Ejecuta el workflow: lista los canales de la cuenta.\n2. En **Set Webhook** reemplaza:\n   - `id_canal`: el ID del canal que quieres conectar (sale del nodo anterior)\n   - `url`: la URL **Production** del Webhook de tu chatbot (ej. `https://tu-n8n.com/webhook/liveconnect-chatbot`)\n   - `secret`: un secreto propio (LiveConnect lo reenvía para que valides las llamadas)\n\nPara desactivar el webhook: `estado = 0`.",
+				"content": "## Step 0 — Configure the channel webhook\n\nRegister your chatbot's URL (workflows 03/04) as the channel webhook in LiveConnect.\n\n1. Run the workflow: it lists the account's channels.\n2. In **Set Webhook** replace:\n   - `id_canal`: the ID of the channel you want to connect (comes from the previous node)\n   - `url`: the **Production** URL of your chatbot's Webhook (e.g. `https://your-n8n.com/webhook/liveconnect-chatbot`)\n   - `secret`: your own secret (LiveConnect forwards it so you can validate the calls)\n\nTo disable the webhook: `estado = 0`.",
 				"height": 320,
 				"width": 420
 			},
 			"id": "b1000000-0000-4000-8000-000000000001",
-			"name": "Instrucciones",
+			"name": "Instructions",
 			"type": "n8n-nodes-base.stickyNote",
 			"typeVersion": 1,
 			"position": [0, -100]
@@ -16,7 +16,7 @@
 		{
 			"parameters": {},
 			"id": "b1000000-0000-4000-8000-000000000002",
-			"name": "Ejecutar manualmente",
+			"name": "Run Manually",
 			"type": "n8n-nodes-base.manualTrigger",
 			"typeVersion": 1,
 			"position": [480, 40]
@@ -28,7 +28,7 @@
 				"filters": {}
 			},
 			"id": "b1000000-0000-4000-8000-000000000003",
-			"name": "Listar canales",
+			"name": "List Channels",
 			"type": "n8n-nodes-liveconnect.liveConnect",
 			"typeVersion": 1,
 			"position": [700, 40]
@@ -38,9 +38,9 @@
 				"resource": "proxy",
 				"operation": "setWebhook",
 				"id_canal": "={{ $json.id }}",
-				"url": "https://TU-N8N.com/webhook/liveconnect-chatbot",
+				"url": "https://YOUR-N8N.com/webhook/liveconnect-chatbot",
 				"estado": 1,
-				"secret": "cambia-este-secreto"
+				"secret": "change-this-secret"
 			},
 			"id": "b1000000-0000-4000-8000-000000000004",
 			"name": "Set Webhook",
@@ -50,10 +50,10 @@
 		}
 	],
 	"connections": {
-		"Ejecutar manualmente": {
-			"main": [[{ "node": "Listar canales", "type": "main", "index": 0 }]]
+		"Run Manually": {
+			"main": [[{ "node": "List Channels", "type": "main", "index": 0 }]]
 		},
-		"Listar canales": {
+		"List Channels": {
 			"main": [[{ "node": "Set Webhook", "type": "main", "index": 0 }]]
 		}
 	},

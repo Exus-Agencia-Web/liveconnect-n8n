@@ -1,14 +1,14 @@
 {
-	"name": "LiveConnect 03 — Chatbot con IA",
+	"name": "LiveConnect 03 — AI Chatbot",
 	"nodes": [
 		{
 			"parameters": {
-				"content": "## Chatbot IA sobre LiveConnect\n\n**Antes de activar:**\n1. Importa y ejecuta el workflow **01 — Configurar webhook del proxy** apuntando a la URL Production de este Webhook.\n2. Configura la credencial **OpenAI** en el nodo del modelo.\n3. Configura la credencial **LiveConnect API** en el nodo de respuesta.\n\n**Payload que envía LiveConnect** (real): `chat.id` (ID conversación), `chat.id_canal`, `chat.contacto` (id, nombre, celular…), `userInput` (mensaje del turno) e `inputs.mensaje_inicial` (primer turno, cuando `userInput` llega vacío).\n\nLa memoria del agente usa el ID de conversación como clave de sesión: cada chat mantiene su propio historial.",
+				"content": "## AI Chatbot on LiveConnect\n\n**Before activating:**\n1. Import and run workflow **01 — Configure the Proxy Webhook** pointing to this Webhook's Production URL.\n2. Set up the **OpenAI** credential on the model node.\n3. Set up the **LiveConnect API** credential on the response node.\n\n**Payload sent by LiveConnect** (real): `chat.id` (conversation ID), `chat.id_canal`, `chat.contacto` (id, nombre, celular…), `userInput` (this turn's message), and `inputs.mensaje_inicial` (first turn, when `userInput` arrives empty).\n\nThe agent's memory uses the conversation ID as the session key: each chat keeps its own history.",
 				"height": 360,
 				"width": 460
 			},
 			"id": "b3000000-0000-4000-8000-000000000001",
-			"name": "Instrucciones",
+			"name": "Instructions",
 			"type": "n8n-nodes-base.stickyNote",
 			"typeVersion": 1,
 			"position": [
@@ -24,7 +24,7 @@
 				"options": {}
 			},
 			"id": "b3000000-0000-4000-8000-000000000002",
-			"name": "Webhook LiveConnect",
+			"name": "LiveConnect Webhook",
 			"type": "n8n-nodes-base.webhook",
 			"typeVersion": 2,
 			"position": [
@@ -34,10 +34,10 @@
 		},
 		{
 			"parameters": {
-				"jsCode": "// Payload real de LiveConnect: {chat, inputs, userInput, intent}\nconst raw = $input.first().json;\nconst body = raw.body ?? raw;\nconst chat = body.chat ?? {};\nconst inputs = body.inputs ?? {};\nconst mensaje = String(body.userInput || inputs.mensaje_inicial || '').trim();\n\nreturn [{\n\tjson: {\n\t\tmensaje,\n\t\tid_conversacion: String(chat.id ?? ''),\n\t\tid_canal: chat.id_canal ?? null,\n\t\tcontacto_id: chat.contacto?.id ?? null,\n\t\tcontacto_nombre: chat.contacto?.nombre || 'Cliente',\n\t\tcontacto_celular: chat.contacto?.celular || inputs.celular || '',\n\t},\n}];"
+				"jsCode": "// Real LiveConnect payload: {chat, inputs, userInput, intent}\nconst raw = $input.first().json;\nconst body = raw.body ?? raw;\nconst chat = body.chat ?? {};\nconst inputs = body.inputs ?? {};\nconst mensaje = String(body.userInput || inputs.mensaje_inicial || '').trim();\n\nreturn [{\n\tjson: {\n\t\tmensaje,\n\t\tid_conversacion: String(chat.id ?? ''),\n\t\tid_canal: chat.id_canal ?? null,\n\t\tcontacto_id: chat.contacto?.id ?? null,\n\t\tcontacto_nombre: chat.contacto?.nombre || 'Customer',\n\t\tcontacto_celular: chat.contacto?.celular || inputs.celular || '',\n\t},\n}];"
 			},
 			"id": "b3000000-0000-4000-8000-000000000003",
-			"name": "Parsear mensaje",
+			"name": "Parse Message",
 			"type": "n8n-nodes-base.code",
 			"typeVersion": 2,
 			"position": [
@@ -70,7 +70,7 @@
 				"options": {}
 			},
 			"id": "b3000000-0000-4000-8000-000000000004",
-			"name": "¿Hay mensaje?",
+			"name": "Is There a Message?",
 			"type": "n8n-nodes-base.if",
 			"typeVersion": 2.2,
 			"position": [
@@ -83,7 +83,7 @@
 				"promptType": "define",
 				"text": "={{ $json.mensaje }}",
 				"options": {
-					"systemMessage": "Eres el asistente virtual de la empresa. Atiendes clientes por chat (WhatsApp y web) en español, con respuestas breves y cordiales. El cliente se llama {{ $json.contacto_nombre }}. Si no sabes algo, dilo y ofrece pasar con un agente humano. Nunca inventes precios ni datos."
+					"systemMessage": "You are the company's virtual assistant. You help customers by chat (WhatsApp and web) in English, with brief and friendly responses. The customer's name is {{ $json.contacto_nombre }}. If you do not know something, say so and offer to transfer them to a human agent. Never make up prices or data."
 				}
 			},
 			"id": "b3000000-0000-4000-8000-000000000005",
@@ -117,10 +117,10 @@
 		{
 			"parameters": {
 				"sessionIdType": "customKey",
-				"sessionKey": "={{ $('Parsear mensaje').first().json.id_conversacion }}"
+				"sessionKey": "={{ $('Parse Message').first().json.id_conversacion }}"
 			},
 			"id": "b3000000-0000-4000-8000-000000000007",
-			"name": "Memoria por conversación",
+			"name": "Conversation Memory",
 			"type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
 			"typeVersion": 1.3,
 			"position": [
@@ -132,11 +132,11 @@
 			"parameters": {
 				"resource": "proxy",
 				"operation": "sendMessage",
-				"id_conversacion": "={{ $('Parsear mensaje').first().json.id_conversacion }}",
+				"id_conversacion": "={{ $('Parse Message').first().json.id_conversacion }}",
 				"mensaje": "={{ $json.output }}"
 			},
 			"id": "b3000000-0000-4000-8000-000000000008",
-			"name": "Responder al cliente",
+			"name": "Reply to Customer",
 			"type": "n8n-nodes-liveconnect.liveConnect",
 			"typeVersion": 1,
 			"position": [
@@ -161,29 +161,29 @@
 		}
 	],
 	"connections": {
-		"Webhook LiveConnect": {
+		"LiveConnect Webhook": {
 			"main": [
 				[
 					{
-						"node": "Parsear mensaje",
+						"node": "Parse Message",
 						"type": "main",
 						"index": 0
 					}
 				]
 			]
 		},
-		"Parsear mensaje": {
+		"Parse Message": {
 			"main": [
 				[
 					{
-						"node": "¿Hay mensaje?",
+						"node": "Is There a Message?",
 						"type": "main",
 						"index": 0
 					}
 				]
 			]
 		},
-		"¿Hay mensaje?": {
+		"Is There a Message?": {
 			"main": [
 				[
 					{
@@ -205,7 +205,7 @@
 			"main": [
 				[
 					{
-						"node": "Responder al cliente",
+						"node": "Reply to Customer",
 						"type": "main",
 						"index": 0
 					}
@@ -223,7 +223,7 @@
 				]
 			]
 		},
-		"Memoria por conversación": {
+		"Conversation Memory": {
 			"ai_memory": [
 				[
 					{
@@ -234,7 +234,7 @@
 				]
 			]
 		},
-		"Responder al cliente": {
+		"Reply to Customer": {
 			"main": [
 				[
 					{

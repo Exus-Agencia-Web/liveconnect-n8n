@@ -1,14 +1,14 @@
 {
-	"name": "LiveConnect 10 — Chatbot IA con Switch y respuestas por intención",
+	"name": "LiveConnect 10 — AI Chatbot with Switch and Per-Intent Replies",
 	"nodes": [
 		{
 			"parameters": {
-				"content": "## Chatbot con IA que enruta por intención\n\n**Flujo:** Callback Trigger → AI Agent (GPT) que clasifica y redacta → Switch por intención → una respuesta distinta en cada rama.\n\n**Configura:**\n1. Credenciales **OpenAI** (modelo) y **LiveConnect API** (nodos de respuesta).\n2. Activa el workflow y pega su URL de producción en el callback de tu Flowbot (mismo `secret` en ambos lados).\n3. En **Hablar con un Asesor** elige tu equipo en `ID del Equipo` (el desplegable lo carga de tu cuenta).\n\n**Cómo decide:** el AI Agent devuelve JSON `{ intencion, mensaje }` gracias al Structured Output Parser. El Switch enruta por `intencion` y cada rama arma sus propias acciones.\n\n**Regla de oro:** las ramas que siguen conversando cierran con `input` (lo agrega el nodo solo). La rama que delega a un humano NO lleva `input`: el bot sale del callback a propósito.",
+				"content": "## AI chatbot that routes by intent\n\n**Flow:** Callback Trigger → AI Agent (GPT) that classifies and drafts a reply → Switch by intent → a different response on each branch.\n\n**Configure:**\n1. **OpenAI** (model) and **LiveConnect API** (response nodes) credentials.\n2. Activate the workflow and paste its production URL into the callback of your Flowbot (same `secret` on both sides).\n3. In **Talk to an Advisor** choose your team in `Team Name or ID` (the dropdown loads it from your account).\n\n**How it decides:** the AI Agent returns JSON `{ intencion, mensaje }` thanks to the Structured Output Parser. The Switch routes by `intencion` and each branch builds its own actions.\n\n**Golden rule:** the branches that keep the conversation going close with `input` (the node adds it on its own). The branch that delegates to a human does NOT carry `input`: the bot deliberately exits the callback.",
 				"height": 460,
 				"width": 520
 			},
 			"id": "c1000000-0000-4000-8000-000000000001",
-			"name": "Instrucciones",
+			"name": "Instructions",
 			"type": "n8n-nodes-base.stickyNote",
 			"typeVersion": 1,
 			"position": [
@@ -18,7 +18,7 @@
 		},
 		{
 			"parameters": {
-				"secret": "cambia-este-secreto",
+				"secret": "change-this-secret",
 				"responseMode": "responseNode",
 				"simple": true,
 				"path": "callback-switch"
@@ -38,11 +38,11 @@
 				"text": "={{ $json.mensaje }}",
 				"hasOutputParser": true,
 				"options": {
-					"systemMessage": "Eres el asistente virtual de la empresa y atiendes por WhatsApp en español, con respuestas breves y cordiales.\n\nEl cliente se llama {{ $json.contacto.nombre || 'cliente' }}. {{ $json.esPrimerTurno ? 'Es su primer mensaje: salúdalo.' : '' }}\n\nClasifica su mensaje en UNA de estas intenciones y redacta la respuesta adecuada:\n- \"ventas\": pregunta por productos, planes o quiere comprar.\n- \"soporte\": tiene un problema, un reclamo o pide hablar con una persona.\n- \"agenda\": quiere agendar, reprogramar o consultar una cita.\n- \"otro\": saludos, agradecimientos o cualquier cosa que no encaje arriba.\n\nDevuelve SOLO el JSON pedido. En \"mensaje\" escribe lo que se le enviará al cliente (máximo 3 frases, sin markdown). Si la intención es \"soporte\", el mensaje debe avisar que lo transfieres con una persona del equipo."
+					"systemMessage": "You are the company's virtual assistant and you handle WhatsApp support in English, with brief and friendly responses.\n\nThe customer's name is {{ $json.contacto.nombre || 'customer' }}. {{ $json.esPrimerTurno ? 'This is their first message: greet them.' : '' }}\n\nClassify their message into ONE of these intents and draft the appropriate reply:\n- \"ventas\": asks about products, plans, or wants to buy.\n- \"soporte\": has a problem, a complaint, or asks to talk to a person.\n- \"agenda\": wants to schedule, reschedule, or check an appointment.\n- \"otro\": greetings, thanks, or anything that does not fit above.\n\nReturn ONLY the requested JSON. In \"mensaje\" write what will be sent to the customer (maximum 3 sentences, no markdown). If the intent is \"soporte\", the message must let them know you are transferring them to a person on the team."
 				}
 			},
 			"id": "c1000000-0000-4000-8000-000000000003",
-			"name": "Clasificar y redactar",
+			"name": "Classify and Draft Reply",
 			"type": "@n8n/n8n-nodes-langchain.agent",
 			"typeVersion": 1.9,
 			"position": [
@@ -75,7 +75,7 @@
 				"sessionKey": "={{ $('LiveConnect Callback Trigger').first().json.sessionId }}"
 			},
 			"id": "c1000000-0000-4000-8000-000000000005",
-			"name": "Memoria por conversación",
+			"name": "Conversation Memory",
 			"type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
 			"typeVersion": 1.3,
 			"position": [
@@ -86,10 +86,10 @@
 		{
 			"parameters": {
 				"schemaType": "fromJson",
-				"jsonSchemaExample": "{\n  \"intencion\": \"ventas\",\n  \"mensaje\": \"Con gusto te ayudo con los planes disponibles.\"\n}"
+				"jsonSchemaExample": "{\n  \"intencion\": \"ventas\",\n  \"mensaje\": \"I would be happy to help you with the available plans.\"\n}"
 			},
 			"id": "c1000000-0000-4000-8000-000000000006",
-			"name": "Formato de salida",
+			"name": "Output Format",
 			"type": "@n8n/n8n-nodes-langchain.outputParserStructured",
 			"typeVersion": 1.2,
 			"position": [
@@ -178,7 +178,7 @@
 				}
 			},
 			"id": "c1000000-0000-4000-8000-000000000007",
-			"name": "Enrutar por intención",
+			"name": "Route by Intent",
 			"type": "n8n-nodes-base.switch",
 			"typeVersion": 3.2,
 			"position": [
@@ -205,7 +205,7 @@
 				"respondWebhook": true
 			},
 			"id": "c1000000-0000-4000-8000-000000000008",
-			"name": "Responder Ventas",
+			"name": "Sales Reply",
 			"type": "n8n-nodes-liveconnect.liveConnectCallbackResponse",
 			"typeVersion": 1,
 			"position": [
@@ -231,7 +231,7 @@
 				"respondWebhook": true
 			},
 			"id": "c1000000-0000-4000-8000-000000000009",
-			"name": "Hablar con un Asesor",
+			"name": "Talk to an Advisor",
 			"type": "n8n-nodes-liveconnect.liveConnectCallbackResponse",
 			"typeVersion": 1,
 			"position": [
@@ -254,7 +254,7 @@
 						},
 						{
 							"tipo": "input",
-							"input": "¿Qué día y hora te quedan bien?"
+							"input": "What day and time work for you?"
 						}
 					]
 				},
@@ -262,7 +262,7 @@
 				"respondWebhook": true
 			},
 			"id": "c1000000-0000-4000-8000-00000000000a",
-			"name": "Agendar Cita",
+			"name": "Schedule Appointment",
 			"type": "n8n-nodes-liveconnect.liveConnectCallbackResponse",
 			"typeVersion": 1,
 			"position": [
@@ -284,7 +284,7 @@
 				"respondWebhook": true
 			},
 			"id": "c1000000-0000-4000-8000-00000000000b",
-			"name": "Responder General",
+			"name": "General Reply",
 			"type": "n8n-nodes-liveconnect.liveConnectCallbackResponse",
 			"typeVersion": 1,
 			"position": [
@@ -294,12 +294,12 @@
 		},
 		{
 			"parameters": {
-				"content": "### Cada rama arma sus propias acciones\n\n- **Ventas / General / Agenda**: envían el texto de la IA y cierran con `input` para seguir conversando (Agenda además pregunta el día).\n- **Hablar con un Asesor**: `teamDelegate` entrega la conversación a un humano. El nodo quita el `input` automáticamente porque el bot debe salir del callback.\n\nCada nodo responde el webhook él mismo: no hace falta Respond to Webhook.",
+				"content": "### Each branch builds its own actions\n\n- **Sales / General / Schedule**: send the AI's text and close with `input` to keep the conversation going (Schedule also asks for the day).\n- **Talk to an Advisor**: `teamDelegate` hands the conversation off to a human. The node removes the `input` automatically because the bot must exit the callback.\n\nEach node responds to the webhook itself: no Respond to Webhook node is needed.",
 				"height": 300,
 				"width": 380
 			},
 			"id": "c1000000-0000-4000-8000-00000000000c",
-			"name": "Notas de las ramas",
+			"name": "Branch Notes",
 			"type": "n8n-nodes-base.stickyNote",
 			"typeVersion": 1,
 			"position": [
@@ -313,18 +313,18 @@
 			"main": [
 				[
 					{
-						"node": "Clasificar y redactar",
+						"node": "Classify and Draft Reply",
 						"type": "main",
 						"index": 0
 					}
 				]
 			]
 		},
-		"Clasificar y redactar": {
+		"Classify and Draft Reply": {
 			"main": [
 				[
 					{
-						"node": "Enrutar por intención",
+						"node": "Route by Intent",
 						"type": "main",
 						"index": 0
 					}
@@ -335,61 +335,61 @@
 			"ai_languageModel": [
 				[
 					{
-						"node": "Clasificar y redactar",
+						"node": "Classify and Draft Reply",
 						"type": "ai_languageModel",
 						"index": 0
 					}
 				]
 			]
 		},
-		"Memoria por conversación": {
+		"Conversation Memory": {
 			"ai_memory": [
 				[
 					{
-						"node": "Clasificar y redactar",
+						"node": "Classify and Draft Reply",
 						"type": "ai_memory",
 						"index": 0
 					}
 				]
 			]
 		},
-		"Formato de salida": {
+		"Output Format": {
 			"ai_outputParser": [
 				[
 					{
-						"node": "Clasificar y redactar",
+						"node": "Classify and Draft Reply",
 						"type": "ai_outputParser",
 						"index": 0
 					}
 				]
 			]
 		},
-		"Enrutar por intención": {
+		"Route by Intent": {
 			"main": [
 				[
 					{
-						"node": "Responder Ventas",
+						"node": "Sales Reply",
 						"type": "main",
 						"index": 0
 					}
 				],
 				[
 					{
-						"node": "Hablar con un Asesor",
+						"node": "Talk to an Advisor",
 						"type": "main",
 						"index": 0
 					}
 				],
 				[
 					{
-						"node": "Agendar Cita",
+						"node": "Schedule Appointment",
 						"type": "main",
 						"index": 0
 					}
 				],
 				[
 					{
-						"node": "Responder General",
+						"node": "General Reply",
 						"type": "main",
 						"index": 0
 					}

@@ -86,23 +86,32 @@ Dos consecuencias prácticas:
 
 ## 10. Tipos y runtime
 
-- n8n-workflow ≥ 1.9x: `NodeConnectionType` es **solo un tipo**; en runtime hay que usar los strings (`['main']`).
-- El tipo de `webhookMethods.default` exige los **tres** métodos (`create`, `checkExists`, `delete`): si no hacen falta, se omite el bloque entero.
+- **`NodeConnectionTypes` sí existe en runtime** (`NodeConnectionTypes.Main`) en n8n-workflow 1.82, la versión que usa este paquete. La nota de que "es solo un tipo, en runtime hay que usar el string `'main'`" venía de una versión anterior y ya no aplica: el escáner de nodos verificados lo exige con la regla `node-connection-type-literal` (`@n8n/eslint-plugin-community-nodes`), que rechaza el literal `'main'` en `inputs`/`outputs`.
+- El tipo de `webhookMethods.default` exige los **tres** métodos (`create`, `checkExists`, `delete`) cuando el bloque existe — eso no cambió. Lo que cambió es que ya **no se puede omitir el bloque entero** en un trigger sin API de registro (como el Callback Trigger): la regla `webhook-lifecycle-complete` lo exige siempre. La solución son tres no-ops honestos que devuelven `true` — ver [04-triggers-y-callbacks.md](04-triggers-y-callbacks.md).
 - `getNodeParameter(nombre, fallback)` lee de `node.parameters` con el fallback: un campo nunca tocado devuelve el fallback; uno tocado y luego oculto devuelve **el valor viejo** (ver punto 6).
 
-## 11. ESLint `eslint-plugin-n8n-nodes-base`
+## 11. ESLint: del `.eslintrc.js` propio al escáner oficial
 
-- **`node-param-operation-option-action-miscased` debe seguir DESACTIVADA.** Su autofix pasa cada `action` por la librería `sentence-case`, que **elimina los diacríticos**: así se rompieron 25 actions con tilde ("Enviar una respuesta rápida" → "Enviar una respuesta r pida", visible en el panel de acciones de n8n).
+**Ya no hay reglas desactivadas por idioma.** Desde que la interfaz volvió a inglés (ver [01-arquitectura.md](01-arquitectura.md) § Idioma), `npm run lint` corre `n8n-node lint`, que usa `eslint.config.mjs` (config plana) → `@n8n/node-cli/eslint`, activado con `npx n8n-node cloud-support enable` (que además puso `n8n.strict: true` en `package.json`). Es la **misma** config que aplica el escáner público (`npx @n8n/scan-community-package`) — ver [06-mantenimiento.md](06-mantenimiento.md) § Verificación de n8n. Compone dos plugins:
 
-  Tras cualquier `npm run lintfix`, comprobar:
+- `@n8n/eslint-plugin-community-nodes` — reglas nuevas, específicas de la verificación: `node-usable-as-tool`, `node-connection-type-literal`, `webhook-lifecycle-complete`, `require-node-api-error`, `icon-validation` / `icon-prefer-themed-variants`, `credential-password-field`, `trigger-node-conventions`, entre otras.
+- `eslint-plugin-n8n-nodes-base` (la de siempre) — reglas de `nodes`/`credentials`/`package.json`, con solo 3 apagadas por el propio preset de `node-cli` (ninguna relacionada con idioma).
 
-  ```bash
-  grep -rho "action: '[^']*'" nodes/LiveConnect/descriptions/*.ts | grep -cE "[áéíóúñ]"   # debe dar 25
-  ```
+Los `.eslintrc.js` y `.eslintrc.prepublish.js` de las versiones anteriores **ya no los usa ningún script** (`lint`, `lintfix` y `prepublishOnly` corren todos `n8n-node lint`); quedan en el repo pero no son la config vigente.
 
-- Las reglas que exigen literales en inglés (Simplify / limit / Get Many / Whether / Title Case) están desactivadas en `.eslintrc.js` **con comentario**, porque la UI va en español.
-- `node-param-display-name-wrong-for-dynamic-options` está desactivada: exige el literal inglés "Name or ID".
-- `node-param-description-*` es quisquillosa con el punto final: cuenta las frases, así que un texto con "etc." pide punto final y uno con "…" lo prohíbe. No pelear: ajustar la redacción.
+### Historia: por qué las tildes se rompían (y por qué ya no puede repetirse)
+
+En v0.5.1, `npm run lintfix` pasó cada `action` en español por la librería `sentence-case` (autofix de la entonces activa `node-param-operation-option-action-miscased`), que **elimina los diacríticos**: 25 actions con tilde la perdieron ("Enviar una respuesta rápida" → "Enviar una respuesta r pida", visible en el panel de acciones de n8n). La solución de entonces fue desactivar esa regla mientras la UI estuviera en español.
+
+Esa trampa no puede repetirse ahora aunque alguien reactive la regla: el texto en español **ya no es código que pase por ESLint**. Vive en `i18n/es.json` (un JSON) y se aplica sobre las descripciones ya compiladas con una asignación directa (`objeto[campo] = traduccion` en `scripts/i18n-runtime.js`), fuera de cualquier paso de lint. Detalle en [08-paquete-espanol.md](08-paquete-espanol.md).
+
+### Reglas activas que antes estaban desactivadas por el español
+
+Los selectores dinámicos ahora llevan el `displayName` con el literal `Name or ID` y la `description` `Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>` (ver [06-mantenimiento.md](06-mantenimiento.md) § Selectores dinámicos): las reglas que los exigen (`node-param-display-name-wrong-for-dynamic-options` y afines) ya no hace falta desactivarlas.
+
+### Lo que sigue igual
+
+- `node-param-description-*` sigue siendo quisquillosa con el punto final: cuenta las frases, así que un texto con "etc." pide punto final y uno con "…" lo prohíbe. No pelear: ajustar la redacción.
 - En las descripciones no escribir referencias tipo `tabla.id` — `node-param-description-miscased-id` las rompe. Usar "(tabla X)".
 
 ## 12. Node 26 y `isolated-vm`
