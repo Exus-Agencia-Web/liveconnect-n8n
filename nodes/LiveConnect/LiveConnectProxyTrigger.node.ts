@@ -34,12 +34,12 @@ export class LiveConnectProxyTrigger implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'LiveConnect Proxy Trigger',
 		name: 'liveConnectProxyTrigger',
-		icon: { light: 'file:liveconnect2.svg', dark: 'file:liveconnect2.svg' },
+		icon: { light: 'file:liveconnect2.svg', dark: 'file:liveconnect2.dark.svg' },
 		group: ['trigger'],
 		version: 1,
 		subtitle: '={{$parameter["path"]}}',
 		description:
-			'Se dispara cuando llega una notificación del proxy de conversaciones de LiveConnect',
+			'Triggers when a notification arrives from the LiveConnect conversation proxy',
 		defaults: {
 			name: 'LiveConnect Proxy Trigger',
 		},
@@ -66,46 +66,46 @@ export class LiveConnectProxyTrigger implements INodeType {
 		properties: [
 			{
 				displayName:
-					'Este trigger registra automáticamente el webhook del canal en LiveConnect al activar el workflow y lo elimina al desactivarlo. LiveConnect permite UN solo webhook por canal: no actives dos workflows con el mismo ID de canal. Ejemplo listo para importar: <b>examples/08-mensajes-proxy-trigger.json</b> del repositorio.',
+					'This trigger automatically registers the channel webhook in LiveConnect when the workflow is activated, and removes it when deactivated. LiveConnect allows only ONE webhook per channel: do not activate two workflows with the same channel ID. Ready-to-import example: <b>examples/08-mensajes-proxy-trigger.json</b> from the repository.',
 				name: 'notice',
 				type: 'notice',
 				default: '',
 			},
 			{
-				displayName: 'ID del Canal',
+				displayName: 'Channel Name or ID',
 				name: 'id_canal',
 				type: 'options',
 				typeOptions: { loadOptionsMethod: 'getChannels' },
 				required: true,
 				default: '',
 				description:
-					'Canal cuyas notificaciones del proxy disparan el workflow. Elige de la lista o especifica un ID con una expresión.',
+					'Channel whose proxy notifications trigger the workflow. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 			},
 			{
-				displayName: 'Ruta del Webhook',
+				displayName: 'Webhook Path',
 				name: 'path',
 				type: 'string',
 				default: 'webhook',
-				placeholder: 'proxy-soporte',
+				placeholder: 'proxy-support',
 				description:
-					'Último tramo de la URL del webhook, para identificarla cuando tienes varios canales. Al cambiarla, el webhook se vuelve a registrar en LiveConnect con la URL nueva.',
+					'Last segment of the webhook URL, used to identify it when you have multiple channels. Changing it re-registers the webhook in LiveConnect with the new URL.',
 			},
 			{
-				displayName: 'Secreto',
+				displayName: 'Secret',
 				name: 'secret',
 				type: 'string',
 				typeOptions: { password: true },
 				default: '',
 				description:
-					'Secreto que LiveConnect envía en cada notificación del webhook. Dejar vacío para generar uno automáticamente al activar el workflow.',
+					'Secret that LiveConnect sends with each webhook notification. Leave empty to generate one automatically when the workflow is activated.',
 			},
 			{
-				displayName: 'Simplificar',
+				displayName: 'Simplify',
 				name: 'simple',
 				type: 'boolean',
 				default: true,
 				description:
-					'Si se activa, entrega el evento simplificado (mensaje, sessionId, contacto…) en lugar del payload crudo',
+					'Whether to return a simplified version of the response instead of the raw data',
 			},
 		],
 	};

@@ -4,6 +4,11 @@
  *
  * Uso: npm run build && node scripts/extract-i18n.mjs [locale]   (por defecto: es)
  *
+ * ⚠️ SOLO PARA BOOTSTRAP. Vuelca al diccionario los textos que tenga el código
+ * compilado: si el código está en inglés (que es como debe estar), ejecutarlo
+ * SOBRESCRIBE las traducciones con inglés. Para saber qué falta traducir tras
+ * añadir textos nuevos, usa `npm run i18n:status`, que no escribe nada.
+ *
  * El código fuente del paquete está en inglés porque n8n exige inglés para los nodos
  * verificados. El paquete en español se genera aplicando este diccionario sobre las
  * descripciones (scripts/build-es-package.mjs), así que hay UNA sola base de código.
@@ -11,7 +16,7 @@
  * Las rutas las construye scripts/i18n-paths.mjs, compartido con el generador.
  */
 import { createRequire } from 'node:module';
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -57,6 +62,14 @@ for (const [clave, archivo, exportado] of FUENTES) {
 }
 
 const locale = process.argv[2] ?? 'es';
+if (!process.argv.includes('--force') && existsSync(resolve(raiz, `i18n/${locale}.json`))) {
+	console.error(
+		`i18n/${locale}.json ya existe. Este script SOBRESCRIBE el diccionario con los textos ` +
+			`del código compilado (hoy, en inglés). Si de verdad quieres regenerarlo, añade --force; ` +
+			`para ver qué falta traducir usa: npm run i18n:status`,
+	);
+	process.exit(1);
+}
 const destino = resolve(raiz, `i18n/${locale}.json`);
 mkdirSync(dirname(destino), { recursive: true });
 // Claves ordenadas: el diff del diccionario debe ser legible entre versiones.

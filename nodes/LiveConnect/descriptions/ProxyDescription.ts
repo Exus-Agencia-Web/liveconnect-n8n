@@ -102,8 +102,7 @@ export const proxyFields: INodeProperties[] = [
 		typeOptions: { loadOptionsMethod: 'getChannels' },
 		required: true,
 		default: '',
-		description:
-			'ID of the channel for the account. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
+		description: 'ID of the channel for the account. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 		displayOptions: {
 			show: {
 				resource: ['proxy'],
@@ -300,8 +299,7 @@ export const proxyFields: INodeProperties[] = [
 		typeOptions: { loadOptionsMethod: 'getChannels' },
 		required: true,
 		default: '',
-		description:
-			'ID of the channel for the account. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
+		description: 'ID of the channel for the account. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 		displayOptions: {
 			show: {
 				resource: ['proxy'],
@@ -438,6 +436,15 @@ export const proxyFields: INodeProperties[] = [
 				},
 			},
 			{
+				displayName: 'Channel Name or ID',
+				name: 'id_canal',
+				type: 'options',
+				typeOptions: { loadOptionsMethod: 'getChannels' },
+				default: '',
+				description: 'ID of the channel (required when transferring the conversation to the proxy). Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+				routing: { send: { type: 'body', property: 'id_canal' } },
+			},
+			{
 				displayName: 'Contact',
 				name: 'contacto',
 				type: 'json',
@@ -448,42 +455,6 @@ export const proxyFields: INodeProperties[] = [
 						type: 'body',
 						property: 'contacto',
 						value: '={{ typeof $value === "object" && $value !== null ? $value : JSON.parse($value || "{}") }}',
-					},
-				},
-			},
-			{
-				displayName: 'Channel Name or ID',
-				name: 'id_canal',
-				type: 'options',
-				typeOptions: { loadOptionsMethod: 'getChannels' },
-				default: '',
-				description:
-					'ID of the channel (required when transferring the conversation to the proxy). Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
-				routing: { send: { type: 'body', property: 'id_canal' } },
-			},
-			{
-				displayName: 'Team Name or ID',
-				name: 'id_grupo',
-				type: 'options',
-				typeOptions: { loadOptionsMethod: 'getGroups' },
-				default: '',
-				description:
-					'ID of the team of agents to assign. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
-				routing: { send: { type: 'body', property: 'id_grupo' } },
-			},
-			{
-				displayName: 'Tag IDs',
-				name: 'etiquetas',
-				type: 'string',
-				default: '',
-				placeholder: '1,2,3',
-				description: 'IDs of the tags to apply to the contact, separated by commas',
-				routing: {
-					send: {
-						type: 'body',
-						property: 'etiquetas',
-						value:
-							'={{ $value.toString().split(",").map((v) => v.trim()).filter((v) => v !== "").map((v) => Number(v)).filter((v) => !isNaN(v)) }}',
 					},
 				},
 			},
@@ -503,6 +474,31 @@ export const proxyFields: INodeProperties[] = [
 				default: '',
 				description: 'Internal note about the source of the transfer',
 				routing: { send: { type: 'body', property: 'info_mensaje' } },
+			},
+			{
+				displayName: 'Tag IDs',
+				name: 'etiquetas',
+				type: 'string',
+				default: '',
+				placeholder: '1,2,3',
+				description: 'IDs of the tags to apply to the contact, separated by commas',
+				routing: {
+					send: {
+						type: 'body',
+						property: 'etiquetas',
+						value:
+							'={{ $value.toString().split(",").map((v) => v.trim()).filter((v) => v !== "").map((v) => Number(v)).filter((v) => !isNaN(v)) }}',
+					},
+				},
+			},
+			{
+				displayName: 'Team Name or ID',
+				name: 'id_grupo',
+				type: 'options',
+				typeOptions: { loadOptionsMethod: 'getGroups' },
+				default: '',
+				description: 'ID of the team of agents to assign. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
+				routing: { send: { type: 'body', property: 'id_grupo' } },
 			},
 		],
 	},

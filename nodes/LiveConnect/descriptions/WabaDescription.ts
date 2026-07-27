@@ -74,8 +74,7 @@ export const wabaFields: INodeProperties[] = [
 		typeOptions: { loadOptionsMethod: 'getWabaChannels' },
 		required: true,
 		default: '',
-		description:
-			'ID of the WABA channel for the account. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
+		description: 'ID of the WABA channel for the account. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 		displayOptions: {
 			show: {
 				resource: ['waba'],
@@ -100,6 +99,14 @@ export const wabaFields: INodeProperties[] = [
 		},
 		options: [
 			{
+				displayName: 'Approved Only',
+				name: 'approved',
+				type: 'boolean',
+				default: false,
+				description: 'Whether to return only templates with APPROVED status',
+				routing: { send: { type: 'body', property: 'approved' } },
+			},
+			{
 				displayName: 'Category',
 				name: 'category',
 				type: 'options',
@@ -111,14 +118,6 @@ export const wabaFields: INodeProperties[] = [
 				default: 'MARKETING',
 				description: 'Filter by Meta category',
 				routing: { send: { type: 'body', property: 'category' } },
-			},
-			{
-				displayName: 'Pagination Cursor',
-				name: 'paging',
-				type: 'string',
-				default: '',
-				description: 'Pagination cursor returned by a previous call',
-				routing: { send: { type: 'body', property: 'paging' } },
 			},
 			{
 				displayName: 'Limit',
@@ -138,12 +137,12 @@ export const wabaFields: INodeProperties[] = [
 				routing: { send: { type: 'body', property: 'name' } },
 			},
 			{
-				displayName: 'Approved Only',
-				name: 'approved',
-				type: 'boolean',
-				default: false,
-				description: 'Whether to return only templates with APPROVED status',
-				routing: { send: { type: 'body', property: 'approved' } },
+				displayName: 'Pagination Cursor',
+				name: 'paging',
+				type: 'string',
+				default: '',
+				description: 'Pagination cursor returned by a previous call',
+				routing: { send: { type: 'body', property: 'paging' } },
 			},
 		],
 	},
@@ -158,8 +157,7 @@ export const wabaFields: INodeProperties[] = [
 		typeOptions: { loadOptionsMethod: 'getWabaChannels' },
 		required: true,
 		default: '',
-		description:
-			'ID of the WABA channel for the account. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
+		description: 'ID of the WABA channel for the account. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 		displayOptions: {
 			show: {
 				resource: ['waba'],
@@ -213,8 +211,7 @@ export const wabaFields: INodeProperties[] = [
 		typeOptions: { loadOptionsMethod: 'getWabaChannels' },
 		required: true,
 		default: '',
-		description:
-			'ID of the WABA channel for the account. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
+		description: 'ID of the WABA channel for the account. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 		displayOptions: {
 			show: {
 				resource: ['waba'],
@@ -299,8 +296,7 @@ export const wabaFields: INodeProperties[] = [
 		typeOptions: { loadOptionsMethod: 'getWabaChannels' },
 		required: true,
 		default: '',
-		description:
-			'ID of the WABA channel for the account. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
+		description: 'ID of the WABA channel for the account. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 		displayOptions: {
 			show: {
 				resource: ['waba'],
@@ -339,8 +335,7 @@ export const wabaFields: INodeProperties[] = [
 		typeOptions: { loadOptionsMethod: 'getWabaTemplates', loadOptionsDependsOn: ['&id_canal'] },
 		required: true,
 		default: '',
-		description:
-			'ID or name of the template to send. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
+		description: 'ID or name of the template to send. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 		displayOptions: {
 			show: {
 				resource: ['waba'],
@@ -526,6 +521,32 @@ export const wabaFields: INodeProperties[] = [
 		},
 		options: [
 			{
+				displayName: 'Additional Message',
+				name: 'message',
+				type: 'json',
+				default: '{}',
+				description: 'Additional message to accompany the template',
+				routing: {
+					send: {
+						type: 'body',
+						property: 'message',
+						value: '={{ typeof $value === "object" && $value !== null ? $value : JSON.parse($value || "{}") }}',
+					},
+				},
+			},
+			{
+				displayName: 'Body Variables (Comma-Separated)',
+				name: 'variables_csv',
+				type: 'string',
+				default: '',
+				placeholder: 'Ana, May 12',
+				// Con la plantilla elegida por expresión (envío masivo con una plantilla
+				// distinta por fila) n8n no puede saber cuántos campos "Variable {{n}}"
+				// mostrar, porque displayOptions ve la expresión sin evaluar.
+				description:
+					'Only used if you choose the template with an expression: body values separated by commas, in the order {{1}}, {{2}}, etc. If you fill in the "Variable {{n}}" fields, they take precedence.',
+			},
+			{
 				displayName: 'Buttons',
 				name: 'buttons',
 				type: 'json',
@@ -545,43 +566,8 @@ export const wabaFields: INodeProperties[] = [
 				type: 'options',
 				typeOptions: { loadOptionsMethod: 'getGroups' },
 				default: '',
-				description:
-					'ID of the team to delegate follow-up of the sent template to. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
+				description: 'ID of the team to delegate follow-up of the sent template to. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 				routing: { send: { type: 'body', property: 'id_to_delegate' } },
-			},
-			{
-				displayName: 'Additional Message',
-				name: 'message',
-				type: 'json',
-				default: '{}',
-				description: 'Additional message to accompany the template',
-				routing: {
-					send: {
-						type: 'body',
-						property: 'message',
-						value: '={{ typeof $value === "object" && $value !== null ? $value : JSON.parse($value || "{}") }}',
-					},
-				},
-			},
-			{
-				displayName: 'Use Sample Data',
-				name: 'usar_ejemplo',
-				type: 'boolean',
-				default: false,
-				description:
-					'Whether to fill in whatever you leave empty with the sample data provided by the Meta template. Useful for sending yourself a test without typing anything.',
-			},
-			{
-				displayName: 'Body Variables (Comma-Separated)',
-				name: 'variables_csv',
-				type: 'string',
-				default: '',
-				placeholder: 'Ana, May 12',
-				// Con la plantilla elegida por expresión (envío masivo con una plantilla
-				// distinta por fila) n8n no puede saber cuántos campos "Variable {{n}}"
-				// mostrar, porque displayOptions ve la expresión sin evaluar.
-				description:
-					'Only used if you choose the template with an expression: body values separated by commas, in the order {{1}}, {{2}}, etc. If you fill in the "Variable {{n}}" fields, they take precedence.',
 			},
 			{
 				displayName: 'Header Variables',
@@ -598,6 +584,14 @@ export const wabaFields: INodeProperties[] = [
 							'={{ $value.toString().split(",").map((v) => v.trim()).filter((v) => v !== "") }}',
 					},
 				},
+			},
+			{
+				displayName: 'Use Sample Data',
+				name: 'usar_ejemplo',
+				type: 'boolean',
+				default: false,
+				description:
+					'Whether to fill in whatever you leave empty with the sample data provided by the Meta template. Useful for sending yourself a test without typing anything.',
 			},
 		],
 	},

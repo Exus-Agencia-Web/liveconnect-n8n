@@ -5,7 +5,7 @@ import type {
 	INodeType,
 	INodeTypeDescription,
 } from 'n8n-workflow';
-import { NodeApiError, NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
+import { NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 
 import { applyClosingRule, buildEnvelope, toAction } from './ActionsFunctions';
 import { getGroups, getUsers } from './LoadOptions';
@@ -17,17 +17,17 @@ export class LiveConnectCallbackResponse implements INodeType {
 	};
 
 	description: INodeTypeDescription = {
-		displayName: 'LiveConnect Respuesta al Callback',
+		displayName: 'LiveConnect Callback Response',
 		name: 'liveConnectCallbackResponse',
-		icon: { light: 'file:liveconnect2.svg', dark: 'file:liveconnect2.svg' },
+		icon: { light: 'file:liveconnect2.svg', dark: 'file:liveconnect2.dark.svg' },
 		group: ['transform'],
 		version: 1,
 		subtitle:
 			'={{$parameter["acciones"]?.accion?.length ? $parameter["acciones"].accion.length + " actions" : "response"}}',
 		description:
-			'Construye visualmente la respuesta de actions del callback del Flowbot y responde el webhook',
+			'Visually builds the action response for the Flowbot callback and responds to the webhook',
 		defaults: {
-			name: 'LiveConnect Respuesta al Callback',
+			name: 'LiveConnect Callback Response',
 		},
 		inputs: [NodeConnectionTypes.Main],
 		outputs: [NodeConnectionTypes.Main],
@@ -43,92 +43,92 @@ export class LiveConnectCallbackResponse implements INodeType {
 		properties: [
 			{
 				displayName:
-					'Construye la respuesta síncrona del callback del Flowbot sin código. Regla de oro: si no delegas, la respuesta cierra con una acción <code>input</code> (el toggle de abajo lo garantiza). Con "Responder al Webhook" activo, el LiveConnect Callback Trigger debe estar en modo "Usando el Nodo Respond to Webhook" (su default). No intercales nodos que puedan filtrar el item (IF/Filter) entre el trigger y este nodo: si no llega ningún item, el callback queda sin respuesta hasta su timeout.',
+					'Builds the synchronous response for the Flowbot callback without code. Golden rule: unless you delegate, the response must close with an <code>input</code> action (the toggle below guarantees this). With "Respond to Webhook" enabled, the LiveConnect Callback Trigger must be in "Using Respond to Webhook Node" mode (its default). Do not insert nodes that might filter the item (IF/Filter) between the trigger and this node: if no item arrives, the callback goes unanswered until it times out.',
 				name: 'notice',
 				type: 'notice',
 				default: '',
 			},
 			{
-				displayName: 'Acciones',
+				displayName: 'Actions',
 				name: 'acciones',
 				type: 'fixedCollection',
 				typeOptions: { multipleValues: true, sortable: true },
-				placeholder: 'Agregar Acción',
+				placeholder: 'Add Action',
 				default: {},
-				description: 'Acciones que LiveConnect ejecuta en orden al recibir la respuesta',
+				description: 'Actions that LiveConnect executes in order upon receiving the response',
 				options: [
 					{
 						name: 'accion',
-						displayName: 'Acción',
+						displayName: 'Action',
 						values: [
 							{
-								displayName: 'Tipo',
+								displayName: 'Type',
 								name: 'tipo',
 								type: 'options',
 								options: [
 									{
-										name: 'Actualizar Contacto (updateContact)',
-										value: 'updateContact',
-										description: 'Persiste un dato del contacto (name, email, phone…)',
-									},
-									{
-										name: 'Actualizar Variable (setVar)',
-										value: 'setVar',
-										description: 'Actualiza una variable de memoria existente',
-									},
-									{
-										name: 'Agregar Etiqueta (addTag)',
+										name: 'Add Tag (addTag)',
 										value: 'addTag',
-										description: 'Clasifica la conversación con una etiqueta',
+										description: 'Classifies the conversation with a tag',
 									},
 									{
-										name: 'Crear Variable (addVar)',
+										name: 'Create Variable (addVar)',
 										value: 'addVar',
-										description: 'Crea una variable de memoria (primera escritura)',
+										description: 'Creates a memory variable (first write)',
 									},
 									{
-										name: 'Delegar a Equipo (teamDelegate)',
+										name: 'Delegate to Team (teamDelegate)',
 										value: 'teamDelegate',
-										description: 'Entrega la conversación a un equipo; el bot sale del callback',
+										description: 'Hands the conversation over to a team; the bot exits the callback',
 									},
 									{
-										name: 'Delegar a Usuario (userDelegate)',
+										name: 'Delegate to User (userDelegate)',
 										value: 'userDelegate',
 										description:
-											'Entrega la conversación a un agente concreto; el bot sale del callback',
+											'Hands the conversation over to a specific agent; the bot exits the callback',
 									},
 									{
-										name: 'Enviar Archivo (sendFile)',
+										name: 'Send File (sendFile)',
 										value: 'sendFile',
-										description: 'Envía un archivo por URL pública',
+										description: 'Sends a file via public URL',
 									},
 									{
-										name: 'Enviar Imagen (sendImage)',
+										name: 'Send Image (sendImage)',
 										value: 'sendImage',
-										description: 'Envía una imagen por URL pública',
+										description: 'Sends an image via public URL',
 									},
 									{
-										name: 'Enviar Texto (sendText)',
+										name: 'Send Text (sendText)',
 										value: 'sendText',
-										description: 'Envía un mensaje de texto al usuario',
+										description: 'Sends a text message to the user',
 									},
 									{
-										name: 'Esperar Respuesta (input)',
+										name: 'Set Variable (setVar)',
+										value: 'setVar',
+										description: 'Updates an existing memory variable',
+									},
+									{
+										name: 'Update Contact (updateContact)',
+										value: 'updateContact',
+										description: 'Persists a contact field (name, email, phone…)',
+									},
+									{
+										name: 'Wait for Reply (input)',
 										value: 'input',
 										description:
-											'Pregunta y espera respuesta del usuario (vacío = espera sin mostrar nada)',
+											'Asks a question and waits for a reply from the user (empty = waits without showing anything)',
 									},
 								],
 								default: 'sendText',
 							},
 							{
-								displayName: 'Texto',
+								displayName: 'Text',
 								name: 'text',
 								type: 'string',
 								typeOptions: { rows: 3 },
 								default: '',
 								displayOptions: { show: { tipo: ['sendText'] } },
-								description: 'Mensaje que se envía al usuario',
+								description: 'Message sent to the user',
 							},
 							{
 								displayName: 'URL',
@@ -137,114 +137,112 @@ export class LiveConnectCallbackResponse implements INodeType {
 								default: '',
 								placeholder: 'https://…',
 								displayOptions: { show: { tipo: ['sendImage', 'sendFile'] } },
-								description: 'URL pública y descargable por LiveConnect',
+								description: 'Public URL that LiveConnect can download',
 							},
 							{
-								displayName: 'ID de la Etiqueta',
+								displayName: 'Tag ID',
 								name: 'id_tag',
 								type: 'number',
 								default: 0,
 								displayOptions: { show: { tipo: ['addTag'] } },
-								description: 'ID entero de la etiqueta en LiveConnect',
+								description: 'Integer ID of the tag in LiveConnect',
 							},
 							{
-								displayName: 'ID del Usuario',
+								displayName: 'User Name or ID',
 								name: 'id_user',
 								type: 'options',
 								typeOptions: { loadOptionsMethod: 'getUsers' },
 								default: '',
 								displayOptions: { show: { tipo: ['userDelegate'] } },
-								description:
-									'Agente al que se delega. Elige de la lista o especifica un ID con una expresión.',
+								description: 'Agent to delegate to. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 							},
 							{
-								displayName: 'Nombre del Usuario',
+								displayName: 'User Name',
 								name: 'user_name',
 								type: 'string',
 								default: '',
 								displayOptions: { show: { tipo: ['userDelegate'] } },
-								description: 'Nombre visible del agente al que se delega',
+								description: 'Visible name of the agent being delegated to',
 							},
 							{
-								displayName: 'Avatar del Usuario',
+								displayName: 'User Avatar',
 								name: 'user_avatar',
 								type: 'string',
 								default: '',
 								placeholder: 'https://…',
 								displayOptions: { show: { tipo: ['userDelegate'] } },
-								description: 'URL del avatar del agente (opcional; se omite si queda vacío)',
+								description: 'Agent avatar URL (optional; omitted if left empty)',
 							},
 							{
-								displayName: 'ID del Equipo',
+								displayName: 'Team Name or ID',
 								name: 'id_team',
 								type: 'options',
 								typeOptions: { loadOptionsMethod: 'getGroups' },
 								default: '',
 								displayOptions: { show: { tipo: ['teamDelegate'] } },
-								description:
-									'Equipo al que se delega. Elige de la lista o especifica un ID con una expresión.',
+								description: 'Team to delegate to. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 							},
 							{
-								displayName: 'Nombre de la Variable',
+								displayName: 'Variable Name',
 								name: 'varname',
 								type: 'string',
 								default: '',
 								displayOptions: { show: { tipo: ['addVar', 'setVar'] } },
-								description: 'Nombre de la variable de memoria del bot',
+								description: 'Name of the bot memory variable',
 							},
 							{
-								displayName: 'Valor de la Variable',
+								displayName: 'Variable Value',
 								name: 'varvalue',
 								type: 'string',
 								default: '',
 								displayOptions: { show: { tipo: ['addVar', 'setVar'] } },
-								description: 'Valor a guardar (puede ser vacío)',
+								description: 'Value to store (can be empty)',
 							},
 							{
-								displayName: 'Pregunta',
+								displayName: 'Question',
 								name: 'input',
 								type: 'string',
 								default: '',
 								displayOptions: { show: { tipo: ['input'] } },
 								description:
-									'Texto que se muestra antes de esperar. Vacío = espera sin mostrar nada (keep-alive).',
+									'Text shown before waiting. Empty = waits without showing anything (keep-alive).',
 							},
 							{
-								displayName: 'Campo del Contacto',
+								displayName: 'Contact Field',
 								name: 'key',
 								type: 'string',
 								default: '',
 								placeholder: 'name, email, phone, company…',
 								displayOptions: { show: { tipo: ['updateContact'] } },
-								description: 'Campo del contacto a actualizar',
+								description: 'Contact field to update',
 							},
 							{
-								displayName: 'Valor del Campo',
+								displayName: 'Field Value',
 								name: 'value',
 								type: 'string',
 								default: '',
 								displayOptions: { show: { tipo: ['updateContact'] } },
-								description: 'Valor a persistir en el contacto',
+								description: 'Value to store on the contact',
 							},
 						],
 					},
 				],
 			},
 			{
-				displayName: 'Agregar Input de Cierre Automáticamente',
+				displayName: 'Automatically Add Closing Input',
 				name: 'autoInput',
 				type: 'boolean',
 				default: true,
 				description:
-					'Si se activa, aplica la regla del contrato: sin delegación agrega { "type": "input", "input": "" } al final si falta, y con delegación elimina cualquier acción input configurada. Si se desactiva, las acciones se envían tal cual.',
+					'Whether to apply the contract rule: without delegation, adds { "type": "input", "input": "" } at the end if missing, and with delegation removes any configured input action. If disabled, actions are sent as-is.',
 			},
 			{
-				displayName: 'Responder al Webhook',
+				displayName: 'Respond to Webhook',
 				name: 'respondWebhook',
 				type: 'boolean',
 				default: true,
 				description:
-					'Si se activa, responde el callback directamente con el envelope (sin nodo Respond to Webhook). Responde una sola vez aunque lleguen varios items. En ejecuciones manuales de prueba no tiene efecto y el nodo solo emite el envelope.',
+					'Whether to respond to the callback directly with the envelope (without a Respond to Webhook node). Responds only once even if several items arrive. Has no effect on manual test executions, where the node only emits the envelope.',
 			},
 		],
 	};
@@ -268,7 +266,7 @@ export class LiveConnectCallbackResponse implements INodeType {
 					// El contrato exige data.actions no vacío; sin autoInput no hay keep-alive implícito.
 					throw new NodeOperationError(
 						this.getNode(),
-						'Configura al menos una acción o activa "Agregar Input de Cierre Automáticamente"',
+						'Configure at least one action or enable "Automatically Add Closing Input"',
 						{ itemIndex: i },
 					);
 				}
@@ -293,11 +291,10 @@ export class LiveConnectCallbackResponse implements INodeType {
 					returnData.push({ json: { error: (error as Error).message }, pairedItem: { item: i } });
 					continue;
 				}
-				// toAction() ya lanza NodeOperationError con el itemIndex correcto: se
-				// relanza tal cual para no perder contexto ni envolverlo dos veces.
-				if (error instanceof NodeOperationError || error instanceof NodeApiError) {
-					throw error;
-				}
+				// Siempre se envuelve, incluso lo que ya es NodeOperationError: la regla
+				// `require-node-api-error` del linter de nodos verificados prohíbe relanzar
+				// el error tal cual. NodeOperationError conserva el mensaje del original,
+				// así que el texto que ve el usuario no cambia.
 				throw new NodeOperationError(this.getNode(), error as Error, { itemIndex: i });
 			}
 		}

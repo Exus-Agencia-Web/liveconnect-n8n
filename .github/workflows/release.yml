@@ -1,8 +1,17 @@
 name: Release
 
-# Publica el paquete a npm cuando se publica un release en GitHub
-# (o manualmente desde la pestaña Actions con workflow_dispatch).
-# Requiere el secret NPM_TOKEN (token de npm con permiso de publish).
+# Publica en npm cuando se publica un release en GitHub (o manualmente desde
+# Actions). Publica DOS paquetes desde el mismo código:
+#   - n8n-nodes-liveconnect     interfaz en inglés, el que se envía a verificación
+#   - n8n-nodes-liveconnect-es  interfaz en español, generado con i18n/es.json
+#
+# n8n exige que los nodos verificados se publiquen desde un workflow de GitHub
+# con provenance (obligatorio desde el 1 de mayo de 2026), nunca desde una
+# máquina local: https://docs.n8n.io/connect/create-nodes/build-your-node/reference/verification-guidelines
+#
+# Requiere el secret NPM_TOKEN: token de npm **Automation** (o granular con
+# Bypass 2FA). Un token de publicación normal falla con 403 porque la cuenta
+# tiene 2FA activo.
 
 on:
   release:
@@ -26,14 +35,41 @@ jobs:
           node-version: 22
           registry-url: 'https://registry.npmjs.org'
 
-      # --ignore-scripts: isolated-vm (transitiva de n8n-workflow) no compila
-      # en runners sin toolchain nativa; ninguna dependencia nuestra necesita
-      # scripts de instalación. prepublishOnly (build + lint estricto) sí corre
-      # durante npm publish.
+      # --ignore-scripts: isolated-vm (transitiva de n8n-workflow) no compila en
+      # runners sin toolchain nativa; ninguna dependencia propia necesita scripts
+      # de instalación.
       - name: Install dependencies
         run: npm ci --ignore-scripts
 
-      - name: Publish to npm
+      - name: Build
+        run: npm run build
+
+      # Las mismas reglas que aplica el escáner oficial de n8n. Si esto falla,
+      # el paquete no pasaría la verificación: mejor no publicarlo.
+      - name: Lint (reglas oficiales de nodos comunitarios)
+        run: npm run lint
+
+      - name: Verify against the LiveConnect OpenAPI spec
+        run: npm run verify
+
+      - name: Smoke tests
+        run: npm run smoke
+
+      - name: Check package contents
+        run: npm pack --dry-run
+
+      - name: Publish n8n-nodes-liveconnect
         run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # El paquete español se genera desde el compilado en inglés aplicando el
+      # diccionario i18n/es.json: una sola base de código, dos interfaces.
+      - name: Build Spanish package
+        run: npm run build:es
+
+      - name: Publish n8n-nodes-liveconnect-es
+        run: npm publish --provenance --access public
+        working-directory: dist-es
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

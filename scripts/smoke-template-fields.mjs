@@ -183,7 +183,7 @@ await test('selector: la etiqueta dice cuántas variables y qué medio pide', as
 		nombres.join(' , '),
 	);
 	assert.ok(
-		nombres.some((n) => n.startsWith('lead_expocamello · es · sin variables')),
+		nombres.some((n) => n.startsWith('lead_expocamello · es · no variables')),
 		nombres.join(' , '),
 	);
 });
@@ -201,11 +201,11 @@ await test('selector: el formato Meta también se etiqueta', async () => {
 	const options = await lo.getWabaTemplates.call(optionsCtx([META, META_SIMPLE]));
 	const nombres = options.map((o) => o.name);
 	assert.ok(
-		nombres.some((n) => n.includes('confirmacion_cita · es · 2 variables · imagen · botón')),
+		nombres.some((n) => n.includes('confirmacion_cita · es · 2 variables · image · button')),
 		nombres.join(' , '),
 	);
 	assert.ok(
-		nombres.some((n) => n.includes('aviso · es · sin variables')),
+		nombres.some((n) => n.includes('aviso · es · no variables')),
 		nombres.join(' , '),
 	);
 });
@@ -234,7 +234,7 @@ await test('valor del selector: codifica y decodifica lo que pide la plantilla',
 
 // --- visibilidad de los campos (lo que ve el usuario) --------------------------------
 // Se evalúa con el propio helper de n8n: es la queja que originó el rediseño ("siempre
-// muestra Variables y URL del Encabezado aunque la plantilla no lleve ni lo uno ni lo otro").
+// muestra Variables y Header URL aunque la plantilla no lleve ni lo uno ni lo otro").
 
 const descripcionNodo = new LiveConnect().description;
 
@@ -255,13 +255,13 @@ function camposVisibles(idPlantilla) {
 await test('UI: sin plantilla elegida no se pide ni variable ni URL', () => {
 	const visibles = camposVisibles('');
 	assert.ok(!visibles.some((n) => n.startsWith('Variable ')), visibles.join(' , '));
-	assert.ok(!visibles.includes('URL del Encabezado'), visibles.join(' , '));
+	assert.ok(!visibles.includes('Header URL'), visibles.join(' , '));
 });
 
 await test('UI: plantilla de texto sin variables no pide nada extra', () => {
 	const visibles = camposVisibles('uuid|v0|TEXT');
 	assert.ok(!visibles.some((n) => n.startsWith('Variable ')), visibles.join(' , '));
-	assert.ok(!visibles.includes('URL del Encabezado'), visibles.join(' , '));
+	assert.ok(!visibles.includes('Header URL'), visibles.join(' , '));
 });
 
 await test('UI: se muestran exactamente las variables que pide la plantilla', () => {
@@ -278,13 +278,13 @@ await test('UI: se muestran exactamente las variables que pide la plantilla', ()
 await test('UI: la URL del encabezado solo aparece con imagen, video o documento', () => {
 	for (const formato of ['IMAGE', 'VIDEO', 'DOCUMENT']) {
 		assert.ok(
-			camposVisibles(`uuid|v0|${formato}`).includes('URL del Encabezado'),
+			camposVisibles(`uuid|v0|${formato}`).includes('Header URL'),
 			`falta con ${formato}`,
 		);
 	}
 	for (const formato of ['NONE', 'TEXT']) {
 		assert.ok(
-			!camposVisibles(`uuid|v0|${formato}`).includes('URL del Encabezado'),
+			!camposVisibles(`uuid|v0|${formato}`).includes('Header URL'),
 			`sobra con ${formato}`,
 		);
 	}
@@ -292,7 +292,7 @@ await test('UI: la URL del encabezado solo aparece con imagen, video o documento
 
 await test('UI: con la plantilla por expresión se ofrece la URL (no se puede deducir)', () => {
 	const visibles = camposVisibles('={{ $json.plantilla }}');
-	assert.ok(visibles.includes('URL del Encabezado'), visibles.join(' , '));
+	assert.ok(visibles.includes('Header URL'), visibles.join(' , '));
 });
 
 await test('identificador de envío: Gupshup manda el id, Meta directo el nombre', () => {
@@ -415,7 +415,7 @@ await test('preSend: hueco en el medio → error que nombra la variable vacía',
 	await assert.rejects(
 		() => prepareTemplateSend.call(ctx, { body: {} }),
 		(err) =>
-			/falta el valor de \{\{2\}\}/.test(err.message) &&
+			/is missing the value of \{\{2\}\}/.test(err.message) &&
 			/"Variable \{\{2\}\}"/.test(err.description ?? '') &&
 			/Ana, 12 de mayo/.test(err.description ?? ''),
 	);
@@ -450,12 +450,12 @@ await test('preSend: medio sin URL ni ejemplo → error que explica qué pegar',
 	await assert.rejects(
 		() => prepareTemplateSend.call(ctx, { body: {} }),
 		(err) =>
-			/lleva una imagen en el encabezado/.test(err.message) &&
-			/URL pública de la imagen/.test(err.description ?? ''),
+			/has an image in the header/.test(err.message) &&
+			/public URL of the image/.test(err.description ?? ''),
 	);
 });
 
-await test('preSend: "Usar Datos de Ejemplo" rellena todo lo vacío', async () => {
+await test('preSend: "Use Sample Data" rellena todo lo vacío', async () => {
 	const { ctx } = executeCtx({
 		params: { id_canal: 1, id_plantilla: 'tpl_1|v2|IMAGE', 'additionalFields.usar_ejemplo': true },
 	});
@@ -465,7 +465,7 @@ await test('preSend: "Usar Datos de Ejemplo" rellena todo lo vacío', async () =
 	assert.deepEqual(out.body.buttons, [{ index: 0, parameter: 'https://test.co/c/999' }]);
 });
 
-await test('preSend: "Usar Datos de Ejemplo" completa solo los huecos', async () => {
+await test('preSend: "Use Sample Data" completa solo los huecos', async () => {
 	const { ctx } = executeCtx({
 		params: {
 			id_canal: 1,

@@ -108,8 +108,8 @@ export function getJwtExpiry(token: string): number | undefined {
 export function extractSessionToken(response: LcTokenResponse): string {
 	if (typeof response.status === 'number' && response.status < 0) {
 		throw new Error(
-			`LiveConnect devolvió un error de autenticación (status ${response.status}): ` +
-				(response.status_message ?? 'sin mensaje'),
+			`LiveConnect returned an authentication error (status ${response.status}): ` +
+				(response.status_message ?? 'no message'),
 		);
 	}
 
@@ -120,7 +120,7 @@ export function extractSessionToken(response: LcTokenResponse): string {
 
 	if (!token) {
 		throw new Error(
-			'LiveConnect no devolvió un token de sesión en data.token ni en PageGearToken. Verifica cKey y privateKey.',
+			'LiveConnect did not return a session token in data.token or PageGearToken. Check cKey and privateKey.',
 		);
 	}
 
@@ -160,12 +160,12 @@ async function mintSessionToken(
 		} catch (error) {
 			throw new NodeOperationError(
 				this.getNode(),
-				'No se pudo renovar el token de sesión de LiveConnect',
+				'Could not renew the LiveConnect session token',
 				{
 					description:
-						'Falló POST /account/token al renovar el token vencido. Revisa la conectividad con ' +
-						'api.liveconnect.chat y que la cKey y la clave privada de la credencial "LiveConnect API" ' +
-						`sean correctas. Detalle: ${(error as Error).message ?? 'error desconocido'}`,
+						'POST /account/token failed while renewing the expired token. Check connectivity to ' +
+						'api.liveconnect.chat and that the cKey and private key of the "LiveConnect API" credential ' +
+						`are correct. Detail: ${(error as Error).message ?? 'unknown error'}`,
 					level: 'warning',
 				},
 			);
@@ -176,8 +176,8 @@ async function mintSessionToken(
 			token = extractSessionToken(response);
 		} catch (error) {
 			throw new NodeApiError(this.getNode(), response as unknown as JsonObject, {
-				message: 'LiveConnect rechazó la renovación del token de sesión',
-				description: `${(error as Error).message} Abre la credencial "LiveConnect API" y verifica la cKey y la clave privada.`,
+				message: 'LiveConnect rejected the session token renewal',
+				description: `${(error as Error).message} Open the "LiveConnect API" credential and check the cKey and private key.`,
 				httpCode: '401',
 			});
 		}
@@ -482,12 +482,12 @@ export async function prepareTemplateSend(
 			const lista = faltantes.map((n) => `{{${n}}}`).join(', ');
 			throw new NodeOperationError(
 				this.getNode(),
-				`La plantilla «${nombre}» necesita ${total === 1 ? 'una variable' : `${total} variables`} y ${faltantes.length === 1 ? 'falta el valor de' : 'faltan los valores de'} ${lista}`,
+				`Template "${nombre}" needs ${total === 1 ? 'one variable' : `${total} variables`} and ${faltantes.length === 1 ? 'is missing the value of' : 'is missing the values of'} ${lista}`,
 				{
 					description:
-						`Llena ${faltantes.length === 1 ? 'el campo' : 'los campos'} ${faltantes.map((n) => `"Variable {{${n}}}"`).join(', ')} debajo del selector de plantilla.` +
-						(ejemplo !== '' ? ` La plantilla trae este ejemplo: ${ejemplo}.` : '') +
-						' También puedes activar "Usar Datos de Ejemplo" en Campos Adicionales para una prueba rápida.',
+						`Fill in ${faltantes.length === 1 ? 'the field' : 'the fields'} ${faltantes.map((n) => `"Variable {{${n}}}"`).join(', ')} below the template selector.` +
+						(ejemplo !== '' ? ` The template includes this example: ${ejemplo}.` : '') +
+						' You can also enable "Use Sample Data" in Additional Fields for a quick test.',
 				},
 			);
 		}
@@ -513,12 +513,12 @@ export async function prepareTemplateSend(
 		const medioPropio = typeof ejemploUrl === 'string' && ejemploUrl !== '';
 		if (url === '' && yaConfigurada === undefined && !medioPropio) {
 			const medio =
-				headerFormat === 'IMAGE' ? 'una imagen' : headerFormat === 'VIDEO' ? 'un video' : 'un documento';
+				headerFormat === 'IMAGE' ? 'an image' : headerFormat === 'VIDEO' ? 'a video' : 'a document';
 			throw new NodeOperationError(
 				this.getNode(),
-				`La plantilla «${nombre}» lleva ${medio} en el encabezado y falta su URL`,
+				`Template "${nombre}" has ${medio} in the header and its URL is missing`,
 				{
-					description: `Pega la URL pública ${headerFormat === 'IMAGE' ? 'de la imagen' : headerFormat === 'VIDEO' ? 'del video' : 'del documento'} en el campo "URL del Encabezado". Debe ser accesible desde internet.`,
+					description: `Paste the public URL ${headerFormat === 'IMAGE' ? 'of the image' : headerFormat === 'VIDEO' ? 'of the video' : 'of the document'} in the "Header URL" field. It must be accessible from the internet.`,
 				},
 			);
 		}
@@ -553,12 +553,12 @@ function describeRequestContext(ctx: IExecuteSingleFunctions): string {
 
 		const variables = readNumberedVariables(ctx);
 		const partes = [
-			`plantilla: ${String(ctx.getNodeParameter('id_plantilla', '')) || '(sin elegir)'}`,
-			`canal: ${String(ctx.getNodeParameter('id_canal', '')) || '(sin elegir)'}`,
-			`número: ${String(ctx.getNodeParameter('numero', '')) || '(vacío)'}`,
-			`variables enviadas: ${variables.length}`,
+			`template: ${String(ctx.getNodeParameter('id_plantilla', '')) || '(not selected)'}`,
+			`channel: ${String(ctx.getNodeParameter('id_canal', '')) || '(not selected)'}`,
+			`number: ${String(ctx.getNodeParameter('numero', '')) || '(empty)'}`,
+			`variables sent: ${variables.length}`,
 		];
-		return `. Datos del envío → ${partes.join(' · ')}. Comprueba que la plantilla esté APROBADA para ese canal y que el número incluya el código de país.`;
+		return `. Send data → ${partes.join(' · ')}. Check that the template is APPROVED for that channel and that the number includes the country code.`;
 	} catch {
 		return '';
 	}
@@ -597,18 +597,18 @@ export async function handleLcResponse(
 			if (credentials.cKey) burnCurrentToken(credentials.cKey);
 
 			throw new NodeApiError(this.getNode(), body as JsonObject, {
-				message: 'El token de sesión de LiveConnect no es válido o expiró',
+				message: 'The LiveConnect session token is invalid or expired',
 				description:
-					'LiveConnect respondió "Token no valido!" (status -403). El token de sesión dura ~10 minutos ' +
-					'y el nodo lo renueva solo: vuelve a ejecutar el workflow y debería funcionar. Si el error se ' +
-					'repite, abre la credencial "LiveConnect API" y verifica la cKey y la clave privada.',
+					'LiveConnect responded "Token no valido!" (status -403). The session token lasts ~10 minutes ' +
+					'and the node renews it automatically: run the workflow again and it should work. If the error ' +
+					'keeps happening, open the "LiveConnect API" credential and check the cKey and private key.',
 				httpCode: String(response.statusCode),
 			});
 		}
 
 		throw new NodeApiError(this.getNode(), body as JsonObject, {
 			message: (body.status_message as string) || 'LiveConnect API error',
-			description: `LiveConnect devolvió status ${status}${describeRequestContext(this)}`,
+			description: `LiveConnect returned status ${status}${describeRequestContext(this)}`,
 			httpCode: String(response.statusCode),
 		});
 	}

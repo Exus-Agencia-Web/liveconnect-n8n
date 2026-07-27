@@ -45,11 +45,11 @@ async function lcRequest(
 	} catch (error) {
 		throw new NodeOperationError(
 			ctx.getNode(),
-			'No se pudo cargar la lista desde LiveConnect',
+			'Could not load the list from LiveConnect',
 			{
 				description:
-					'Verifica que la credencial "LiveConnect API" esté configurada y que la cuenta tenga ' +
-					`acceso a ${endpoint}. Detalle: ${(error as Error).message ?? 'error desconocido'}`,
+					'Check that the "LiveConnect API" credential is configured and that the account has ' +
+					`access to ${endpoint}. Detail: ${(error as Error).message ?? 'unknown error'}`,
 			},
 		);
 	}
@@ -61,17 +61,17 @@ async function lcRequest(
 			await burnTokenForContext(tokenContext);
 			throw new NodeOperationError(
 				ctx.getNode(),
-				'El token de sesión de LiveConnect expiró al cargar la lista',
+				'The LiveConnect session token expired while loading the list',
 				{
 					description:
-						'Vuelve a abrir el desplegable: el nodo emitirá un token nuevo. Si el error se repite, ' +
-						'revisa la cKey y la clave privada de la credencial "LiveConnect API".',
+						'Open the dropdown again: the node will issue a new token. If the error keeps happening, ' +
+						'check the cKey and private key of the "LiveConnect API" credential.',
 				},
 			);
 		}
 		throw new NodeOperationError(
 			ctx.getNode(),
-			`LiveConnect no devolvió la lista: ${response.status_message ?? 'error'} (status ${response.status})`,
+			`LiveConnect did not return the list: ${response.status_message ?? 'error'} (status ${response.status})`,
 		);
 	}
 
@@ -154,11 +154,11 @@ function readParameter(
 		// En el editor las expresiones no están resueltas: no se puede consultar el API.
 		throw new NodeOperationError(
 			ctx.getNode(),
-			`No se puede cargar la lista mientras ${label} use una expresión`,
+			`The list cannot be loaded while ${label} uses an expression`,
 			{
 				description:
-					`Escribe temporalmente un valor fijo en ${label} para elegir de la lista, o rellena ` +
-					'este campo también con una expresión.',
+					`Temporarily type a fixed value in ${label} to choose from the list, or also fill in ` +
+					'this field with an expression.',
 			},
 		);
 	}
@@ -239,11 +239,11 @@ export async function getPipelines(this: ILoadOptionsFunctions): Promise<INodePr
 }
 
 export async function getStages(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
-	const idPipeline = dependencyValue(this, 'id_pipeline', 'el Pipeline');
+	const idPipeline = dependencyValue(this, 'id_pipeline', 'the Pipeline');
 	if (idPipeline === undefined) {
 		throw new NodeOperationError(
 			this.getNode(),
-			'Selecciona primero el Pipeline para poder listar sus etapas',
+			'Select the Pipeline first to list its stages',
 		);
 	}
 	return toOptions(await lcList(this, '/crm/getStages', 'POST', { id_pipeline: Number(idPipeline) }));
@@ -269,11 +269,11 @@ export async function getAssistants(this: ILoadOptionsFunctions): Promise<INodeP
 export async function getWabaTemplates(
 	this: ILoadOptionsFunctions,
 ): Promise<INodePropertyOptions[]> {
-	const idCanal = dependencyValue(this, 'id_canal', 'el Canal');
+	const idCanal = dependencyValue(this, 'id_canal', 'the Channel');
 	if (idCanal === undefined) {
 		throw new NodeOperationError(
 			this.getNode(),
-			'Selecciona primero el Canal para poder listar sus plantillas',
+			'Select the Channel first to list its templates',
 		);
 	}
 	const rows = await lcList(this, '/direct/waba/getTemplates', 'POST', {
@@ -333,14 +333,14 @@ function describeTemplateNeeds(row: IDataObject): string {
 	const variables = countBodyVariables(row);
 	if (variables > 0) partes.push(variables === 1 ? '1 variable' : `${variables} variables`);
 
-	if (headerFormat === 'IMAGE') partes.push('imagen');
+	if (headerFormat === 'IMAGE') partes.push('image');
 	else if (headerFormat === 'VIDEO') partes.push('video');
-	else if (headerFormat === 'DOCUMENT') partes.push('documento');
+	else if (headerFormat === 'DOCUMENT') partes.push('document');
 
 	const botones = fields.filter((f) => f.id.startsWith('button_')).length;
-	if (botones > 0) partes.push(botones === 1 ? 'botón' : `${botones} botones`);
+	if (botones > 0) partes.push(botones === 1 ? 'button' : `${botones} buttons`);
 
-	if (partes.length === 0) return 'sin variables';
+	if (partes.length === 0) return 'no variables';
 	return partes.join(' · ');
 }
 

@@ -72,8 +72,7 @@ export const crmFields: INodeProperties[] = [
 		typeOptions: { loadOptionsMethod: 'getPipelines' },
 		required: true,
 		default: '',
-		description:
-			'ID of the pipeline whose stages are listed. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
+		description: 'ID of the pipeline whose stages are listed. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 		displayOptions: {
 			show: {
 				resource: ['crm'],

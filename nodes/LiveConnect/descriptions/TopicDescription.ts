@@ -105,8 +105,7 @@ export const topicFields: INodeProperties[] = [
 				type: 'options',
 				typeOptions: { loadOptionsMethod: 'getAssistants' },
 				default: '',
-				description:
-					'ID of the assistant that owns the topic. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
+				description: 'ID of the assistant that owns the topic. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 				routing: { send: { type: 'body', property: 'id_assistant' } },
 			},
 		],
@@ -134,8 +133,7 @@ export const topicFields: INodeProperties[] = [
 				type: 'options',
 				typeOptions: { loadOptionsMethod: 'getAssistants' },
 				default: '',
-				description:
-					'Filter by the assistant that owns the topic. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
+				description: 'Filter by the assistant that owns the topic. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 				routing: { send: { type: 'query', property: 'id_assistant' } },
 			},
 			{
@@ -204,8 +202,7 @@ export const topicFields: INodeProperties[] = [
 				type: 'options',
 				typeOptions: { loadOptionsMethod: 'getAssistants' },
 				default: '',
-				description:
-					'ID of the assistant that owns the topic. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
+				description: 'ID of the assistant that owns the topic. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 				routing: { send: { type: 'body', property: 'id_assistant' } },
 			},
 			{

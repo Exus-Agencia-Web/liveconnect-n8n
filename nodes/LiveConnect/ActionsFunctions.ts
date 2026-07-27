@@ -2,20 +2,20 @@ import type { IDataObject, INode } from 'n8n-workflow';
 import { NodeOperationError } from 'n8n-workflow';
 
 const LABELS: Record<string, string> = {
-	sendText: 'Enviar Texto',
-	sendImage: 'Enviar Imagen',
-	sendFile: 'Enviar Archivo',
-	addTag: 'Agregar Etiqueta',
-	userDelegate: 'Delegar a Usuario',
-	teamDelegate: 'Delegar a Equipo',
-	addVar: 'Crear Variable',
-	setVar: 'Actualizar Variable',
-	input: 'Esperar Respuesta',
-	updateContact: 'Actualizar Contacto',
+	sendText: 'Send Text',
+	sendImage: 'Send Image',
+	sendFile: 'Send File',
+	addTag: 'Add Tag',
+	userDelegate: 'Delegate to User',
+	teamDelegate: 'Delegate to Team',
+	addVar: 'Create Variable',
+	setVar: 'Set Variable',
+	input: 'Wait for Reply',
+	updateContact: 'Update Contact',
 };
 
 function fail(node: INode, itemIndex: number, pos: number, tipo: string, detalle: string): never {
-	throw new NodeOperationError(node, `Acción #${pos} (${LABELS[tipo] ?? tipo}): ${detalle}`, {
+	throw new NodeOperationError(node, `Action #${pos} (${LABELS[tipo] ?? tipo}): ${detalle}`, {
 		itemIndex,
 	});
 }
@@ -34,7 +34,7 @@ function rejectNonScalar(
 			itemIndex,
 			pos,
 			tipo,
-			`el campo "${campo}" debe ser texto, pero la expresión devolvió un ${Array.isArray(value) ? 'array' : 'objeto'} — revisa la ruta de tu expresión (p.ej. usa contacto.nombre en vez de contacto)`,
+			`field "${campo}" must be text, but the expression returned an ${Array.isArray(value) ? 'array' : 'object'} — check the path of your expression (e.g. use contacto.nombre instead of contacto)`,
 		);
 	}
 }
@@ -49,7 +49,7 @@ function requireText(
 ): string {
 	rejectNonScalar(node, itemIndex, pos, tipo, campo, value);
 	const s = typeof value === 'string' ? value.trim() : String(value ?? '').trim();
-	if (s === '') fail(node, itemIndex, pos, tipo, `el campo "${campo}" es obligatorio y no puede quedar vacío`);
+	if (s === '') fail(node, itemIndex, pos, tipo, `field "${campo}" is required and cannot be left empty`);
 	return s;
 }
 
@@ -69,7 +69,7 @@ function requireUrl(
 	} catch {
 		valid = false;
 	}
-	if (!valid) fail(node, itemIndex, pos, tipo, `"${s}" no es una URL http(s) válida en el campo "${campo}"`);
+	if (!valid) fail(node, itemIndex, pos, tipo, `"${s}" is not a valid http(s) URL in field "${campo}"`);
 	return s;
 }
 
@@ -84,10 +84,10 @@ function requireId(
 	// Number('') === 0 pasa Number.isInteger: rechazar vacío ANTES de castear.
 	// Solo number|string: Number(true)===1 y Number([5])===5 colarían IDs fantasma.
 	if (value === '' || value === null || value === undefined) {
-		fail(node, itemIndex, pos, tipo, `el campo "${campo}" es obligatorio`);
+		fail(node, itemIndex, pos, tipo, `field "${campo}" is required`);
 	}
 	if (typeof value !== 'number' && typeof value !== 'string') {
-		fail(node, itemIndex, pos, tipo, `"${String(value)}" no es un ID válido en "${campo}" (debe ser un entero mayor que 0)`);
+		fail(node, itemIndex, pos, tipo, `"${String(value)}" is not a valid ID in "${campo}" (must be an integer greater than 0)`);
 	}
 	const n = Number(value);
 	if (!Number.isInteger(n) || n <= 0) {
@@ -96,7 +96,7 @@ function requireId(
 			itemIndex,
 			pos,
 			tipo,
-			`"${String(value)}" no es un ID válido en "${campo}" (debe ser un entero mayor que 0)`,
+			`"${String(value)}" is not a valid ID in "${campo}" (must be an integer greater than 0)`,
 		);
 	}
 	return n;
@@ -153,7 +153,7 @@ export function toAction(node: INode, ui: IDataObject, pos: number, itemIndex: n
 				value: asStr(ui.value),
 			};
 		default:
-			throw new NodeOperationError(node, `Acción #${pos}: tipo "${tipo}" no soportado`, {
+			throw new NodeOperationError(node, `Action #${pos}: type "${tipo}" not supported`, {
 				itemIndex,
 			});
 	}

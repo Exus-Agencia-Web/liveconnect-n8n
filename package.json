@@ -1,69 +1,64 @@
 {
-	"name": "n8n-nodes-liveconnect",
-	"version": "0.9.2",
-	"description": "n8n community node for the LiveConnect API (omnichannel messaging + CRM): contacts, conversations, WhatsApp QR & Business API, CRM deals, catalog, AI assistants and more",
-	"keywords": [
-		"n8n-community-node-package",
-		"liveconnect",
-		"whatsapp",
-		"waba",
-		"crm",
-		"chat",
-		"omnichannel",
-		"messaging",
-		"trigger",
-		"chatbot"
-	],
-	"license": "MIT",
-	"homepage": "https://liveconnect.chat",
-	"author": {
-		"name": "Herduin Rivera",
-		"email": "hrivera@exus.com.co"
-	},
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/Exus-Agencia-Web/liveconnect-n8n.git"
-	},
-	"engines": {
-		"node": ">=20.15"
-	},
-	"main": "index.js",
-	"scripts": {
-		"build": "tsc && gulp build:icons",
-		"dev": "tsc --watch",
-		"format": "prettier nodes credentials --write",
-		"lint": "eslint nodes credentials package.json",
-		"lintfix": "eslint nodes credentials package.json --fix",
-		"verify": "node scripts/verify-spec.mjs",
-		"smoke": "node scripts/smoke-triggers.mjs && node scripts/smoke-response.mjs && node scripts/smoke-token.mjs && node scripts/smoke-loadoptions.mjs && node scripts/smoke-template-fields.mjs",
-		"prepublishOnly": "npm run build && eslint -c .eslintrc.prepublish.js nodes credentials package.json"
-	},
-	"files": [
-		"dist"
-	],
-	"n8n": {
-		"n8nNodesApiVersion": 1,
-		"credentials": [
-			"dist/credentials/LiveConnectApi.credentials.js"
-		],
-		"nodes": [
-			"dist/nodes/LiveConnect/LiveConnect.node.js",
-			"dist/nodes/LiveConnect/LiveConnectCallbackResponse.node.js",
-			"dist/nodes/LiveConnect/LiveConnectCallbackTrigger.node.js",
-			"dist/nodes/LiveConnect/LiveConnectProxyTrigger.node.js"
-		]
-	},
-	"devDependencies": {
-		"@types/node": "^20.19.43",
-		"@typescript-eslint/parser": "~8.32.0",
-		"eslint": "^8.57.0",
-		"eslint-plugin-n8n-nodes-base": "^1.16.3",
-		"gulp": "^5.0.0",
-		"n8n-workflow": "^1.82.0",
-		"prettier": "^3.5.3",
-		"typescript": "^5.8.2"
-	},
-	"peerDependencies": {
-		"n8n-workflow": "*"
-	}
+  "name": "n8n-nodes-liveconnect",
+  "version": "0.9.2",
+  "description": "n8n community node for the LiveConnect API (omnichannel messaging + CRM): contacts, conversations, WhatsApp QR & Business API, CRM deals, catalog, AI assistants and more",
+  "keywords": [
+    "n8n-community-node-package",
+    "liveconnect",
+    "whatsapp",
+    "waba",
+    "crm",
+    "chat",
+    "omnichannel",
+    "messaging",
+    "trigger",
+    "chatbot"
+  ],
+  "license": "MIT",
+  "homepage": "https://liveconnect.chat",
+  "author": { "name": "Herduin Rivera", "email": "hrivera@exus.com.co" },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Exus-Agencia-Web/liveconnect-n8n.git"
+  },
+  "engines": { "node": ">=20.15" },
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc && gulp build:icons",
+    "build:es": "npm run build && node scripts/build-es-package.mjs && node scripts/smoke-i18n.mjs",
+    "dev": "n8n-node dev",
+    "format": "prettier nodes credentials --write",
+    "lint": "n8n-node lint",
+    "lintfix": "n8n-node lint --fix",
+    "verify": "node scripts/verify-spec.mjs",
+    "smoke": "node scripts/smoke-triggers.mjs && node scripts/smoke-response.mjs && node scripts/smoke-token.mjs && node scripts/smoke-loadoptions.mjs && node scripts/smoke-template-fields.mjs",
+    "smoke:i18n": "node scripts/build-es-package.mjs && node scripts/smoke-i18n.mjs",
+    "scan": "npx @n8n/scan-community-package n8n-nodes-liveconnect",
+    "prepublishOnly": "npm run build && npm run lint",
+    "i18n:status": "node scripts/i18n-status.mjs"
+  },
+  "files": ["dist"],
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "credentials": ["dist/credentials/LiveConnectApi.credentials.js"],
+    "nodes": [
+      "dist/nodes/LiveConnect/LiveConnect.node.js",
+      "dist/nodes/LiveConnect/LiveConnectCallbackResponse.node.js",
+      "dist/nodes/LiveConnect/LiveConnectCallbackTrigger.node.js",
+      "dist/nodes/LiveConnect/LiveConnectProxyTrigger.node.js"
+    ],
+    "strict": true
+  },
+  "devDependencies": {
+    "@n8n/node-cli": "^0.40.3",
+    "@types/node": "^20.19.43",
+    "@typescript-eslint/parser": "~8.32.0",
+    "eslint": "^8.57.0",
+    "eslint-plugin-n8n-nodes-base": "^1.16.3",
+    "gulp": "^5.0.0",
+    "n8n-workflow": "^1.82.0",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.2"
+  },
+  "peerDependencies": { "n8n-workflow": "*" }
 }

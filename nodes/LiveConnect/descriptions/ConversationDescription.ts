@@ -41,8 +41,7 @@ export const conversationFields: INodeProperties[] = [
 		typeOptions: { loadOptionsMethod: 'getChannels' },
 		required: true,
 		default: '',
-		description:
-			'ID of the account channel through which the conversation is started. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
+		description: 'ID of the account channel through which the conversation is started. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 		displayOptions: {
 			show: {
 				resource: ['conversation'],

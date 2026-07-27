@@ -74,8 +74,7 @@ export const whatsAppFields: INodeProperties[] = [
 		typeOptions: { loadOptionsMethod: 'getWhatsAppChannels' },
 		required: true,
 		default: '',
-		description:
-			'WhatsApp QR channel ID (table wa_instances). Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
+		description: 'WhatsApp QR channel ID (table wa_instances). Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 		displayOptions: {
 			show: {
 				resource: ['whatsapp'],
@@ -114,8 +113,7 @@ export const whatsAppFields: INodeProperties[] = [
 		typeOptions: { loadOptionsMethod: 'getWhatsAppChannels' },
 		required: true,
 		default: '',
-		description:
-			'WhatsApp QR channel ID (table wa_instances). Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
+		description: 'WhatsApp QR channel ID (table wa_instances). Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 		displayOptions: {
 			show: {
 				resource: ['whatsapp'],
@@ -210,8 +208,7 @@ export const whatsAppFields: INodeProperties[] = [
 		typeOptions: { loadOptionsMethod: 'getWhatsAppChannels' },
 		required: true,
 		default: '',
-		description:
-			'WhatsApp QR channel ID (table wa_instances). Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
+		description: 'WhatsApp QR channel ID (table wa_instances). Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 		displayOptions: {
 			show: {
 				resource: ['whatsapp'],
@@ -291,8 +288,7 @@ export const whatsAppFields: INodeProperties[] = [
 		typeOptions: { loadOptionsMethod: 'getWhatsAppChannels' },
 		required: true,
 		default: '',
-		description:
-			'WhatsApp QR channel ID (table wa_instances). Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
+		description: 'WhatsApp QR channel ID (table wa_instances). Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 		displayOptions: {
 			show: {
 				resource: ['whatsapp'],

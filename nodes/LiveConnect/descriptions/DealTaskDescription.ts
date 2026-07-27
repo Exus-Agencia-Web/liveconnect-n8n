@@ -136,8 +136,7 @@ export const dealTaskFields: INodeProperties[] = [
 				type: 'options',
 				typeOptions: { loadOptionsMethod: 'getUsers' },
 				default: '',
-				description:
-					'Assigned user; defaults to the deal owner. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
+				description: 'Assigned user; defaults to the deal owner. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 				routing: { send: { type: 'body', property: 'id_usuario' } },
 			},
 			{
@@ -220,8 +219,7 @@ export const dealTaskFields: INodeProperties[] = [
 				type: 'options',
 				typeOptions: { loadOptionsMethod: 'getUsers' },
 				default: '',
-				description:
-					'Alias of Assigned User ID to reassign the task. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
+				description: 'Alias of Assigned User ID to reassign the task. Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 				routing: { send: { type: 'body', property: 'id_asignado' } },
 			},
 			{
@@ -230,8 +228,7 @@ export const dealTaskFields: INodeProperties[] = [
 				type: 'options',
 				typeOptions: { loadOptionsMethod: 'getUsers' },
 				default: '',
-				description:
-					'Reassigns the task to this user (alias: id_asignado). Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>',
+				description: 'Reassigns the task to this user (alias: id_asignado). Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>.',
 				routing: { send: { type: 'body', property: 'id_usuario' } },
 			},
 			{

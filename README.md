@@ -1,37 +1,65 @@
 # n8n-nodes-liveconnect
 
-Nodo comunitario de [n8n](https://n8n.io) para la **API pública de LiveConnect** (mensajería omnicanal + CRM): contactos, conversaciones, WhatsApp QR, WhatsApp Business API (WABA), CRM (deals, tareas, automatizaciones), catálogo, asistentes de IA, historial y más.
+Community node for [n8n](https://n8n.io) that integrates the **LiveConnect public API** — omnichannel messaging and CRM: contacts, conversations, WhatsApp QR, WhatsApp Business API (WABA), CRM deals, tasks and automations, product catalog, AI assistants, conversation history and more.
 
-Cubre las 58 operaciones de la [especificación OpenAPI pública](https://cdn.liveconnect.chat/liveconnect/public-openapi.json) (la emisión de token es automática vía credenciales), más **dos triggers**: notificaciones del proxy de conversaciones y callbacks del chatbot (Flowbot).
+It covers all 58 operations of the [public OpenAPI specification](https://cdn.liveconnect.chat/liveconnect/public-openapi.json) (token issuing is handled automatically by the credential), plus **two triggers** — conversation proxy notifications and chatbot (Flowbot) callbacks — and a node that builds callback responses visually.
 
-## Instalación
+> This package is being prepared for submission to the n8n verified community nodes program.
 
-En n8n: **Settings → Community Nodes → Install** e ingresa `n8n-nodes-liveconnect`.
+## What is LiveConnect
 
-Manual (self-hosted):
+[LiveConnect](https://liveconnect.chat) is an omnichannel customer communication platform: it centralizes WhatsApp, Facebook, Instagram, Telegram and web chat conversations, routes them to agents or bots, and includes a CRM with deals, tasks and automations. This node lets n8n read from and write to that platform.
+
+## Features
+
+- **58 operations** across 18 resources, all derived from the official OpenAPI spec.
+- **Two triggers**: conversation proxy notifications (registers its own webhook) and Flowbot callbacks (synchronous response).
+- **Visual callback response builder** — compose the bot's actions without a Code node.
+- **Dynamic dropdowns** for every ID field (channels, teams, agents, pipelines, stages, lead origins, categories, assistants, WABA templates), loaded from your own account.
+- **WhatsApp template sending** that shows exactly the fields the chosen template needs, and validates before calling the API.
+- **Automatic session-token lifecycle**: issued, cached and renewed transparently.
+- Usable as an **AI Agent tool** (`usableAsTool`).
+
+## Requirements
+
+- n8n 1.82 or newer (self-hosted, or n8n Cloud once the node is verified).
+- Node.js 20.15 or newer.
+- A LiveConnect account with API access (account key and private key).
+
+## Installation
+
+### Verified community nodes panel
+
+Once the node is verified, install it from **Settings → Community Nodes → Browse** and search for `n8n-nodes-liveconnect`.
+
+### Self-hosted n8n
+
+**Settings → Community Nodes → Install**, then enter `n8n-nodes-liveconnect`.
+
+Manual install:
 
 ```bash
 cd ~/.n8n/nodes
 npm install n8n-nodes-liveconnect
 ```
 
-## Credenciales
+## Credentials
 
-Crea credenciales **LiveConnect API** con:
+Create a **LiveConnect API** credential with:
 
-| Campo | Descripción |
+| Field | Description |
 |---|---|
-| Account Key (cKey) | Hash de la cuenta LiveConnect |
-| Private Key | Clave privada de la cuenta |
+| Account Key (cKey) | LiveConnect account hash |
+| Private Key (privateKey) | LiveConnect account private key |
 
-El nodo llama a `POST /account/token` automáticamente, guarda el JWT de sesión y lo envía en el header `PageGearToken`. Cuando el token expira (401), se renueva solo.
+The node calls `POST /account/token` on your behalf, caches the session JWT and sends it in the `PageGearToken` header. The token lives for about 10 minutes and is renewed automatically before it expires.
 
-## Recursos y operaciones
+## Resources and operations
 
-| Recurso | Operaciones |
+| Resource | Operations |
 |---|---|
 | **Assistant** | Get Many, Create, Update |
-| **Topic** | Get Many, Create, Update (memorias de asistentes) |
+| **Topic** | Get Many, Create, Update (assistant memories) |
 | **Category** | Get Many, Create, Update |
 | **Product** | Get Many, Create, Update |
 | **Channel** | Get Many |
@@ -41,7 +69,7 @@ El nodo llama a `POST /account/token` automáticamente, guarda el JWT de sesión
 | **CRM Automation** | Create, Update, Delete |
 | **Deal** | Create, Update, Archive |
 | **Deal Task** | Create, Update, Delete |
-| **Group** | Get Many |
+| **Team** | Get Many |
 | **History** | Get Many Conversations, Get Conversation, Get Messages, Get Participants, Get Attachments |
 | **Proxy** | Get Webhook, Set Webhook, Send Message, Send File, Send Quick Reply, Transfer, Get Balance |
 | **Quick Reply** | Create, Update |
@@ -53,74 +81,90 @@ El nodo llama a `POST /account/token` automáticamente, guarda el JWT de sesión
 
 ### LiveConnect Proxy Trigger
 
-Se dispara con las notificaciones del **proxy de conversaciones**. Gestiona el webhook del canal solo: al activar el workflow lo registra (`/proxy/setWebhook`) y al desactivarlo lo elimina. Si dejas el campo Secret vacío, genera uno seguro automáticamente y valida cada notificación entrante.
+Fires on **conversation proxy notifications**. It manages the channel webhook by itself: it registers it (`POST /proxy/setWebhook`) when the workflow is activated and removes it when deactivated. Leave the Secret field empty and it generates a secure one, then validates every incoming notification against it.
 
-> ⚠️ LiveConnect permite **un solo webhook por canal**: no actives dos workflows con el mismo Channel ID (se roban el registro entre sí; probar con "Listen for test event" también reemplaza temporalmente el webhook de producción).
+> ⚠️ LiveConnect allows **one webhook per channel**. Do not activate two workflows with the same Channel ID — they overwrite each other's registration. "Listen for test event" also replaces the production webhook while it listens.
 
 ### LiveConnect Callback Trigger
 
-Recibe los **callbacks del chatbot (Flowbot)**. Activa el workflow y pega la URL Production del trigger en la acción de callback del Flowbot. El trigger valida el secret (query o header) y entrega el evento simplificado: `mensaje` (resuelve el primer turno desde `inputs.mensaje_inicial`), `sessionId` estable para memoria, `esPrimerTurno`, `hayAgenteHumano`, `contacto`, `inputs`, `intent` y `raw`.
+Receives **chatbot (Flowbot) callbacks**. Activate the workflow and paste the trigger's Production URL into your Flowbot's callback action. The trigger validates the secret (query string or header) and outputs a simplified event: the user message (resolving the first turn from `inputs.mensaje_inicial`), a stable session ID for memory, whether it is the first turn, whether a human agent is in the conversation, contact data, inputs, intent and the raw payload.
 
-**El callback exige respuesta síncrona.** La forma fácil (v0.4.0+): el nodo **LiveConnect Respuesta al Callback** arma las acciones visualmente desde el editor (texto, imagen, archivo, etiqueta, variables, delegación, actualizar contacto), aplica solo la regla del `input` de cierre y **responde el webhook él mismo** — sin Code ni Respond to Webhook. Ver [`examples/09-chatbot-callback-visual.json`](examples/09-chatbot-callback-visual.json).
+Both triggers expose a **Webhook Path** field, so you can give each one a readable URL when you run several bots.
 
-Si prefieres construirla a mano, este es el envelope (devuélvelo con un nodo *Respond to Webhook*):
+#### The callback requires a synchronous response
+
+LiveConnect expects the actions in the same HTTP response:
 
 ```json
 { "status": 1, "status_message": "Ok", "data": { "actions": [
-  { "type": "sendText", "text": "¡Hola! ¿En qué puedo ayudarte?" },
+  { "type": "sendText", "text": "Hi! How can I help you?" },
   { "type": "input", "input": "" }
 ] } }
 ```
 
-Regla de oro: **cierra siempre con una acción `input`** (vacía sirve) — sin ella LiveConnect abandona el callback y no vuelve a llamar. Única excepción: cuando delegas a un humano (`userDelegate`/`teamDelegate`). Tipos de action soportados: `sendText`, `sendImage`, `sendFile`, `addTag`, `userDelegate`, `teamDelegate`, `addVar`, `setVar`, `input`, `updateContact`. Ver el ejemplo [`examples/07-chatbot-callback-trigger.json`](examples/07-chatbot-callback-trigger.json).
+The easy way is the **LiveConnect Callback Response** node: it builds the actions from the editor (text, image, file, tag, variables, delegation, contact update), applies the closing rule and answers the webhook itself — no Code node, no Respond to Webhook. See [`examples/09-chatbot-callback-visual.json`](examples/09-chatbot-callback-visual.json).
 
-## Selectores dinámicos
+**Closing rule:** always end with an `input` action (an empty one works). Without it LiveConnect abandons the callback and never calls again. The only exception is delegating to a human (`userDelegate` / `teamDelegate`). Supported action types: `sendText`, `sendImage`, `sendFile`, `addTag`, `userDelegate`, `teamDelegate`, `addVar`, `setVar`, `input`, `updateContact`.
 
-Los campos de ID (canal, equipo, agente, pipeline, etapa, origen de lead, categoría, asistente, plantilla WABA) son **listas desplegables** que se cargan desde tu propia cuenta de LiveConnect: no hace falta buscar los IDs a mano. Las etapas se filtran por el pipeline elegido y las plantillas por el canal WABA elegido. Si prefieres pasar un ID desde otro nodo, usa el modo expresión del campo.
+## Dynamic dropdowns
 
-## Enviar una plantilla de WhatsApp
+ID fields (channel, team, agent, pipeline, stage, lead origin, category, assistant, WABA template) are **dropdowns loaded from your own LiveConnect account**, so you never have to look up IDs by hand. Stages are filtered by the selected pipeline, and templates by the selected WhatsApp channel. To pass an ID from another node, switch the field to expression mode.
 
-Es la operación que más datos combina, así que el nodo la resuelve por ti:
+## Sending a WhatsApp template
 
-1. Elige el **Canal** (solo aparecen los canales WhatsApp) y la **Plantilla**. La etiqueta del desplegable ya dice lo que hace falta: `promo_48h · es · 2 variables · video`.
-2. Aparecen **exactamente** los campos que esa plantilla necesita: `Variable {{1}}`, `Variable {{2}}`… y `URL del Encabezado` solo si la plantilla lleva imagen, video o documento. Si no lleva nada, no se muestra nada.
-3. **Execute step**. Si falta algo, el error dice cuál: *«La plantilla promo_48h necesita 2 variables y falta el valor de {{2}}»*.
+This is the operation that combines the most data, so the node does the work for you:
 
-Atajos útiles:
+1. Pick the **Channel** (only WhatsApp channels are listed) and the **Template**. The dropdown label already tells you what it needs: `promo_48h · es · 2 variables · video`.
+2. **Exactly** the fields that template requires appear: `Variable {{1}}`, `Variable {{2}}`… and the header URL only when the template carries an image, video or document. A template with neither shows neither.
+3. Run the step. If something is missing, the error names it: *"Template promo_48h needs 2 variables and the value of {{2}} is missing"*.
 
-- **Campos Adicionales → Usar Datos de Ejemplo**: rellena lo que dejes vacío con los ejemplos que trae la plantilla, para enviarte una prueba sin escribir nada.
-- **Envío masivo con una plantilla distinta por fila**: pon una expresión en *ID de la Plantilla* y manda los valores por *Campos Adicionales → Variables del Cuerpo Separadas por Comas*, en el orden `{{1}}, {{2}}…` (ver [`examples/02-envio-masivo-plantillas-waba.json`](examples/02-envio-masivo-plantillas-waba.json)).
+Shortcuts:
 
-## Respuesta del API
+- **Additional Fields → Use Sample Data**: fills whatever you left empty with the sample values the template ships with, so you can send yourself a test without typing anything.
+- **Bulk sending with a different template per row**: put an expression in the template field and pass the values through *Additional Fields → Body Variables (Comma-Separated)*, in `{{1}}, {{2}}…` order. See [`examples/02-envio-masivo-plantillas-waba.json`](examples/02-envio-masivo-plantillas-waba.json).
 
-LiveConnect responde siempre `{ status, status_message, data }` (`status > 0` éxito, `status < 0` error):
+## Using the node as an AI Agent tool
 
-- Con `status < 0` el nodo lanza error (visible en n8n con el mensaje del API).
-- Por defecto el nodo devuelve solo `data` (una fila por elemento cuando es un array).
-- Activa **Return Full Response** para recibir el envelope completo.
+The node is marked `usableAsTool`, so an AI Agent can call any of its operations directly, and fields accept the `$fromAI()` expression so the model can fill them in. [`examples/04-chatbot-ia-crm.json`](examples/04-chatbot-ia-crm.json) shows an agent that creates CRM deals out of a WhatsApp conversation.
 
-## Notas
+## API response format
 
-- Los archivos (Send File) se envían por **URL pública**, no como binarios.
-- El nodo es utilizable como **herramienta de AI Agents** (`usableAsTool`).
+LiveConnect always answers with `{ status, status_message, data }`, where `status > 0` means success and `status < 0` means error — **even when the HTTP status is 200**:
+
+- On `status < 0` the node throws, surfacing the API message in n8n.
+- By default the node returns only `data` (one item per element when it is an array).
+- Enable **Return Full Response** to get the whole envelope.
+
+## Notes
+
+- Files (Send File) are sent by **public URL**, never as binary data.
 - Base URL: `https://api.liveconnect.chat/prod`.
 
-## Ejemplos
+## Examples
 
-En [`examples/`](examples/) hay workflows importables listos para usar: envío masivo de plantillas WABA, chatbot con IA (con memoria por conversación), chatbot vendedor que crea negociaciones en el CRM usando el nodo como herramienta del AI Agent, reporte diario de conversaciones y alta validada de contactos. Ver [examples/README.md](examples/README.md).
+Ready-to-import workflows live in [`examples/`](examples/): bulk WABA template sending, an AI chatbot with per-conversation memory, an AI sales bot that creates CRM deals using this node as an agent tool, a daily conversation report, validated contact creation, and callback bots built both with and without code. See [examples/README.md](examples/README.md).
 
-## Desarrollo
+## Development
 
 ```bash
-npm install --ignore-scripts   # a secas falla: isolated-vm no compila en Node >= 26
-npm run build                  # tsc + íconos
-npm run lint
-npm run verify                 # compara el nodo compilado con el OpenAPI de LiveConnect
-npm run smoke                  # pruebas de humo (triggers, respuesta, token, selectores, plantillas)
+npm install --ignore-scripts   # plain `npm install` fails: isolated-vm does not build on Node >= 26
+npm run build                  # tsc + icons
+npm run lint                   # official n8n community-node lint rules
+npm run verify                 # diffs the compiled node against the LiveConnect OpenAPI spec
+npm run smoke                  # smoke tests (triggers, callback response, token, dropdowns, templates)
+npm run scan                   # official n8n community package scanner (runs against the published package)
 ```
 
-**Antes de tocar el código, lee [`docs/`](docs/)**: ahí está el comportamiento real del API (lo que el spec no documenta), las trampas del runtime de n8n y el historial de diseños que se descartaron y por qué. Empieza por [docs/README.md](docs/README.md).
+Before changing the code, read [`docs/`](docs/): it documents the API behaviour the spec does not, the n8n runtime pitfalls this package hit, and the designs that were discarded and why. Start with [docs/README.md](docs/README.md). Those development notes are kept in Spanish; everything shipped to users is in English.
 
-## Licencia
+## Links
+
+- LiveConnect: <https://liveconnect.chat>
+- Public API (OpenAPI): <https://cdn.liveconnect.chat/liveconnect/public-openapi.json>
+- Repository: <https://github.com/Exus-Agencia-Web/liveconnect-n8n>
+- Report an issue: <https://github.com/Exus-Agencia-Web/liveconnect-n8n/issues>
+- n8n community nodes: <https://docs.n8n.io/integrations/community-nodes/>
+
+## License
 
 [MIT](LICENSE.md)

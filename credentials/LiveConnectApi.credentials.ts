@@ -24,29 +24,29 @@ export class LiveConnectApi implements ICredentialType {
 	// hermanos bajo dist/, de ahí el "../" (gulpfile.js copia ambos svg tal cual).
 	icon: Icon = {
 		light: 'file:../nodes/LiveConnect/liveconnect2.svg',
-		dark: 'file:../nodes/LiveConnect/liveconnect2.svg',
+		dark: 'file:../nodes/LiveConnect/liveconnect2.dark.svg',
 	};
 
 	documentationUrl = 'https://cdn.liveconnect.chat/liveconnect/public-openapi.json';
 
 	properties: INodeProperties[] = [
 		{
-			displayName: 'Clave de Cuenta (cKey)',
+			displayName: 'Account Key (cKey)',
 			name: 'cKey',
 			type: 'string',
 			typeOptions: { password: true },
 			default: '',
 			required: true,
-			description: 'Hash de la cuenta LiveConnect',
+			description: 'LiveConnect account hash',
 		},
 		{
-			displayName: 'Clave Privada (privateKey)',
+			displayName: 'Private Key (privateKey)',
 			name: 'privateKey',
 			type: 'string',
 			typeOptions: { password: true },
 			default: '',
 			required: true,
-			description: 'Clave privada de la cuenta LiveConnect',
+			description: 'LiveConnect account private key',
 		},
 		{
 			displayName: 'Session Token',
@@ -78,8 +78,8 @@ export class LiveConnectApi implements ICredentialType {
 			})) as LcTokenResponse;
 		} catch (error) {
 			throw new Error(
-				'LiveConnect rechazó las credenciales (¿cKey o privateKey inválidos?). Respuesta del API: ' +
-					((error as Error).message ?? 'error desconocido'),
+				'LiveConnect rejected the credentials (invalid cKey or privateKey?). API response: ' +
+					((error as Error).message ?? 'unknown error'),
 			);
 		}
 
@@ -121,7 +121,7 @@ export class LiveConnectApi implements ICredentialType {
 				properties: {
 					key: 'status',
 					value: -403,
-					message: 'Token de sesión inválido: revisa la cKey y la clave privada',
+					message: 'Invalid session token. Check the account key and private key.',
 				},
 			},
 			{
@@ -129,7 +129,7 @@ export class LiveConnectApi implements ICredentialType {
 				properties: {
 					key: 'status',
 					value: -2,
-					message: 'Faltan la cKey o la clave privada en la credencial',
+					message: 'The account key or private key is missing from the credential.',
 				},
 			},
 		],
