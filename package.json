@@ -1,6 +1,6 @@
 {
 	"name": "n8n-nodes-liveconnect",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "n8n community node for the LiveConnect API (omnichannel messaging + CRM): contacts, conversations, WhatsApp QR & Business API, CRM deals, catalog, AI assistants and more",
 	"keywords": [
 		"n8n-community-node-package",
@@ -33,14 +33,15 @@
 		"build:es": "npm run build && node scripts/build-es-package.mjs && node scripts/smoke-i18n.mjs",
 		"dev": "n8n-node dev",
 		"format": "prettier nodes credentials --write",
-		"lint": "n8n-node lint",
-		"lintfix": "n8n-node lint --fix",
+		"lint": "n8n-node lint && node scripts/lint-scanner.mjs",
+		"lintfix": "n8n-node lint --fix && node scripts/lint-scanner.mjs --fix",
 		"verify": "node scripts/verify-spec.mjs",
 		"smoke": "node scripts/smoke-triggers.mjs && node scripts/smoke-response.mjs && node scripts/smoke-token.mjs && node scripts/smoke-loadoptions.mjs && node scripts/smoke-template-fields.mjs",
 		"smoke:i18n": "node scripts/build-es-package.mjs",
 		"scan": "npx @n8n/scan-community-package n8n-nodes-liveconnect",
 		"prepublishOnly": "npm run build && npm run lint",
-		"i18n:status": "node scripts/i18n-status.mjs"
+		"i18n:status": "node scripts/i18n-status.mjs",
+		"lint:scanner": "node scripts/lint-scanner.mjs"
 	},
 	"files": [
 		"dist"

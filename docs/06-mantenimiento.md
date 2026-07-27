@@ -120,6 +120,17 @@ El ícono actual es `liveconnect2.svg` (claro) y `liveconnect2.dark.svg` (oscuro
 
 El español se conserva como paquete aparte, `n8n-nodes-liveconnect-es`, generado desde este mismo código con el diccionario `i18n/es.json`. Detalle completo en [08-paquete-espanol.md](08-paquete-espanol.md).
 
+## El lint del proyecto NO basta: usa también `lint:scanner`
+
+`npm run lint` corre `n8n-node lint` **y** `scripts/lint-scanner.mjs`, y hacen cosas distintas:
+
+- `n8n-node lint` usa el preset de `@n8n/node-cli`, que **apaga** algunas reglas de `eslint-plugin-n8n-nodes-base`.
+- `lint:scanner` construye la config con `buildScanConfig()` del **propio escáner oficial**, así que ve exactamente lo que verá n8n.
+
+No es una precaución teórica: **v1.0.0 se publicó con `n8n-node lint` en 0 errores y el escáner encontró 2** (`node-param-fixed-collection-type-unsorted-items` y `node-param-display-name-miscased` en `LiveConnectCallbackResponse.node.ts`). Como `npx @n8n/scan-community-package` solo funciona contra un paquete **ya publicado**, el fallo solo se podía descubrir publicando — de ahí este script.
+
+El escáner se instala en `node_modules/.cache/n8n-scanner`, **no como devDependency**: arrastra su propio TypeScript 7 y su `@typescript-eslint` aborta si comparte árbol con el TypeScript 5 del proyecto (`typescript-eslint does not support TS 7.0`). La versión está fijada en el script porque su config de lint cambia entre versiones.
+
 ## Checklist antes de publicar
 
 - [ ] `npm run build` sin errores de TypeScript
