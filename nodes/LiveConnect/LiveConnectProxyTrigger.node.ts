@@ -20,7 +20,7 @@ import {
 	simplifyProxyEvent,
 } from './TriggerFunctions';
 
-/** Secret efectivo: el del parámetro, o el autogenerado persistido en staticData. */
+/** Effective secret: the one from the parameter, or the auto-generated one persisted in staticData. */
 function effectiveSecret(param: string, staticData: IDataObject): string {
 	if (param !== '') return param;
 	return typeof staticData.secret === 'string' ? staticData.secret : '';
@@ -57,9 +57,9 @@ export class LiveConnectProxyTrigger implements INodeType {
 				name: 'default',
 				httpMethod: 'POST',
 				responseMode: 'onReceived',
-				// Ruta configurable; el default reproduce la URL de versiones anteriores.
-				// Al cambiarla cambia la URL, y checkExists la ve distinta a la registrada
-				// en LiveConnect, así que el webhook se vuelve a dar de alta solo.
+				// Configurable path; the default reproduces the URL of earlier versions.
+				// Changing it changes the URL, and checkExists sees it as different from the one
+				// registered in LiveConnect, so the webhook re-registers itself automatically.
 				path: '={{$parameter["path"] || "webhook"}}',
 			},
 		],
@@ -112,8 +112,8 @@ export class LiveConnectProxyTrigger implements INodeType {
 
 	webhookMethods = {
 		default: {
-			// Registro en LiveConnect: POST /proxy/setWebhook con estado=1 da de alta o
-			// REEMPLAZA el webhook del canal (slot único); estado distinto de 1 lo elimina.
+			// Registration in LiveConnect: POST /proxy/setWebhook with estado=1 creates or
+			// REPLACES the channel's webhook (single slot); any other estado value removes it.
 			async checkExists(this: IHookFunctions): Promise<boolean> {
 				const idCanal = this.getNodeParameter('id_canal') as number;
 				const webhookUrl = this.getNodeWebhookUrl('default');
@@ -122,7 +122,7 @@ export class LiveConnectProxyTrigger implements INodeType {
 				try {
 					envelope = await lcHookRequest.call(this, '/proxy/getWebhook', { id_canal: idCanal });
 				} catch {
-					// Sin registro (o API caída): n8n llamará create()
+					// No registration (or the API is down): n8n will call create()
 					return false;
 				}
 				if (typeof envelope.status === 'number' && envelope.status < 0) return false;
@@ -131,18 +131,18 @@ export class LiveConnectProxyTrigger implements INodeType {
 				if (data === undefined) return false;
 				if (data.webhook !== webhookUrl) return false;
 
-				// TTL de DynamoDB vencido (epoch en segundos) → tratar como inexistente y re-registrar
+				// Expired DynamoDB TTL (epoch in seconds) → treat as nonexistent and re-register
 				const ttl = Number(data.TTL);
 				if (Number.isFinite(ttl) && ttl > 0 && ttl * 1000 < Date.now()) return false;
 
-				// Secret local desconocido (p.ej. staticData perdido tras un delete fallido):
-				// NUNCA dar el registro por válido — forzar create() para regenerar y persistir.
+				// Unknown local secret (e.g. staticData lost after a failed delete):
+				// NEVER treat the registration as valid — force create() to regenerate and persist it.
 				const expected = effectiveSecret(
 					this.getNodeParameter('secret', '') as string,
 					this.getWorkflowStaticData('node'),
 				);
 				if (expected === '') return false;
-				// Secret cambiado por el usuario → re-registrar con el nuevo
+				// Secret changed by the user → re-register with the new one
 				if (data.secret !== expected) return false;
 
 				return true;
@@ -156,7 +156,7 @@ export class LiveConnectProxyTrigger implements INodeType {
 				const staticData = this.getWorkflowStaticData('node');
 				let secret = effectiveSecret(this.getNodeParameter('secret', '') as string, staticData);
 				if (secret === '') {
-					// hex → inmune a problemas de encoding en query/header
+					// hex → immune to encoding issues in query/header
 					secret = randomBytes(16).toString('hex');
 				}
 
@@ -189,12 +189,12 @@ export class LiveConnectProxyTrigger implements INodeType {
 						estado: 0,
 						secret,
 					});
-					// Solo olvidar el secret local cuando el borrado remoto fue confirmado:
-					// si falló, el registro remoto sigue vivo con este secret y webhook()
-					// debe seguir validándolo.
+					// Only forget the local secret once the remote deletion is confirmed:
+					// if it failed, the remote registration is still alive with this secret and
+					// webhook() must keep validating against it.
 					delete staticData.secret;
 				} catch {
-					// Registro ya inexistente o API caída: no bloquear la desactivación del workflow
+					// Registration already gone or the API is down: don't block deactivating the workflow
 				}
 				return true;
 			},

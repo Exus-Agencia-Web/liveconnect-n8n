@@ -1,15 +1,21 @@
 #!/usr/bin/env node
 /**
- * Prueba de humo del nodo LiveConnect Respuesta al Callback sobre dist/.
+ * Prueba de humo del recurso Callback Response sobre dist/.
  * Uso: npm run build && node scripts/smoke-response.mjs
+ *
+ * Desde 2.0.0 no es un nodo aparte: n8n solo admite UN nodo regular por paquete
+ * verificado, así que la respuesta al callback es un recurso del nodo principal,
+ * implementado con `customOperations` (LiveConnect.node.ts).
  */
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
-const { LiveConnectCallbackResponse } = require('../dist/nodes/LiveConnect/LiveConnectCallbackResponse.node.js');
+const { LiveConnect } = require('../dist/nodes/LiveConnect/LiveConnect.node.js');
 
-const node = new LiveConnectCallbackResponse();
+const node = new LiveConnect();
+/** La operación custom que n8n invoca en vez del routing para este recurso. */
+const enviarRespuesta = node.customOperations.callbackResponse.send;
 
 function executeCtx({ params = {}, items = [{ json: {} }] } = {}) {
 	const sent = [];
@@ -43,7 +49,7 @@ await test('sendText + autoInput → cierre automático y sendResponse único', 
 			respondWebhook: true,
 		},
 	});
-	const out = await node.execute.call(ctx);
+	const out = await enviarRespuesta.call(ctx);
 	const envelope = out[0][0].json;
 	assert.deepEqual(envelope.data.actions, [
 		{ type: 'sendText', text: 'Hola' },
@@ -66,7 +72,7 @@ await test('input INTERMEDIO no cierra: se agrega input de cierre al final', asy
 			autoInput: true,
 		},
 	});
-	const actions = (await node.execute.call(ctx))[0][0].json.data.actions;
+	const actions = (await enviarRespuesta.call(ctx))[0][0].json.data.actions;
 	assert.equal(actions.length, 3);
 	assert.equal(actions[2].type, 'input');
 	assert.equal(actions[2].input, '');
@@ -77,7 +83,7 @@ await test('expresión que devuelve objeto/array en campo de texto → error cla
 		const { ctx } = executeCtx({
 			params: { acciones: acciones([{ tipo: 'sendText', text: bad }]), autoInput: true },
 		});
-		await assert.rejects(() => node.execute.call(ctx), /returned an (object|array)/);
+		await assert.rejects(() => enviarRespuesta.call(ctx), /returned an (object|array)/);
 	}
 	const varCase = executeCtx({
 		params: {
@@ -85,7 +91,7 @@ await test('expresión que devuelve objeto/array en campo de texto → error cla
 			autoInput: true,
 		},
 	});
-	await assert.rejects(() => node.execute.call(varCase.ctx), /returned an object/);
+	await assert.rejects(() => enviarRespuesta.call(varCase.ctx), /returned an object/);
 });
 
 await test('IDs booleanos o arrays rechazados (no coerción fantasma)', async () => {
@@ -93,7 +99,7 @@ await test('IDs booleanos o arrays rechazados (no coerción fantasma)', async ()
 		const { ctx } = executeCtx({
 			params: { acciones: acciones([{ tipo: 'addTag', id_tag: bad }]), autoInput: true },
 		});
-		await assert.rejects(() => node.execute.call(ctx), /is not a valid ID/);
+		await assert.rejects(() => enviarRespuesta.call(ctx), /is not a valid ID/);
 	}
 });
 
@@ -109,7 +115,7 @@ await test('delegación elimina inputs configurados (gana la delegación)', asyn
 			respondWebhook: false,
 		},
 	});
-	const actions = (await node.execute.call(ctx))[0][0].json.data.actions;
+	const actions = (await enviarRespuesta.call(ctx))[0][0].json.data.actions;
 	assert.deepEqual(actions, [
 		{ type: 'sendText', text: 'Te transfiero' },
 		{ type: 'teamDelegate', id_team: 3 },
@@ -123,31 +129,31 @@ await test('userDelegate sin user_name → error en inglés con posición', asyn
 			autoInput: true,
 		},
 	});
-	await assert.rejects(() => node.execute.call(ctx), /Action #1 \(Delegate to User\).*user_name/);
+	await assert.rejects(() => enviarRespuesta.call(ctx), /Action #1 \(Delegate to User\).*user_name/);
 });
 
 await test('IDs: castea "12"→12; rechaza "", "abc" y 0', async () => {
 	const ok = executeCtx({
 		params: { acciones: acciones([{ tipo: 'addTag', id_tag: '12' }]), autoInput: true },
 	});
-	const actions = (await node.execute.call(ok.ctx))[0][0].json.data.actions;
+	const actions = (await enviarRespuesta.call(ok.ctx))[0][0].json.data.actions;
 	assert.deepEqual(actions[0], { type: 'addTag', id_tag: 12 });
 
 	for (const bad of ['', 'abc', 0, 3.5]) {
 		const { ctx } = executeCtx({
 			params: { acciones: acciones([{ tipo: 'addTag', id_tag: bad }]), autoInput: true },
 		});
-		await assert.rejects(() => node.execute.call(ctx), /Action #1 \(Add Tag\)/);
+		await assert.rejects(() => enviarRespuesta.call(ctx), /Action #1 \(Add Tag\)/);
 	}
 });
 
 await test('0 acciones: autoInput=true → keep-alive; false → error', async () => {
 	const ok = executeCtx({ params: { acciones: {}, autoInput: true } });
-	const actions = (await node.execute.call(ok.ctx))[0][0].json.data.actions;
+	const actions = (await enviarRespuesta.call(ok.ctx))[0][0].json.data.actions;
 	assert.deepEqual(actions, [{ type: 'input', input: '' }]);
 
 	const bad = executeCtx({ params: { acciones: {}, autoInput: false } });
-	await assert.rejects(() => node.execute.call(bad.ctx), /at least one action/);
+	await assert.rejects(() => enviarRespuesta.call(bad.ctx), /at least one action/);
 });
 
 await test('respondWebhook=false → no llama sendResponse, passthrough intacto', async () => {
@@ -158,7 +164,7 @@ await test('respondWebhook=false → no llama sendResponse, passthrough intacto'
 			respondWebhook: false,
 		},
 	});
-	const out = await node.execute.call(ctx);
+	const out = await enviarRespuesta.call(ctx);
 	assert.equal(sent.length, 0);
 	assert.equal(out[0][0].json.data.actions.length, 2);
 });
@@ -172,7 +178,7 @@ await test('2 items de entrada → 1 sola respuesta HTTP, 2 envelopes de salida'
 		},
 		items: [{ json: {} }, { json: {} }],
 	});
-	const out = await node.execute.call(ctx);
+	const out = await enviarRespuesta.call(ctx);
 	assert.equal(sent.length, 1);
 	assert.equal(out[0].length, 2);
 });
@@ -182,7 +188,7 @@ await test('sendImage con URL inválida → error', async () => {
 		const { ctx } = executeCtx({
 			params: { acciones: acciones([{ tipo: 'sendImage', url: bad }]), autoInput: true },
 		});
-		await assert.rejects(() => node.execute.call(ctx), /valid http\(s\) URL/);
+		await assert.rejects(() => enviarRespuesta.call(ctx), /valid http\(s\) URL/);
 	}
 });
 
@@ -193,7 +199,7 @@ await test('user_avatar vacío se omite; con URL se incluye', async () => {
 			autoInput: true,
 		},
 	});
-	const a1 = (await node.execute.call(sin.ctx))[0][0].json.data.actions[0];
+	const a1 = (await enviarRespuesta.call(sin.ctx))[0][0].json.data.actions[0];
 	assert.equal('user_avatar' in a1, false);
 
 	const con = executeCtx({
@@ -204,7 +210,7 @@ await test('user_avatar vacío se omite; con URL se incluye', async () => {
 			autoInput: true,
 		},
 	});
-	const a2 = (await node.execute.call(con.ctx))[0][0].json.data.actions[0];
+	const a2 = (await enviarRespuesta.call(con.ctx))[0][0].json.data.actions[0];
 	assert.equal(a2.user_avatar, 'https://x.com/a.png');
 });
 
@@ -219,7 +225,7 @@ await test('acciones solo con claves del contrato (sin extras de la UI)', async 
 			autoInput: true,
 		},
 	});
-	const actions = (await node.execute.call(ctx))[0][0].json.data.actions;
+	const actions = (await enviarRespuesta.call(ctx))[0][0].json.data.actions;
 	assert.deepEqual(Object.keys(actions[0]).sort(), ['text', 'type']);
 	assert.deepEqual(Object.keys(actions[1]).sort(), ['type', 'varname', 'varvalue']);
 	assert.deepEqual(Object.keys(actions[2]).sort(), ['key', 'type', 'value']);

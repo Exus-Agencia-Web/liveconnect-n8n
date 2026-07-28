@@ -3,7 +3,7 @@
 	"nodes": [
 		{
 			"parameters": {
-				"content": "## Callback response built visually\n\nThe **LiveConnect Callback Response** node (v0.4.0+) builds the actions from the editor — no Code node and no Respond to Webhook: **it responds to the webhook itself**.\n\n**Setup:**\n1. Activate the workflow and paste the trigger's Production URL into the callback of your Flowbot (same `secret` on both).\n2. Add/edit actions on the response node: text, image, file, tag, variables, delegation, update contact…\n3. The **golden rule** takes care of itself: with \"Automatically Add Closing Input\" turned on, the response always closes with `input` (and if you delegate, it is removed — the bot exits the callback).\n\nOrder matters: LiveConnect runs the actions in the node's order (you can drag them).\n\nCode-based variant: `examples/07-chatbot-callback-trigger.json` (rules engine in a Code node).",
+				"content": "## Callback response built visually\n\nThe **Callback Response** resource of the **LiveConnect** node (v2.0.0+) builds the actions from the editor — no Code node and no Respond to Webhook: **it responds to the webhook itself**.\n\n**Setup:**\n1. Activate the workflow and paste the trigger's Production URL into the callback of your Flowbot (same `secret` on both).\n2. Add/edit actions on the response node: text, image, file, tag, variables, delegation, update contact…\n3. The **golden rule** takes care of itself: with \"Automatically Add Closing Input\" turned on, the response always closes with `input` (and if you delegate, it is removed — the bot exits the callback).\n\nOrder matters: LiveConnect runs the actions in the node's order (you can drag them).\n\nCode-based variant: `examples/07-chatbot-callback-trigger.json` (rules engine in a Code node).",
 				"height": 420,
 				"width": 480
 			},
@@ -34,16 +34,18 @@
 		},
 		{
 			"parameters": {
+				"resource": "callbackResponse",
+				"operation": "send",
 				"acciones": {
 					"accion": [
 						{
 							"tipo": "sendText",
-							"text": "={{ $json.esPrimerTurno ? 'Hello' + ($json.contacto.nombre ? ' ' + $json.contacto.nombre : '') + '! I am the virtual assistant. How can I help you?' : 'I received your message: \"' + $json.mensaje + '\". Tell me more so I can help you better.' }}"
+							"text": "={{ $json.isFirstTurn ? 'Hello' + ($json.contact.nombre ? ' ' + $json.contact.nombre : '') + '! I am the virtual assistant. How can I help you?' : 'I received your message: \"' + $json.message + '\". Tell me more so I can help you better.' }}"
 						},
 						{
 							"tipo": "addVar",
 							"varname": "ultimo_mensaje",
-							"varvalue": "={{ $json.mensaje }}"
+							"varvalue": "={{ $json.message }}"
 						}
 					]
 				},
@@ -52,7 +54,7 @@
 			},
 			"id": "b9000000-0000-4000-8000-000000000003",
 			"name": "Visual Response (actions)",
-			"type": "n8n-nodes-liveconnect.liveConnectCallbackResponse",
+			"type": "n8n-nodes-liveconnect.liveConnect",
 			"typeVersion": 1,
 			"position": [
 				820,

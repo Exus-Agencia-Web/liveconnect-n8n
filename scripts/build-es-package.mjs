@@ -35,14 +35,16 @@ if (!existsSync(dist)) {
 const paquete = JSON.parse(readFileSync(resolve(raiz, 'package.json'), 'utf8'));
 const NOMBRE_ES = `${paquete.name}-es`;
 
+/**
+ * n8n indexa las credenciales por nombre en un espacio GLOBAL, sin prefijo de paquete: si
+ * los dos paquetes declararan `liveConnectApi` serían incompatibles y n8n Cloud los
+ * rechaza (lo señaló su revisión de verificación). El paquete español declara la suya.
+ */
+const CREDENCIAL_ES = 'liveConnectApiEs';
+
 /** Nodos y credencial: [archivo dentro de dist, clase exportada, clave del diccionario]. */
 const PIEZAS = [
 	['nodes/LiveConnect/LiveConnect.node.js', 'LiveConnect', 'liveConnect'],
-	[
-		'nodes/LiveConnect/LiveConnectCallbackResponse.node.js',
-		'LiveConnectCallbackResponse',
-		'liveConnectCallbackResponse',
-	],
 	[
 		'nodes/LiveConnect/LiveConnectCallbackTrigger.node.js',
 		'LiveConnectCallbackTrigger',
@@ -84,6 +86,10 @@ const base = require("${haciaRaiz}base/${archivo}");
 const { traducirDescripcion, clonarDescripcion } = require("${haciaRaiz}i18n/translate.js");
 const diccionario = require("${haciaRaiz}i18n/es.json");
 
+// El nombre de la credencial se cambia sobre la copia propia del paquete (base/), que es
+// física e independiente de la del paquete inglés.
+require("${haciaRaiz}base/nodes/LiveConnect/GenericFunctions.js").LC_CREDENTIALS.name = "${CREDENCIAL_ES}";
+
 class ${clase} extends base.${clase} {
 \tconstructor() {
 \t\tsuper(...arguments);
@@ -92,6 +98,10 @@ class ${clase} extends base.${clase} {
 \t\t// español si ambos se cargan en el mismo proceso (ver clonarDescripcion).
 \t\tif (this.description !== undefined) this.description = clonarDescripcion(this.description);
 \t\ttraducirDescripcion(this.description ?? this, "${claveDiccionario}", diccionario);
+\t\tif (Array.isArray(this.description?.credentials)) {
+\t\t\tfor (const credencial of this.description.credentials) credencial.name = "${CREDENCIAL_ES}";
+\t\t}
+\t\tif (this.name === "liveConnectApi") this.name = "${CREDENCIAL_ES}";
 \t}
 }
 exports.${clase} = ${clase};
@@ -118,7 +128,6 @@ const paqueteEs = {
 		credentials: ['credentials/LiveConnectApi.credentials.js'],
 		nodes: [
 			'nodes/LiveConnect/LiveConnect.node.js',
-			'nodes/LiveConnect/LiveConnectCallbackResponse.node.js',
 			'nodes/LiveConnect/LiveConnectCallbackTrigger.node.js',
 			'nodes/LiveConnect/LiveConnectProxyTrigger.node.js',
 		],

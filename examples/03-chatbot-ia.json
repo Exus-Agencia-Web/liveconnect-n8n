@@ -34,7 +34,7 @@
 		},
 		{
 			"parameters": {
-				"jsCode": "// Real LiveConnect payload: {chat, inputs, userInput, intent}\nconst raw = $input.first().json;\nconst body = raw.body ?? raw;\nconst chat = body.chat ?? {};\nconst inputs = body.inputs ?? {};\nconst mensaje = String(body.userInput || inputs.mensaje_inicial || '').trim();\n\nreturn [{\n\tjson: {\n\t\tmensaje,\n\t\tid_conversacion: String(chat.id ?? ''),\n\t\tid_canal: chat.id_canal ?? null,\n\t\tcontacto_id: chat.contacto?.id ?? null,\n\t\tcontacto_nombre: chat.contacto?.nombre || 'Customer',\n\t\tcontacto_celular: chat.contacto?.celular || inputs.celular || '',\n\t},\n}];"
+				"jsCode": "// Real LiveConnect payload: {chat, inputs, userInput, intent}\nconst raw = $input.first().json;\nconst body = raw.body ?? raw;\nconst chat = body.chat ?? {};\nconst inputs = body.inputs ?? {};\nconst message = String(body.userInput || inputs.mensaje_inicial || '').trim();\n\nreturn [{\n\tjson: {\n\t\tmessage,\n\t\tconversationId: String(chat.id ?? ''),\n\t\tchannelId: chat.id_canal ?? null,\n\t\tcontactId: chat.contacto?.id ?? null,\n\t\tcontactName: chat.contacto?.nombre || 'Customer',\n\t\tcontactPhone: chat.contacto?.celular || inputs.celular || '',\n\t},\n}];"
 			},
 			"id": "b3000000-0000-4000-8000-000000000003",
 			"name": "Parse Message",
@@ -56,7 +56,7 @@
 					},
 					"conditions": [
 						{
-							"leftValue": "={{ $json.mensaje }}",
+							"leftValue": "={{ $json.message }}",
 							"rightValue": "",
 							"operator": {
 								"type": "string",
@@ -81,9 +81,9 @@
 		{
 			"parameters": {
 				"promptType": "define",
-				"text": "={{ $json.mensaje }}",
+				"text": "={{ $json.message }}",
 				"options": {
-					"systemMessage": "You are the company's virtual assistant. You help customers by chat (WhatsApp and web) in English, with brief and friendly responses. The customer's name is {{ $json.contacto_nombre }}. If you do not know something, say so and offer to transfer them to a human agent. Never make up prices or data."
+					"systemMessage": "You are the company's virtual assistant. You help customers by chat (WhatsApp and web) in English, with brief and friendly responses. The customer's name is {{ $json.contactName }}. If you do not know something, say so and offer to transfer them to a human agent. Never make up prices or data."
 				}
 			},
 			"id": "b3000000-0000-4000-8000-000000000005",
@@ -117,7 +117,7 @@
 		{
 			"parameters": {
 				"sessionIdType": "customKey",
-				"sessionKey": "={{ $('Parse Message').first().json.id_conversacion }}"
+				"sessionKey": "={{ $('Parse Message').first().json.conversationId }}"
 			},
 			"id": "b3000000-0000-4000-8000-000000000007",
 			"name": "Conversation Memory",
@@ -132,7 +132,7 @@
 			"parameters": {
 				"resource": "proxy",
 				"operation": "sendMessage",
-				"id_conversacion": "={{ $('Parse Message').first().json.id_conversacion }}",
+				"id_conversacion": "={{ $('Parse Message').first().json.conversationId }}",
 				"mensaje": "={{ $json.output }}"
 			},
 			"id": "b3000000-0000-4000-8000-000000000008",

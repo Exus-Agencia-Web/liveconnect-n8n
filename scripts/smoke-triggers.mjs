@@ -129,13 +129,13 @@ await test('callback simplifica payload real (primer turno)', async () => {
 	const { ctx } = webhookCtx({ params: { secret: '', simple: true } });
 	const out = await callback.webhook.call(ctx);
 	const json = out.workflowData[0][0].json;
-	assert.equal(json.mensaje, 'Hola!');
-	assert.equal(json.esPrimerTurno, true);
+	assert.equal(json.message, 'Hola!');
+	assert.equal(json.isFirstTurn, true);
 	assert.equal(json.sessionId, 'AKZPF35619988576HQZTF');
-	assert.equal(json.hayAgenteHumano, false);
-	assert.equal(json.id_conversacion, 'ZMXRQ3854777686PYTXM');
-	assert.equal(json.id_canal, 67095);
-	assert.equal(json.contacto.nombre, 'Nuevo Visitante');
+	assert.equal(json.hasHumanAgent, false);
+	assert.equal(json.conversationId, 'ZMXRQ3854777686PYTXM');
+	assert.equal(json.channelId, 67095);
+	assert.equal(json.contact.nombre, 'Nuevo Visitante');
 	assert.deepEqual(json.raw, REAL_BODY);
 });
 
@@ -145,9 +145,9 @@ await test('callback turno normal usa userInput y detecta humano', async () => {
 	body.chat.usuarios['99'] = { id: 99, isbot: 0, nombre: 'Agente Real' };
 	const { ctx } = webhookCtx({ body, params: { secret: '', simple: true } });
 	const json = (await callback.webhook.call(ctx)).workflowData[0][0].json;
-	assert.equal(json.mensaje, 'quiero precios');
-	assert.equal(json.esPrimerTurno, false);
-	assert.equal(json.hayAgenteHumano, true);
+	assert.equal(json.message, 'quiero precios');
+	assert.equal(json.isFirstTurn, false);
+	assert.equal(json.hasHumanAgent, true);
 });
 
 await test('callback turno con adjunto sin texto NO es primer turno', async () => {
@@ -155,9 +155,9 @@ await test('callback turno con adjunto sin texto NO es primer turno', async () =
 	body.userFile = { url: 'https://cdn.example.com/foto.jpg', nombre: 'foto.jpg' };
 	const { ctx } = webhookCtx({ body, params: { secret: '', simple: true } });
 	const json = (await callback.webhook.call(ctx)).workflowData[0][0].json;
-	assert.equal(json.esPrimerTurno, false);
-	assert.equal(json.tieneAdjunto, true);
-	assert.equal(json.mensaje, '');
+	assert.equal(json.isFirstTurn, false);
+	assert.equal(json.hasAttachment, true);
+	assert.equal(json.message, '');
 	assert.equal(json.userFile.nombre, 'foto.jpg');
 });
 
@@ -216,7 +216,7 @@ await test('callback secret vacío no valida', async () => {
 
 // --- proxy: webhook() con forma desconocida ---
 await test('proxy simplify con forma desconocida entrega crudo', async () => {
-	const body = { evento: 'nuevo_mensaje', id_conversacion: 'X1' };
+	const body = { evento: 'nuevo_mensaje', conversationId: 'X1' };
 	const { ctx } = webhookCtx({ body, params: { secret: '', simple: true } });
 	const json = (await proxy.webhook.call(ctx)).workflowData[0][0].json;
 	assert.deepEqual(json, body);
@@ -225,7 +225,7 @@ await test('proxy simplify con forma desconocida entrega crudo', async () => {
 await test('proxy simplify con forma conocida extrae campos', async () => {
 	const { ctx } = webhookCtx({ params: { secret: '', simple: true } });
 	const json = (await proxy.webhook.call(ctx)).workflowData[0][0].json;
-	assert.equal(json.mensaje, 'Hola!');
+	assert.equal(json.message, 'Hola!');
 	assert.equal(json.sessionId, 'AKZPF35619988576HQZTF');
 });
 

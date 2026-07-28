@@ -1,6 +1,13 @@
-import type { INodeType, INodeTypeDescription } from 'n8n-workflow';
-import { NodeConnectionTypes } from 'n8n-workflow';
+import type {
+	IDataObject,
+	IExecuteFunctions,
+	INodeExecutionData,
+	INodeType,
+	INodeTypeDescription,
+} from 'n8n-workflow';
+import { NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 
+import { applyClosingRule, buildEnvelope, toAction } from './ActionsFunctions';
 import { LIVECONNECT_BASE_URL, refreshTokenIfExpired } from './GenericFunctions';
 import { liveConnectLoadOptions } from './LoadOptions';
 import {
@@ -8,6 +15,8 @@ import {
 	assistantOperations,
 	automationFields,
 	automationOperations,
+	callbackResponseFields,
+	callbackResponseOperations,
 	categoryFields,
 	categoryOperations,
 	channelFields,
@@ -43,7 +52,7 @@ import {
 } from './descriptions';
 
 export class LiveConnect implements INodeType {
-	// Selectores dinámicos: alimentan los campos de ID con los endpoints de listado.
+	// Dynamic selectors: feed the ID fields from the listing endpoints.
 	methods = {
 		loadOptions: liveConnectLoadOptions,
 	};
@@ -81,14 +90,15 @@ export class LiveConnect implements INodeType {
 				name: 'resource',
 				type: 'options',
 				noDataExpression: true,
-				// preSend global: `resource` siempre está visible y es la primera propiedad,
-				// así que su preSend corre en todas las operaciones y antes que cualquier
-				// otro. Sin `property` no envía nada al body ni al query.
+				// Global preSend: `resource` is always visible and is the first property,
+				// so its preSend runs on every operation and before any other one.
+				// Without `property` it sends nothing to the body or the query.
 				routing: {
 					send: { preSend: [refreshTokenIfExpired] },
 				},
 				options: [
 					{ name: 'Assistant', value: 'assistant' },
+					{ name: 'Callback Response', value: 'callbackResponse' },
 					{ name: 'Category', value: 'category' },
 					{ name: 'Channel', value: 'channel' },
 					{ name: 'Contact', value: 'contact' },
@@ -112,6 +122,8 @@ export class LiveConnect implements INodeType {
 
 			...assistantOperations,
 			...assistantFields,
+			...callbackResponseOperations,
+			...callbackResponseFields,
 			...automationOperations,
 			...automationFields,
 			...categoryOperations,
@@ -156,5 +168,73 @@ export class LiveConnect implements INodeType {
 					'Whether to return the full API envelope ({ status, status_message, data }) instead of just the data field',
 			},
 		],
+	};
+
+	/**
+	 * The Callback Response resource does not call the API: it builds the action envelope
+	 * and answers the Flowbot webhook. n8n runs `customOperations` instead of the routing
+	 * for that resource/operation pair, which is how a declarative node can carry one
+	 * custom implementation without turning the other 58 operations programmatic.
+	 */
+	customOperations = {
+		callbackResponse: {
+			async send(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
+				const items = this.getInputData();
+				const returnData: INodeExecutionData[] = [];
+				// The HTTP callback allows only ONE response per execution.
+				let responded = false;
+
+				for (let i = 0; i < items.length; i++) {
+					try {
+						const raw = this.getNodeParameter('acciones', i, {}) as { accion?: IDataObject[] };
+						const autoInput = this.getNodeParameter('autoInput', i, true) as boolean;
+						const uiActions = raw.accion ?? [];
+
+						let actions = uiActions.map((ui, idx) => toAction(this.getNode(), ui, idx + 1, i));
+						if (autoInput) {
+							actions = applyClosingRule(actions);
+						} else if (actions.length === 0) {
+							// The contract requires a non-empty data.actions; without autoInput there's no implicit keep-alive.
+							throw new NodeOperationError(
+								this.getNode(),
+								'Configure at least one action or enable "Automatically Add Closing Input"',
+								{ itemIndex: i },
+							);
+						}
+
+						const envelope = buildEnvelope(actions);
+
+						const respond = this.getNodeParameter('respondWebhook', i, true) as boolean;
+						if (respond && !responded) {
+							// Same shape as the core Respond to Webhook (IN8nHttpFullResponse).
+							// With no webhook waiting (manual execution) it's a no-op: it doesn't throw.
+							this.sendResponse({
+								body: envelope,
+								headers: { 'content-type': 'application/json' },
+								statusCode: 200,
+							});
+							responded = true;
+						}
+
+						returnData.push({ json: envelope, pairedItem: { item: i } });
+					} catch (error) {
+						if (this.continueOnFail()) {
+							returnData.push({
+								json: { error: (error as Error).message },
+								pairedItem: { item: i },
+							});
+							continue;
+						}
+						// Always wrapped, even when it's already a NodeOperationError: the
+						// `require-node-api-error` rule in the verified-nodes linter forbids
+						// rethrowing the error as-is. NodeOperationError preserves the original
+						// message, so the text the user sees doesn't change.
+						throw new NodeOperationError(this.getNode(), error as Error, { itemIndex: i });
+					}
+				}
+
+				return [returnData];
+			},
+		},
 	};
 }

@@ -8,7 +8,7 @@ npm run build                  # tsc + copia de íconos
 npm run build:es               # build + genera dist-es/ (paquete n8n-nodes-liveconnect-es) — ver 08-paquete-espanol.md
 npm run lint / npm run lintfix # n8n-node lint — la MISMA config del escáner oficial (ver § Verificación de n8n)
 npm run verify                 # diff de dist/ contra el OpenAPI del CDN (acepta un spec local como argumento)
-npm run smoke                  # 114 pruebas: triggers, nodo de respuesta, token, selectores, plantillas + 5 del paquete español
+npm run smoke                  # 116 pruebas: triggers, recurso de respuesta, token, selectores, plantillas + 7 del paquete español
 npm run i18n:status            # qué textos nuevos faltan traducir a español (no escribe nada)
 npm run scan                   # npx @n8n/scan-community-package — solo funciona contra una versión YA publicada en npm
 ```
@@ -35,6 +35,8 @@ npm run scan                   # npx @n8n/scan-community-package — solo funcio
   	output: { postReceive: [handleLcResponse] },
   },
   ```
+
+  Excepción: la operación `send` del recurso `callbackResponse` no lleva `routing` — no llama al API de LiveConnect, la resuelve `customOperations` en `LiveConnect.node.ts` (ver [01-arquitectura.md](01-arquitectura.md) § Los tres nodos y [04-triggers-y-callbacks.md](04-triggers-y-callbacks.md) §3).
 
 - Campo: `name` = **propiedad exacta del API** (snake_case: `id_canal`, `celular`…, nunca se traduce); `displayName` en inglés Title Case; `description` en inglés, sentence case.
 - Requeridos del spec → top-level con `required: true`. Opcionales → dentro de una colección: `additionalFields` (create/send), `updateFields` (update), `filters` (getMany), `searchFields` (búsqueda por identificador).
@@ -93,6 +95,7 @@ Guía oficial: <https://docs.n8n.io/connect/create-nodes/build-your-node/referen
 - Licencia MIT; repositorio público que coincide con el `repository` de `package.json`; autor consistente.
 - Nada de variables de entorno ni acceso al sistema de archivos.
 - Un solo servicio por paquete — por eso el español es un paquete aparte y no una opción del mismo paquete, ver [08-paquete-espanol.md](08-paquete-espanol.md).
+- **Un solo nodo regular por paquete** (los triggers no cuentan aparte) — por eso el antiguo nodo `LiveConnect Respuesta al Callback` pasó a ser el recurso `callbackResponse` del nodo principal, resuelto con `customOperations` sin volver programáticas las otras 58 operaciones. Ver [01-arquitectura.md](01-arquitectura.md) § Los tres nodos y [04-triggers-y-callbacks.md](04-triggers-y-callbacks.md) §3.
 - Publicación **desde GitHub Actions con provenance** (`npm publish --provenance`), obligatorio desde el 1 de mayo de 2026, nunca desde una máquina local. `.github/workflows/release.yml` lo hace para los dos paquetes.
 
 **Comprobación**: `npx @n8n/scan-community-package n8n-nodes-liveconnect` — solo funciona contra una versión **ya publicada** en npm. En local se valida con `npm run lint`, que corre la misma config (`eslint.config.mjs` → `@n8n/node-cli/eslint`, activada con `npx n8n-node cloud-support enable`).
@@ -118,7 +121,7 @@ El ícono actual es `liveconnect2.svg` (claro) y `liveconnect2.dark.svg` (oscuro
 
 **Inglés** en `displayName` (Title Case), labels de `options`, `action` (oración corta, p. ej. `Create a contact`), `description` (sentence case) y placeholders — lo exige la verificación de nodos comunitarios de n8n (ver § Verificación de n8n). Literales que pide el escáner: `Name or ID` y `Choose from the list, or specify an ID using an <a href="https://docs.n8n.io/code/expressions/">expression</a>` en los selectores dinámicos, `Max number of results to return` en `limit`, descripciones booleanas que empiezan por `Whether`. Los `name`/`value` internos no cambian nunca. Ya no hay reglas de ESLint desactivadas por el idioma — detalle en [05-lecciones-n8n.md](05-lecciones-n8n.md) §11.
 
-El español se conserva como paquete aparte, `n8n-nodes-liveconnect-es`, generado desde este mismo código con el diccionario `i18n/es.json`. Detalle completo en [08-paquete-espanol.md](08-paquete-espanol.md).
+El español se conserva como paquete aparte, `n8n-nodes-liveconnect-es`, generado desde este mismo código con el diccionario `i18n/es.json`. Declara su propia credencial (`liveConnectApiEs`), así que los dos paquetes conviven en la misma instancia de n8n. Detalle completo en [08-paquete-espanol.md](08-paquete-espanol.md).
 
 ## El lint del proyecto NO basta: usa también `lint:scanner`
 
@@ -136,7 +139,7 @@ El escáner se instala en `node_modules/.cache/n8n-scanner`, **no como devDepend
 - [ ] `npm run build` sin errores de TypeScript
 - [ ] `npm run lint` limpio (0 errores — es la misma config del escáner oficial)
 - [ ] `npm run verify` con 0 errores duros y el conteo de endpoints correcto (58/58 hoy)
-- [ ] `npm run smoke` entero en verde (114 pruebas)
+- [ ] `npm run smoke` entero en verde (116 pruebas)
 - [ ] `npm run i18n:status` sin textos nuevos por traducir (o ya traducidos antes de publicar)
 - [ ] `npm run build:es` genera `dist-es/` sin errores
 - [ ] `version` de `package.json` subida

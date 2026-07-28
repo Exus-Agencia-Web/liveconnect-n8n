@@ -20,34 +20,43 @@ import {
 
 export const LIVECONNECT_BASE_URL = 'https://api.liveconnect.chat/prod';
 export const LIVECONNECT_TOKEN_HEADER = 'PageGearToken';
-export const LIVECONNECT_CREDENTIALS_NAME = 'liveConnectApi';
+/**
+ * Name of the credential type, kept in a deliberately MUTABLE object.
+ *
+ * n8n indexes credentials by name in a global namespace, with no package prefix:
+ * two extensions that both declare `liveConnectApi` are incompatible and n8n Cloud
+ * rejects them. The generated Spanish package (scripts/build-es-package.mjs) rewrites
+ * this `name` on its own copy of the compiled output, so both can coexist. That's why
+ * this is an object instead of a string constant: it needs to be changeable at load time.
+ */
+export const LC_CREDENTIALS = { name: 'liveConnectApi' };
 
-/** Status con el que LiveConnect reporta un token de sesión vencido o inválido. */
+/** Status code LiveConnect uses to report an expired or invalid session token. */
 const LC_STATUS_INVALID_TOKEN = -403;
-/** Margen ante relojes desfasados: se renueva 60 s antes del `exp`. */
+/** Safety margin for clock skew: renews 60 s before the `exp`. */
 const TOKEN_SKEW_SECONDS = 60;
-/** Vida asumida (~10 min) cuando el `exp` del token emitido no es legible. */
+/** Assumed lifetime (~10 min) when the `exp` of the issued token isn't readable. */
 const TOKEN_FALLBACK_TTL_SECONDS = 540;
 
 type TokenState = {
 	minted?: { token: string; expiresAt: number };
-	/** Hashes de tokens que el API ya rechazó con status -403. */
+	/** Hashes of tokens the API has already rejected with status -403. */
 	burned: Set<string>;
-	/** Último token puesto en el cable, para poder quemarlo si el API lo rechaza. */
+	/** Last token sent over the wire, kept so it can be burned if the API rejects it. */
 	lastSent?: string;
 };
 
 /**
- * Caché en memoria del proceso, una entrada por cuenta.
+ * In-process memory cache, one entry per account.
  *
- * n8n NO persiste el token que emitimos aquí (`updateCredentials` no está expuesto a
- * los nodos), así que sin esta caché cada ítem volvería a pedir uno. La clave es un
- * hash de la cKey: nunca se guardan credenciales en claro.
+ * n8n does NOT persist the token we mint here (`updateCredentials` isn't exposed to
+ * nodes), so without this cache every item would request a new one. The key is a
+ * hash of the cKey: credentials are never stored in plain text.
  */
 const tokenStates = new Map<string, TokenState>();
-/** Emisiones en vuelo: N ítems concurrentes hacen UNA sola llamada a /account/token. */
+/** In-flight mints: N concurrent items make a SINGLE call to /account/token. */
 const inFlightMints = new Map<string, Promise<string>>();
-/** Tope de cuentas en caché: evita crecimiento indefinido en instancias multi-credencial. */
+/** Cap on cached accounts: prevents unbounded growth on multi-credential instances. */
 const MAX_CACHED_ACCOUNTS = 50;
 
 function sha256(value: string): string {
@@ -62,7 +71,7 @@ function stateFor(key: string): TokenState {
 	const existing = tokenStates.get(key);
 	if (existing !== undefined) return existing;
 	if (tokenStates.size >= MAX_CACHED_ACCOUNTS) {
-		// Map conserva el orden de inserción: se descarta la cuenta más antigua.
+		// Map preserves insertion order: the oldest account gets evicted.
 		const oldest = tokenStates.keys().next();
 		if (!oldest.done) tokenStates.delete(oldest.value);
 	}
@@ -71,7 +80,7 @@ function stateFor(key: string): TokenState {
 	return created;
 }
 
-/** Respuesta de POST /account/token en cualquiera de sus formas conocidas. */
+/** Response of POST /account/token in any of its known shapes. */
 export interface LcTokenResponse {
 	status?: number;
 	status_message?: string;
@@ -80,8 +89,8 @@ export interface LcTokenResponse {
 }
 
 /**
- * `exp` (epoch en segundos) del payload de un JWT, o `undefined` si no es decodificable
- * o no trae `exp`. No valida la firma: solo interesa saber si ya venció.
+ * `exp` (epoch in seconds) from a JWT's payload, or `undefined` if it can't be decoded
+ * or carries no `exp`. Doesn't validate the signature: it only cares whether it already expired.
  */
 export function getJwtExpiry(token: string): number | undefined {
 	const parts = token.split('.');
@@ -92,18 +101,18 @@ export function getJwtExpiry(token: string): number | undefined {
 		) as { exp?: unknown };
 		return typeof payload.exp === 'number' && Number.isFinite(payload.exp) ? payload.exp : undefined;
 	} catch {
-		// JWT malformado: no se puede afirmar que venció. La capa reactiva
-		// (handleLcResponse con -403) lo quema si el API lo rechaza.
+		// Malformed JWT: can't tell whether it expired. The reactive layer
+		// (handleLcResponse with -403) will burn it if the API rejects it.
 		return undefined;
 	}
 }
 
 /**
- * Extrae el JWT de sesión de la respuesta de POST /account/token.
+ * Extracts the session JWT from the POST /account/token response.
  *
- * TRAMPA DEL API: con keys faltantes responde HTTP 200 con `status:-2` Y un JWT ANÓNIMO
- * en `PageGearToken` que no sirve como sesión. Por eso `status < 0` se valida ANTES de
- * mirar el token.
+ * API GOTCHA: with missing keys it responds HTTP 200 with `status:-2` AND an ANONYMOUS JWT
+ * in `PageGearToken` that doesn't work as a session. That's why `status < 0` is validated
+ * BEFORE looking at the token.
  */
 export function extractSessionToken(response: LcTokenResponse): string {
 	if (typeof response.status === 'number' && response.status < 0) {
@@ -128,8 +137,8 @@ export function extractSessionToken(response: LcTokenResponse): string {
 }
 
 /**
- * Contexto mínimo para renovar el token. Lo cumplen IExecuteSingleFunctions,
- * ILoadOptionsFunctions e IHookFunctions, que son las tres rutas que hablan con el API.
+ * Minimal context needed to renew the token. Satisfied by IExecuteSingleFunctions,
+ * ILoadOptionsFunctions, and IHookFunctions — the three code paths that talk to the API.
  */
 export interface LcTokenContext {
 	getNode: IExecuteSingleFunctions['getNode'];
@@ -137,7 +146,7 @@ export interface LcTokenContext {
 	helpers: { httpRequest: IExecuteSingleFunctions['helpers']['httpRequest'] };
 }
 
-/** Emite un token nuevo. Deduplica las emisiones concurrentes de la misma cuenta. */
+/** Mints a new token. Deduplicates concurrent mints for the same account. */
 async function mintSessionToken(
 	this: LcTokenContext,
 	key: string,
@@ -201,12 +210,12 @@ async function mintSessionToken(
 }
 
 /**
- * Marca el token vigente como inservible tras un -403 del API (capa reactiva).
+ * Marks the current token as unusable after a -403 from the API (reactive layer).
  *
- * Se quema `lastSent` (el último token puesto en el cable para esa cuenta). Con varios
- * ítems concurrentes podría quemarse un token recién emitido en vez del rechazado: el
- * peor caso es una emisión extra, nunca una falla, porque `mintSessionToken` limpia la
- * lista de quemados al emitir.
+ * Burns `lastSent` (the last token sent over the wire for that account). With several
+ * concurrent items, a freshly minted token could get burned instead of the rejected one:
+ * the worst case is one extra mint, never a failure, because `mintSessionToken` clears
+ * the burned list whenever it mints.
  */
 function burnCurrentToken(cKey: string): void {
 	const state = tokenStates.get(accountKey(cKey));
@@ -216,16 +225,16 @@ function burnCurrentToken(cKey: string): void {
 }
 
 /**
- * preSend compartido por todas las operaciones: garantiza que la request salga con un
- * PageGearToken vigente.
+ * preSend shared by every operation: guarantees the request goes out with a valid
+ * PageGearToken.
  *
- * Por qué existe: el JWT dura ~10 min y n8n solo re-ejecuta `preAuthentication` ante un
- * HTTP 401. LiveConnect reporta el token vencido como HTTP 200 con `status:-403`, así
- * que ese 401 nunca ocurre y la credencial se queda con el token muerto.
+ * Why it exists: the JWT lasts ~10 min and n8n only re-runs `preAuthentication` on an
+ * actual HTTP 401. LiveConnect reports the expired token as HTTP 200 with `status:-403`,
+ * so that 401 never happens and the credential is left holding a dead token.
  *
- * Este preSend SIEMBRA el header y `LiveConnectApi.authenticate` (forma de FUNCIÓN) lo
- * respeta. Con `IAuthenticateGeneric` no funcionaría: n8n aplica la autenticación
- * DESPUÉS de los preSend y pisaría el header sin condición.
+ * This preSend SEEDS the header and `LiveConnectApi.authenticate` (the FUNCTION form)
+ * honors it. It wouldn't work with `IAuthenticateGeneric`: n8n applies authentication
+ * AFTER the preSend hooks and would overwrite the header unconditionally.
  */
 export async function refreshTokenIfExpired(
 	this: IExecuteSingleFunctions,
@@ -241,34 +250,34 @@ export async function refreshTokenIfExpired(
 }
 
 /**
- * Devuelve un token de sesión vigente para la cuenta de la credencial, renovándolo si
- * hace falta. `undefined` cuando no hay credenciales que usar (deja el flujo normal).
+ * Returns a valid session token for the credential's account, renewing it if needed.
+ * `undefined` when there are no credentials to use (lets the normal flow continue).
  *
- * La usan las tres rutas que llaman al API: el preSend del nodo declarativo, los
- * selectores dinámicos (LoadOptions) y los webhookMethods de los triggers. Estas dos
- * últimas NO pasan por el preSend, así que sin esto usarían el token rancio de la
- * credencial y fallarían con status -403.
+ * Used by the three code paths that call the API: the declarative node's preSend, the
+ * dynamic selectors (LoadOptions), and the triggers' webhookMethods. The latter two do
+ * NOT go through the preSend, so without this they'd use the credential's stale token
+ * and fail with status -403.
  */
 export async function ensureFreshToken(ctx: LcTokenContext): Promise<string | undefined> {
 	let credentials: { cKey?: string; privateKey?: string; sessionToken?: string };
 	try {
-		credentials = (await ctx.getCredentials(LIVECONNECT_CREDENTIALS_NAME)) as typeof credentials;
+		credentials = (await ctx.getCredentials(LC_CREDENTIALS.name)) as typeof credentials;
 	} catch {
-		// Credencial no configurada (es opcional en el nodo de respuesta al callback):
-		// se deja que la llamada siga y sea n8n quien reporte el error real.
+		// Credential not configured (it's optional on the callback response node):
+		// let the call continue and have n8n report the real error.
 		return undefined;
 	}
 
 	const cKey = credentials.cKey ?? '';
 	const privateKey = credentials.privateKey ?? '';
-	// Sin keys no hay nada que renovar: sigue el flujo normal de n8n.
+	// With no keys there's nothing to renew: continue with n8n's normal flow.
 	if (cKey === '' || privateKey === '') return undefined;
 
 	const key = accountKey(cKey);
 	const state = stateFor(key);
 	const nowSeconds = Math.floor(Date.now() / 1000);
 
-	// Candidato: el token emitido por el nodo (más fresco) o el de la credencial.
+	// Candidate: the token minted by the node (freshest) or the credential's own token.
 	const mintedIsUsable =
 		state.minted !== undefined && state.minted.expiresAt - TOKEN_SKEW_SECONDS > nowSeconds;
 	const candidate = mintedIsUsable
@@ -286,28 +295,28 @@ export async function ensureFreshToken(ctx: LcTokenContext): Promise<string | un
 	return token;
 }
 
-/** Quema el token de la cuenta tras un rechazo del API. Reexportado para las otras rutas. */
+/** Burns the account's token after an API rejection. Re-exported for the other code paths. */
 export async function burnTokenForContext(ctx: LcTokenContext): Promise<void> {
-	const credentials = (await ctx.getCredentials(LIVECONNECT_CREDENTIALS_NAME)) as {
+	const credentials = (await ctx.getCredentials(LC_CREDENTIALS.name)) as {
 		cKey?: string;
 	};
 	if (credentials.cKey) burnCurrentToken(credentials.cKey);
 }
 
 /* ------------------------------------------------------------------ *
- * Enviar plantilla WABA
+ * Send WABA template
  * ------------------------------------------------------------------ */
 
-/** Plantillas ya consultadas: evita una petición por ítem en envíos masivos. */
-/** Listado de plantillas por canal (clave = id_canal). */
+/** Templates already fetched: avoids one request per item on bulk sends. */
+/** Template listing per channel (key = id_canal). */
 const templateCache = new Map<string, { rows?: IDataObject[]; expiresAt: number }>();
 const TEMPLATE_CACHE_TTL_MS = 5 * 60 * 1000;
 const MAX_CACHED_TEMPLATES = 100;
 
 
 /**
- * Valores de los campos "Variable {{1}}", "Variable {{2}}"… en orden. Se cortan en el
- * último con contenido para no enviar huecos al final.
+ * Values of the "Variable {{1}}", "Variable {{2}}"… fields, in order. Trimmed at the
+ * last one with content so no trailing gaps get sent.
  */
 function readNumberedVariables(ctx: IExecuteSingleFunctions): string[] {
 	const valores: string[] = [];
@@ -320,7 +329,7 @@ function readNumberedVariables(ctx: IExecuteSingleFunctions): string[] {
 	return valores.slice(0, ultimo);
 }
 
-/** Tope de campos de variable declarados en la operación de envío. */
+/** Cap on the variable fields declared on the send operation. */
 const MAX_TEMPLATE_VARIABLES = 10;
 
 async function loadTemplate(
@@ -342,12 +351,13 @@ async function loadTemplate(
 }
 
 /**
- * Plantillas del canal, cacheadas.
+ * Channel templates, cached.
  *
- * Se usa el LISTADO y no `/direct/waba/getTemplate`: ese endpoint identifica la plantilla
- * por su id de META (o su nombre alterno) y responde `status:-400 Invalid template id
- * provided` con el id de LiveConnect, que es justo el que hay que enviar. Una sola
- * consulta por canal sirve además para todas las plantillas y todos los ítems del lote.
+ * Uses the LIST endpoint instead of `/direct/waba/getTemplate`: that endpoint identifies
+ * the template by its META id (or its alternate name) and responds `status:-400 Invalid
+ * template id provided` when given the LiveConnect id — which is exactly the one that
+ * needs to be sent. A single query per channel also covers every template and every
+ * item in the batch.
  */
 async function loadChannelTemplates(
 	ctx: IExecuteSingleFunctions,
@@ -362,7 +372,7 @@ async function loadChannelTemplates(
 		const token = await ensureFreshToken(ctx as unknown as LcTokenContext);
 		const response = (await ctx.helpers.httpRequestWithAuthentication.call(
 			ctx,
-			LIVECONNECT_CREDENTIALS_NAME,
+			LC_CREDENTIALS.name,
 			{
 				method: 'POST',
 				url: `${LIVECONNECT_BASE_URL}/direct/waba/getTemplates`,
@@ -376,8 +386,8 @@ async function loadChannelTemplates(
 			rows = pickTemplateRows(response.data);
 		}
 	} catch {
-		// Si no se puede consultar el listado no se bloquea el envío: se manda lo que el
-		// usuario configuró y que sea el API quien valide.
+		// If the listing can't be queried, the send isn't blocked: it goes out with
+		// whatever the user configured and lets the API do the validating.
 		rows = undefined;
 	}
 
@@ -389,7 +399,7 @@ async function loadChannelTemplates(
 	return rows;
 }
 
-/** `data` es un array plano o el objeto `{ templates, paging }` que devuelve el API. */
+/** `data` is either a plain array or the `{ templates, paging }` object the API returns. */
 function pickTemplateRows(data: unknown): IDataObject[] {
 	if (Array.isArray(data)) return data as IDataObject[];
 	if (data === null || typeof data !== 'object') return [];
@@ -404,9 +414,9 @@ function pickTemplateRows(data: unknown): IDataObject[] {
 }
 
 /**
- * preSend de "Enviar Plantilla": consulta la plantilla elegida para saber qué necesita,
- * coloca cada dato en la propiedad correcta del cuerpo y avisa con un mensaje útil
- * cuando falta algo (en vez de dejar que el API responda un error opaco).
+ * preSend for "Send Template": looks up the chosen template to find out what it needs,
+ * places each piece of data in the correct body property, and warns with a useful
+ * message when something is missing (instead of letting the API return an opaque error).
  */
 export async function prepareTemplateSend(
 	this: IExecuteSingleFunctions,
@@ -419,8 +429,8 @@ export async function prepareTemplateSend(
 	const body = { ...((bodyActual as IDataObject | undefined) ?? {}) };
 
 	const idCanal = Number(this.getNodeParameter('id_canal', 0));
-	// El selector codifica lo que la plantilla necesita: hay que quedarse con el
-	// identificador antes de mandarlo al API.
+	// The selector encodes what the template needs: only the identifier should be
+	// kept before sending it to the API.
 	const { identificador: idPlantilla, headerFormat: formatoCodificado } = decodeTemplateValue(
 		String(this.getNodeParameter('id_plantilla', '')),
 	);
@@ -428,8 +438,8 @@ export async function prepareTemplateSend(
 	const urlEncabezado = String(this.getNodeParameter('url_encabezado', '') ?? '').trim();
 	const usarEjemplo = this.getNodeParameter('additionalFields.usar_ejemplo', false) as boolean;
 	let variables = readNumberedVariables(this);
-	// Respaldo para la plantilla elegida por expresión: ahí los campos "Variable {{n}}"
-	// no se muestran porque displayOptions no evalúa expresiones.
+	// Fallback for a template chosen via expression: in that case the "Variable {{n}}"
+	// fields aren't shown because displayOptions doesn't evaluate expressions.
 	if (variables.length === 0) {
 		variables = String(this.getNodeParameter('additionalFields.variables_csv', '') ?? '')
 			.split(',')
@@ -440,8 +450,8 @@ export async function prepareTemplateSend(
 	const template =
 		idCanal > 0 && idPlantilla !== '' ? await loadTemplate(this, idCanal, idPlantilla) : undefined;
 
-	// Sin datos de la plantilla se envía lo que haya configurado el usuario. El formato
-	// del encabezado se toma del valor del selector, que ya lo trae codificado.
+	// With no template data, whatever the user configured is sent as-is. The header
+	// format is taken from the selector's value, which already carries it encoded.
 	if (template === undefined) {
 		if (variables.length > 0) body.variables = variables;
 		if (urlEncabezado !== '') {
@@ -457,23 +467,23 @@ export async function prepareTemplateSend(
 		typeof f.defaultValue === 'string' ? f.defaultValue : '',
 	);
 	const nombre = templateName(template) ?? idPlantilla;
-	// El identificador correcto depende del proveedor del canal (Gupshup pide el id,
-	// Meta directo el nombre): se recalcula sobre la fila real del listado, así también
-	// se corrige un valor viejo guardado en el nodo.
+	// The correct identifier depends on the channel's provider (Gupshup wants the id,
+	// Meta direct wants the name): it's recalculated from the actual listing row, which
+	// also fixes up a stale value saved on the node.
 	const identificadorReal = templateSendIdentifier(template);
 	if (identificadorReal !== undefined) body.id_plantilla = identificadorReal;
 
 	const total = camposCuerpo.length;
 	if (total > 0) {
-		// Se toman solo las posiciones que la plantilla declara: al cambiar de plantilla,
-		// n8n conserva en el nodo lo que se escribió en los campos que ahora están ocultos.
+		// Only the positions the template declares are used: when switching templates,
+		// n8n keeps on the node whatever was typed into fields that are now hidden.
 		variables = variables.slice(0, total);
 		while (variables.length < total) variables.push('');
 		if (usarEjemplo) {
 			variables = variables.map((valor, i) => (valor.trim() !== '' ? valor : ejemplosCuerpo[i] ?? ''));
 		}
 
-		// Validación que enseña: se nombran las posiciones vacías, no un total abstracto.
+		// Validation that teaches: it names the empty positions instead of an abstract total.
 		const faltantes = variables
 			.map((valor, i) => (valor.trim() === '' ? i + 1 : 0))
 			.filter((posicion) => posicion > 0);
@@ -496,7 +506,7 @@ export async function prepareTemplateSend(
 	}
 	if (variables.length > 0) body.variables = variables;
 
-	// URL del encabezado a la propiedad que corresponde al formato de la plantilla.
+	// Header URL goes into the property that matches the template's format.
 	const propiedadUrl = headerUrlProperty(headerFormat);
 	if (propiedadUrl !== undefined) {
 		const ejemploUrl = fields.find((f) => f.id.startsWith('header_media'))?.defaultValue;
@@ -508,8 +518,8 @@ export async function prepareTemplateSend(
 					: '';
 		const yaConfigurada =
 			body.url_imagen_encabezado ?? body.url_video_encabezado ?? body.url_documento_encabezado;
-		// La plantilla con medio propio se envía sin URL: el API usa el suyo (comprobado
-		// en vivo). Solo se exige cuando no hay ninguno de los dos.
+		// A template with its own media is sent without a URL: the API uses its own
+		// (verified live). It's only required when neither one is present.
 		const medioPropio = typeof ejemploUrl === 'string' && ejemploUrl !== '';
 		if (url === '' && yaConfigurada === undefined && !medioPropio) {
 			const medio =
@@ -524,11 +534,11 @@ export async function prepareTemplateSend(
 		}
 		if (url !== '' && yaConfigurada === undefined) body[propiedadUrl] = url;
 	} else if (urlEncabezado !== '') {
-		// La plantilla no declara medio pero el usuario puso una URL: se respeta.
+		// The template doesn't declare media but the user set a URL: it's respected.
 		body.url_imagen_encabezado = urlEncabezado;
 	}
 
-	// Botones con parámetro dinámico: solo se rellenan con el ejemplo si se pidió.
+	// Buttons with a dynamic parameter: only filled with the sample if it was requested.
 	const camposBoton = fields.filter((f) => f.id.startsWith('button_'));
 	if (usarEjemplo && camposBoton.length > 0 && body.buttons === undefined) {
 		body.buttons = camposBoton.map((f, index) => ({
@@ -541,9 +551,9 @@ export async function prepareTemplateSend(
 }
 
 /**
- * Contexto de lo enviado, para que un error del API se pueda diagnosticar sin tener que
- * reproducir la llamada. Hoy solo detalla el envío de plantillas, que es el que más
- * datos combina.
+ * Context of what was sent, so an API error can be diagnosed without having to
+ * reproduce the call. Today it only details the template send, which is the one
+ * combining the most data.
  */
 function describeRequestContext(ctx: IExecuteSingleFunctions): string {
 	try {
@@ -565,13 +575,13 @@ function describeRequestContext(ctx: IExecuteSingleFunctions): string {
 }
 
 /**
- * postReceive compartido por todas las operaciones.
+ * postReceive shared by every operation.
  *
- * La API de LiveConnect responde siempre `{ status, status_message, data }`:
- * `status > 0` es éxito y `status < 0` es error (aún con HTTP 200).
- * - Lanza NodeApiError cuando `status < 0`.
- * - Si "Devolver Respuesta Completa" está apagado (default), devuelve solo `data`
- *   (una fila por elemento cuando `data` es un array).
+ * The LiveConnect API always responds `{ status, status_message, data }`:
+ * `status > 0` is success and `status < 0` is an error (even with HTTP 200).
+ * - Throws NodeApiError when `status < 0`.
+ * - If "Return Full Response" is off (default), returns only `data`
+ *   (one row per item when `data` is an array).
  */
 export async function handleLcResponse(
 	this: IExecuteSingleFunctions,
@@ -581,18 +591,18 @@ export async function handleLcResponse(
 	const body = response.body as IDataObject | undefined;
 
 	if (body === undefined || body === null || typeof body !== 'object' || Array.isArray(body)) {
-		// La API siempre envuelve en { status, status_message, data }; cualquier otra
-		// forma se entrega tal cual llegó (robustez defensiva).
+		// The API always wraps in { status, status_message, data }; any other shape
+		// is passed through as-is (defensive robustness).
 		return items;
 	}
 
 	const status = body.status as number | undefined;
 	if (typeof status === 'number' && status < 0) {
 		if (status === LC_STATUS_INVALID_TOKEN) {
-			// Capa reactiva: se quema el token para que el próximo request renueve,
-			// incluso si el `exp` del JWT no era legible.
+			// Reactive layer: burn the token so the next request renews it,
+			// even if the JWT's `exp` wasn't readable.
 			const credentials = await this.getCredentials<{ cKey?: string }>(
-				LIVECONNECT_CREDENTIALS_NAME,
+				LC_CREDENTIALS.name,
 			);
 			if (credentials.cKey) burnCurrentToken(credentials.cKey);
 

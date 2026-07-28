@@ -1,5 +1,6 @@
 export * from './AssistantDescription';
 export * from './AutomationDescription';
+export * from './CallbackResponseDescription';
 export * from './CategoryDescription';
 export * from './ChannelDescription';
 export * from './ContactDescription';

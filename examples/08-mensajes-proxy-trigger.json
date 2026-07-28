@@ -43,7 +43,7 @@
 					},
 					"conditions": [
 						{
-							"leftValue": "={{ $json.mensaje }}",
+							"leftValue": "={{ $json.message }}",
 							"rightValue": "",
 							"operator": {
 								"type": "string",
@@ -52,7 +52,7 @@
 							}
 						},
 						{
-							"leftValue": "={{ $json.id_conversacion }}",
+							"leftValue": "={{ $json.conversationId }}",
 							"rightValue": "",
 							"operator": {
 								"type": "string",
@@ -78,8 +78,8 @@
 			"parameters": {
 				"resource": "proxy",
 				"operation": "sendMessage",
-				"id_conversacion": "={{ $json.id_conversacion }}",
-				"mensaje": "=We received your message: \"{{ $json.mensaje }}\". An advisor will reply shortly. 🙌"
+				"id_conversacion": "={{ $json.conversationId }}",
+				"mensaje": "=We received your message: \"{{ $json.message }}\". An advisor will reply shortly. 🙌"
 			},
 			"id": "b8000000-0000-4000-8000-000000000004",
 			"name": "Auto-Reply",

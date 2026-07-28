@@ -1,15 +1,14 @@
 import type { IDataObject, ResourceMapperField } from 'n8n-workflow';
 
 /**
- * Traduce los `components` de una plantilla WABA (formato crudo de Meta) a los campos
- * editables que se muestran en el nodo, con el ejemplo de la plantilla como valor por
- * defecto.
+ * Translates the `components` of a WABA template (Meta's raw format) into the editable
+ * fields shown in the node, using the template's example as the default value.
  *
- * Los IDs son deterministas y ordenables porque el preSend los reparte por prefijo:
- *   body_1, body_2…      → variables del cuerpo (en orden)
- *   header_1, header_2…  → variables del encabezado de texto
- *   header_media         → URL de la imagen/video/documento del encabezado
- *   button_1, button_2…  → parámetro dinámico de cada botón
+ * IDs are deterministic and sortable because the preSend distributes them by prefix:
+ *   body_1, body_2…      → body variables (in order)
+ *   header_1, header_2…  → text header variables
+ *   header_media         → URL of the header image/video/document
+ *   button_1, button_2…  → dynamic parameter of each button
  */
 
 export const TEMPLATE_FIELD_PREFIX = {
@@ -19,13 +18,13 @@ export const TEMPLATE_FIELD_PREFIX = {
 	button: 'button_',
 } as const;
 
-/** Formato del encabezado, para saber a qué propiedad del body va la URL. */
+/** Header format, used to know which body property the URL should go into. */
 export type HeaderFormat = 'IMAGE' | 'VIDEO' | 'DOCUMENT' | 'TEXT' | 'NONE';
 
 export interface TemplateLayout {
 	fields: ResourceMapperField[];
 	headerFormat: HeaderFormat;
-	/** Botones tal como los devuelve el API, para reconstruirlos al enviar. */
+	/** Buttons exactly as returned by the API, so they can be rebuilt when sending. */
 	buttons: IDataObject[];
 }
 
@@ -43,14 +42,14 @@ function asText(value: unknown): string | undefined {
 	return typeof value === 'string' && value.trim() !== '' ? value : undefined;
 }
 
-/** Cantidad de marcadores {{n}} distintos en un texto de plantilla. */
+/** Number of distinct {{n}} placeholders in a template text. */
 export function countPlaceholders(text: string): number {
 	const found = new Set<number>();
 	for (const match of text.matchAll(/\{\{\s*(\d+)\s*\}\}/g)) {
 		found.add(Number(match[1]));
 	}
 	if (found.size === 0) return 0;
-	// Meta numera desde 1 y sin huecos; se usa el mayor por seguridad.
+	// Meta numbers them from 1 with no gaps; the highest one is used, just to be safe.
 	return Math.max(...found);
 }
 
@@ -73,17 +72,17 @@ function field(
 }
 
 /**
- * Campos de una plantilla. Las variables se listan aunque la plantilla no traiga
- * `example` (se detectan por los marcadores del texto), para que nunca falte un dato
- * obligatorio en el envío.
+ * Fields of a template. Variables are listed even when the template has no `example`
+ * (they're detected from the placeholders in the text), so a required value is never
+ * missing when sending.
  */
 export function buildTemplateLayout(template: IDataObject): TemplateLayout {
 	const components = asArray(template.components)
 		.map((component) => asObject(component))
 		.filter((component): component is IDataObject => component !== undefined);
 
-	// Formato real de LiveConnect (proveedor Gupshup): el texto con los marcadores vive
-	// en `content` y el tipo de medio en `templateType`; no hay `components` de Meta.
+	// LiveConnect's actual format (Gupshup provider): the text with the placeholders lives
+	// in `content` and the media type in `templateType`; there are no Meta `components`.
 	if (components.length === 0) {
 		return buildLayoutFromGupshup(template);
 	}
@@ -91,7 +90,7 @@ export function buildTemplateLayout(template: IDataObject): TemplateLayout {
 	return buildLayoutFromMetaComponents(template, components);
 }
 
-/** Texto de la plantilla con sus marcadores {{n}}, en cualquiera de sus variantes. */
+/** Template text with its {{n}} placeholders, in any of its variants. */
 export function templateContent(template: IDataObject): string {
 	const containerMeta = asObject(template.containerMeta) ?? {};
 	return (
@@ -104,16 +103,17 @@ export function templateContent(template: IDataObject): string {
 }
 
 /**
- * Identificador con el que hay que pedirle a LiveConnect que envíe la plantilla.
+ * Identifier to use when asking LiveConnect to send the template.
  *
- * LiveConnect trabaja con VARIOS proveedores de WhatsApp y cada uno resuelve por una
- * clave distinta (`sendTemplate` documenta "Id/nombre de la plantilla"):
- * - **Gupshup** (fila con `elementName`/`templateType`): el `id` (UUID). Con el nombre
- *   responde `status:-1` «Invalid template id provided».
- * - **Meta directo** (fila con `components`): el NOMBRE. Con el id largo de Meta
- *   (`667058365993373_67d4976c2921a_6360`) no resuelve.
+ * LiveConnect works with SEVERAL WhatsApp providers, and each one resolves the template
+ * by a different key (`sendTemplate` documents "Id/nombre de la plantilla"):
+ * - **Gupshup** (row with `elementName`/`templateType`): the `id` (UUID). Sending the
+ *   name instead returns `status:-1` «Invalid template id provided».
+ * - **Direct Meta** (row with `components`): the NAME. Meta's long id
+ *   (`667058365993373_67d4976c2921a_6360`) does not resolve.
  *
- * Se decide por la forma de la fila, que es lo único que distingue al proveedor.
+ * The decision is based on the shape of the row, which is the only thing that tells
+ * the providers apart.
  */
 export function templateSendIdentifier(template: IDataObject): string | undefined {
 	const esMeta = asArray(template.components).length > 0;
@@ -127,7 +127,7 @@ export function templateSendIdentifier(template: IDataObject): string | undefine
 	return undefined;
 }
 
-/** Nombre legible de la plantilla tal como lo expone LiveConnect. */
+/** Human-readable template name as exposed by LiveConnect. */
 export function templateName(template: IDataObject): string | undefined {
 	for (const key of ['elementName', 'name', 'nombre', 'templateName', 'title']) {
 		const value = asText(template[key]);
@@ -140,13 +140,13 @@ function buildLayoutFromGupshup(template: IDataObject): TemplateLayout {
 	const fields: ResourceMapperField[] = [];
 	const containerMeta = asObject(template.containerMeta) ?? {};
 
-	// Variables posicionales {{1}}, {{2}}… del cuerpo.
+	// Positional body variables: {{1}}, {{2}}…
 	const total = countPlaceholders(templateContent(template));
 	for (let i = 0; i < total; i++) {
 		fields.push(field(`${TEMPLATE_FIELD_PREFIX.body}${i + 1}`, `Variable {{${i + 1}}}`));
 	}
 
-	// El tipo de plantilla declara si lleva medio en el encabezado.
+	// The template type declares whether it carries media in the header.
 	const tipo = (asText(template.templateType) ?? 'TEXT').toUpperCase();
 	let headerFormat: HeaderFormat = 'NONE';
 	if (tipo === 'IMAGE' || tipo === 'VIDEO' || tipo === 'DOCUMENT') {
@@ -223,7 +223,7 @@ function buildLayoutFromMetaComponents(
 				const handles = asArray(example.header_handle);
 				const etiqueta =
 					formato === 'IMAGE' ? 'Image' : formato === 'VIDEO' ? 'Video' : 'Document';
-				// El formato va en el ID para no tener que adivinarlo luego por la extensión.
+				// The format goes in the ID so it doesn't have to be guessed later from the extension.
 				fields.push(
 					field(
 						`${TEMPLATE_FIELD_PREFIX.headerMedia}_${formato}`,
@@ -238,7 +238,7 @@ function buildLayoutFromMetaComponents(
 		if (tipo === 'BODY') {
 			hayCuerpo = true;
 			const texto = asText(component.text) ?? '';
-			// example.body_text es un array de filas de ejemplo: se usa la primera.
+			// example.body_text is an array of example rows: the first one is used.
 			const primeraFila = asArray(asArray(example.body_text)[0]);
 			const total = countPlaceholders(texto);
 			for (let i = 0; i < total; i++) {
@@ -260,7 +260,7 @@ function buildLayoutFromMetaComponents(
 		}
 	}
 
-	// Sin componente BODY, el texto del cuerpo llega en `data`: de ahí salen las variables.
+	// Without a BODY component, the body text arrives in `data` — that's where the variables come from.
 	if (!hayCuerpo) {
 		const texto = asText(template.data) ?? '';
 		const total = countPlaceholders(texto);
@@ -271,7 +271,7 @@ function buildLayoutFromMetaComponents(
 		}
 	}
 
-	// Algunas cuentas entregan los botones fuera de `components`.
+	// Some accounts deliver the buttons outside of `components`.
 	if (buttons.length === 0) {
 		buttons = asArray(template.buttons)
 			.map((button) => asObject(button))
@@ -279,8 +279,8 @@ function buildLayoutFromMetaComponents(
 	}
 
 	buttons.forEach((button, index) => {
-		// Solo los botones con parámetro dinámico piden dato: una URL con {{1}} o un
-		// código copiable (COPY_CODE), que Meta entrega en `example`.
+		// Only buttons with a dynamic parameter require a value: a URL with {{1}} or a
+		// copyable code (COPY_CODE), which Meta provides in `example`.
 		const tipoBoton = (asText(button.type) ?? '').toUpperCase();
 		const url = asText(button.url) ?? '';
 		const esDinamico = countPlaceholders(url) > 0 || tipoBoton === 'COPY_CODE';
@@ -293,7 +293,7 @@ function buildLayoutFromMetaComponents(
 		);
 	});
 
-	// Una plantilla mal formada podría repetir componentes: los IDs deben ser únicos.
+	// A malformed template could repeat components: IDs must be unique.
 	const vistos = new Set<string>();
 	const unicos = fields.filter((f) => (vistos.has(f.id) ? false : vistos.add(f.id) !== undefined));
 
@@ -301,13 +301,13 @@ function buildLayoutFromMetaComponents(
 }
 
 /**
- * El valor del selector de plantillas codifica lo que esa plantilla necesita:
- * `nombre|v2|IMAGE` (identificador, nº de variables del cuerpo, formato del encabezado).
+ * The template selector's value encodes what that template needs:
+ * `name|v2|IMAGE` (identifier, number of body variables, header format).
  *
- * Sirve para dos cosas que n8n no permite de otro modo: mostrar los campos "Variables" y
- * "URL del Encabezado" SOLO cuando la plantilla los usa (displayOptions únicamente puede
- * mirar otros parámetros, nunca datos del API), y validar sin volver a consultarla.
- * Es el mismo patrón del nodo oficial de WhatsApp, cuyo valor es `nombre|idioma`.
+ * This serves two purposes n8n doesn't otherwise allow: showing the "Variables" and
+ * "Header URL" fields ONLY when the template uses them (displayOptions can only look
+ * at other parameters, never at API data), and validating without querying it again.
+ * It's the same pattern used by the official WhatsApp node, whose value is `name|language`.
  */
 export function encodeTemplateValue(
 	identificador: string,
@@ -318,14 +318,14 @@ export function encodeTemplateValue(
 }
 
 export interface DecodedTemplateValue {
-	/** Nombre o ID con el que el API resuelve la plantilla. */
+	/** Name or ID the API uses to resolve the template. */
 	identificador: string;
-	/** Número de variables del cuerpo, o `undefined` si el valor no lo codifica. */
+	/** Number of body variables, or `undefined` if the value doesn't encode it. */
 	variables?: number;
 	headerFormat?: HeaderFormat;
 }
 
-/** Lee el valor del selector. Tolera valores antiguos (solo el identificador). */
+/** Reads the selector's value. Tolerates legacy values (identifier only). */
 export function decodeTemplateValue(value: string): DecodedTemplateValue {
 	const partes = value.split('|');
 	if (partes.length < 3) return { identificador: value };
@@ -343,7 +343,7 @@ export function decodeTemplateValue(value: string): DecodedTemplateValue {
 	return { identificador, variables, headerFormat };
 }
 
-/** Propiedad del body que corresponde a la URL del encabezado según su formato. */
+/** Body property that corresponds to the header URL, based on its format. */
 export function headerUrlProperty(formato: HeaderFormat): string | undefined {
 	if (formato === 'IMAGE') return 'url_imagen_encabezado';
 	if (formato === 'VIDEO') return 'url_video_encabezado';

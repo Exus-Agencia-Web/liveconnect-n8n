@@ -3,7 +3,7 @@
 	"nodes": [
 		{
 			"parameters": {
-				"content": "## AI chatbot that routes by intent\n\n**Flow:** Callback Trigger → AI Agent (GPT) that classifies and drafts a reply → Switch by intent → a different response on each branch.\n\n**Configure:**\n1. **OpenAI** (model) and **LiveConnect API** (response nodes) credentials.\n2. Activate the workflow and paste its production URL into the callback of your Flowbot (same `secret` on both sides).\n3. In **Talk to an Advisor** choose your team in `Team Name or ID` (the dropdown loads it from your account).\n\n**How it decides:** the AI Agent returns JSON `{ intencion, mensaje }` thanks to the Structured Output Parser. The Switch routes by `intencion` and each branch builds its own actions.\n\n**Golden rule:** the branches that keep the conversation going close with `input` (the node adds it on its own). The branch that delegates to a human does NOT carry `input`: the bot deliberately exits the callback.",
+				"content": "## AI chatbot that routes by intent\n\n**Flow:** Callback Trigger → AI Agent (GPT) that classifies and drafts a reply → Switch by intent → a different response on each branch.\n\n**Configure:**\n1. **OpenAI** (model) and **LiveConnect API** (response nodes) credentials.\n2. Activate the workflow and paste its production URL into the callback of your Flowbot (same `secret` on both sides).\n3. In **Talk to an Advisor** choose your team in `Team Name or ID` (the dropdown loads it from your account).\n\n**How it decides:** the AI Agent returns JSON `{ intencion, message }` thanks to the Structured Output Parser. The Switch routes by `intencion` and each branch builds its own actions.\n\n**Golden rule:** the branches that keep the conversation going close with `input` (the node adds it on its own). The branch that delegates to a human does NOT carry `input`: the bot deliberately exits the callback.",
 				"height": 460,
 				"width": 520
 			},
@@ -35,10 +35,10 @@
 		{
 			"parameters": {
 				"promptType": "define",
-				"text": "={{ $json.mensaje }}",
+				"text": "={{ $json.message }}",
 				"hasOutputParser": true,
 				"options": {
-					"systemMessage": "You are the company's virtual assistant and you handle WhatsApp support in English, with brief and friendly responses.\n\nThe customer's name is {{ $json.contacto.nombre || 'customer' }}. {{ $json.esPrimerTurno ? 'This is their first message: greet them.' : '' }}\n\nClassify their message into ONE of these intents and draft the appropriate reply:\n- \"ventas\": asks about products, plans, or wants to buy.\n- \"soporte\": has a problem, a complaint, or asks to talk to a person.\n- \"agenda\": wants to schedule, reschedule, or check an appointment.\n- \"otro\": greetings, thanks, or anything that does not fit above.\n\nReturn ONLY the requested JSON. In \"mensaje\" write what will be sent to the customer (maximum 3 sentences, no markdown). If the intent is \"soporte\", the message must let them know you are transferring them to a person on the team."
+					"systemMessage": "You are the company's virtual assistant and you handle WhatsApp support in English, with brief and friendly responses.\n\nThe customer's name is {{ $json.contact.nombre || 'customer' }}. {{ $json.isFirstTurn ? 'This is their first message: greet them.' : '' }}\n\nClassify their message into ONE of these intents and draft the appropriate reply:\n- \"ventas\": asks about products, plans, or wants to buy.\n- \"soporte\": has a problem, a complaint, or asks to talk to a person.\n- \"agenda\": wants to schedule, reschedule, or check an appointment.\n- \"otro\": greetings, thanks, or anything that does not fit above.\n\nReturn ONLY the requested JSON. In \"message\" write what will be sent to the customer (maximum 3 sentences, no markdown). If the intent is \"soporte\", the message must let them know you are transferring them to a person on the team."
 				}
 			},
 			"id": "c1000000-0000-4000-8000-000000000003",
@@ -86,7 +86,7 @@
 		{
 			"parameters": {
 				"schemaType": "fromJson",
-				"jsonSchemaExample": "{\n  \"intencion\": \"ventas\",\n  \"mensaje\": \"I would be happy to help you with the available plans.\"\n}"
+				"jsonSchemaExample": "{\n  \"intencion\": \"ventas\",\n  \"message\": \"I would be happy to help you with the available plans.\"\n}"
 			},
 			"id": "c1000000-0000-4000-8000-000000000006",
 			"name": "Output Format",
@@ -188,11 +188,13 @@
 		},
 		{
 			"parameters": {
+				"resource": "callbackResponse",
+				"operation": "send",
 				"acciones": {
 					"accion": [
 						{
 							"tipo": "sendText",
-							"text": "={{ $json.output.mensaje }}"
+							"text": "={{ $json.output.message }}"
 						},
 						{
 							"tipo": "addVar",
@@ -206,7 +208,7 @@
 			},
 			"id": "c1000000-0000-4000-8000-000000000008",
 			"name": "Sales Reply",
-			"type": "n8n-nodes-liveconnect.liveConnectCallbackResponse",
+			"type": "n8n-nodes-liveconnect.liveConnect",
 			"typeVersion": 1,
 			"position": [
 				1120,
@@ -215,11 +217,13 @@
 		},
 		{
 			"parameters": {
+				"resource": "callbackResponse",
+				"operation": "send",
 				"acciones": {
 					"accion": [
 						{
 							"tipo": "sendText",
-							"text": "={{ $json.output.mensaje }}"
+							"text": "={{ $json.output.message }}"
 						},
 						{
 							"tipo": "teamDelegate",
@@ -232,7 +236,7 @@
 			},
 			"id": "c1000000-0000-4000-8000-000000000009",
 			"name": "Talk to an Advisor",
-			"type": "n8n-nodes-liveconnect.liveConnectCallbackResponse",
+			"type": "n8n-nodes-liveconnect.liveConnect",
 			"typeVersion": 1,
 			"position": [
 				1120,
@@ -241,11 +245,13 @@
 		},
 		{
 			"parameters": {
+				"resource": "callbackResponse",
+				"operation": "send",
 				"acciones": {
 					"accion": [
 						{
 							"tipo": "sendText",
-							"text": "={{ $json.output.mensaje }}"
+							"text": "={{ $json.output.message }}"
 						},
 						{
 							"tipo": "addVar",
@@ -263,7 +269,7 @@
 			},
 			"id": "c1000000-0000-4000-8000-00000000000a",
 			"name": "Schedule Appointment",
-			"type": "n8n-nodes-liveconnect.liveConnectCallbackResponse",
+			"type": "n8n-nodes-liveconnect.liveConnect",
 			"typeVersion": 1,
 			"position": [
 				1120,
@@ -272,11 +278,13 @@
 		},
 		{
 			"parameters": {
+				"resource": "callbackResponse",
+				"operation": "send",
 				"acciones": {
 					"accion": [
 						{
 							"tipo": "sendText",
-							"text": "={{ $json.output.mensaje }}"
+							"text": "={{ $json.output.message }}"
 						}
 					]
 				},
@@ -285,7 +293,7 @@
 			},
 			"id": "c1000000-0000-4000-8000-00000000000b",
 			"name": "General Reply",
-			"type": "n8n-nodes-liveconnect.liveConnectCallbackResponse",
+			"type": "n8n-nodes-liveconnect.liveConnect",
 			"typeVersion": 1,
 			"position": [
 				1120,

@@ -1,6 +1,6 @@
 # Triggers y callbacks
 
-Dos triggers y un nodo de respuesta. Los tres son **programáticos**: en n8n no hay otra forma de implementar triggers ni de responder un webhook.
+Dos triggers y el recurso **Callback Response** del nodo principal (`LiveConnect`). Los tres se implementan de forma **programática**: en n8n no hay otra forma de crear triggers ni de responder un webhook, y el recurso lo logra vía `customOperations` sin convertir programáticas las otras 58 operaciones del nodo (detalle en [01-arquitectura.md](01-arquitectura.md)).
 
 ## 1. LiveConnect Proxy Trigger
 
@@ -20,7 +20,7 @@ Puntos que costaron:
 - **TTL de DynamoDB** (epoch en segundos): vencido = el registro ya no existe → `checkExists` devuelve `false` y n8n vuelve a registrar.
 - **Secret**: si el parámetro está vacío, `create()` genera `randomBytes(16).hex` y lo persiste en `getWorkflowStaticData('node')`.
 - **Fallo de seguridad corregido**: `checkExists` devuelve `false` cuando no conoce el secret local, y `delete` solo limpia el secret guardado si el borrado remoto se confirmó. Sin eso, un webhook podía quedar registrado con un secret que el nodo ya no validaba.
-- El payload del proxy **no está documentado**: `simplifyProxyEvent` simplifica solo si reconoce `{chat|inputs|userInput}`; si no, entrega crudo.
+- El payload del proxy **no está documentado**: `simplifyProxyEvent` simplifica solo si reconoce `{chat|inputs|userInput}`; si no, entrega crudo. Cuando sí simplifica, entrega `message`, `sessionId`, `conversationId`, `channelId`, `contact`, `inputs` y `raw` — claves en inglés (identificadores del código, no se traducen); `raw` conserva el payload de LiveConnect con sus nombres originales.
 
 ## 2. LiveConnect Callback Trigger
 
@@ -34,6 +34,10 @@ Petición: `POST` con `{chat, inputs, userInput, intent, userFile, idcs}`.
 - **Primer turno**: `userInput === ''` y el mensaje real está en `inputs.mensaje_inicial`. Un turno posterior sin texto pero **con** adjunto (`userFile`) no se confunde con el primero; un turno vacío sin adjunto sí es indistinguible (limitación del contrato).
 - **`chat.usuarios` es un OBJETO indexado por id**, no un array. Hay agente humano si alguna entrada tiene `isbot === 0`.
 - **Session ID**: `inputs.id` → `chat.contacto.id` → `chat.id` → hash de `id_canal:fecha_ini`. Si no hay ningún identificador, un UUID aleatorio por evento: un hash de campos ausentes sería constante y mezclaría conversaciones distintas.
+
+### Evento simplificado (`simple: true`, default)
+
+`simplifyCallbackEvent` (en `TriggerFunctions.ts`) traduce el contrato de arriba a las claves que ve el workflow — **identificadores en inglés, no se traducen ni siquiera en el paquete español**: `message`, `sessionId`, `isFirstTurn`, `hasAttachment`, `userFile`, `hasHumanAgent`, `conversationId`, `channelId`, `contact`, `inputs`, `intent` y `raw` (el payload de LiveConnect sin tocar, con sus nombres originales). Antes de la 2.0.0 estas claves estaban en español (`mensaje`, `esPrimerTurno`, `tieneAdjunto`, `hayAgenteHumano`, `contacto`, `id_conversacion`, `id_canal`); cualquier expresión de un workflow que las lea por el nombre viejo hay que actualizarla — ver [07-historial-decisiones.md](07-historial-decisiones.md).
 
 ### Respuesta síncrona (lo más importante)
 
@@ -73,9 +77,16 @@ La regla `trigger-node-conventions` (del escáner oficial, `@n8n/eslint-plugin-c
 
 En n8n-workflow 1.120 el tipo de `webhookMethods.default` **exige los tres métodos** cuando el bloque existe (eso no cambió). Lo que cambió es que ya **no se puede omitir el bloque entero** en un trigger sin API de registro (como el de callback): la regla `webhook-lifecycle-complete` del escáner de nodos verificados lo exige siempre. La solución es declarar los tres métodos como no-ops honestos que devuelven `true` sin hacer nada, con un comentario que explique por qué existen.
 
-## 3. LiveConnect Respuesta al Callback
+## 3. Recurso Callback Response (nodo LiveConnect)
 
-Constructor visual de las actions, para no depender de un nodo Code.
+Constructor visual de las actions, para no depender de un nodo Code. **Hasta la 1.0.x era un nodo aparte**, `LiveConnectCallbackResponse`; n8n solo admite un nodo regular por paquete verificado (los triggers no cuentan) y su revisión lo señaló. Desde la 2.0.0 es el recurso `callbackResponse` (operación `send`) del nodo `LiveConnect`:
+
+- Las properties viven en `descriptions/CallbackResponseDescription.ts` (antes eran las `properties` del nodo retirado; los nombres internos no cambiaron).
+- La lógica corre en `customOperations.callbackResponse.send`, dentro de `LiveConnect.node.ts` — el mecanismo que `n8n-workflow` define para que un nodo declarativo tenga una operación con implementación propia (`nodes-base` ya lo usa en `WhatsApp.node.ts`); n8n lo ejecuta en vez del `routing` para ese par recurso/operación. Recibe `IExecuteFunctions`, así que todo lo de abajo sigue igual que cuando era un nodo.
+- `scripts/verify-spec.mjs` excluye el recurso: no llama al API de LiveConnect, así que no hay endpoint del OpenAPI que verificar.
+- **BREAKING**: los workflows que usaban el nodo `LiveConnectCallbackResponse` no migran solos — hay que rehacerlos con el recurso `callbackResponse` del nodo `LiveConnect`. Detalle en [07-historial-decisiones.md](07-historial-decisiones.md).
+
+Lo que hace, sin cambios respecto al nodo anterior:
 
 - `fixedCollection` `acciones.accion[]` con un campo `tipo` y campos condicionales por tipo. **`displayOptions.show.tipo` funciona entre hermanos dentro del `fixedCollection`** (el scope es local al ítem) — es lo que permite mostrar solo los campos de la acción elegida.
 - `toAction` valida lo obligatorio: IDs enteros > 0 (rechazando `''` **antes** de `Number()`, porque `Number('') === 0` pasaría un `!isNaN`), URLs `http(s)`, y campos de texto que no sean objetos ni arrays (error típico de una expresión mal apuntada).
@@ -86,11 +97,11 @@ Constructor visual de las actions, para no depender de un nodo Code.
 - **No copiar el guard "No Webhook node found" del core**: su lista de triggers reconocidos no incluye nodos comunitarios, así que rechazaría una respuesta perfectamente válida.
 - Requiere que el Callback Trigger esté en `responseMode: responseNode` (su valor por defecto).
 
-Humo: `scripts/smoke-response.mjs`.
+Humo: `scripts/smoke-response.mjs` (ejercita la operación custom).
 
 ## 4. Ejemplos
 
 - `examples/07-chatbot-callback-trigger.json` — callback con nodo Code.
 - `examples/08-mensajes-proxy-trigger.json` — proxy.
-- `examples/09-chatbot-callback-visual.json` — callback con el nodo de respuesta visual.
+- `examples/09-chatbot-callback-visual.json` — callback con el recurso Callback Response del nodo LiveConnect.
 - `examples/10-chatbot-ia-switch-respuestas.json` — callback + IA + Switch + respuestas por intención.

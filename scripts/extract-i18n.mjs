@@ -20,30 +20,11 @@ import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { recorrerTextos } from './i18n-paths.mjs';
+import { FUENTES, recorrerTextos } from './i18n-paths.mjs';
 
 const require = createRequire(import.meta.url);
 const raiz = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
-export const FUENTES = [
-	['liveConnect', 'dist/nodes/LiveConnect/LiveConnect.node.js', 'LiveConnect'],
-	[
-		'liveConnectCallbackResponse',
-		'dist/nodes/LiveConnect/LiveConnectCallbackResponse.node.js',
-		'LiveConnectCallbackResponse',
-	],
-	[
-		'liveConnectCallbackTrigger',
-		'dist/nodes/LiveConnect/LiveConnectCallbackTrigger.node.js',
-		'LiveConnectCallbackTrigger',
-	],
-	[
-		'liveConnectProxyTrigger',
-		'dist/nodes/LiveConnect/LiveConnectProxyTrigger.node.js',
-		'LiveConnectProxyTrigger',
-	],
-	['liveConnectApi', 'dist/credentials/LiveConnectApi.credentials.js', 'LiveConnectApi'],
-];
 
 const diccionario = {};
 
