@@ -30,11 +30,6 @@ export const callbackResponseOperations: INodeProperties[] = [
 			},
 		],
 		default: 'send',
-		displayOptions: {
-			show: {
-				resource: ['callbackResponse'],
-			},
-		},
 	},
 ];
 

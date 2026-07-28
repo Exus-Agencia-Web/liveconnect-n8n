@@ -1,12 +1,15 @@
-import type { INodeType, INodeTypeDescription } from 'n8n-workflow';
-import { NodeConnectionTypes } from 'n8n-workflow';
-
-import { LIVECONNECT_BASE_URL, refreshTokenIfExpired } from './GenericFunctions';
-import { liveConnectLoadOptions } from './LoadOptions';
-import type { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
-import { NodeOperationError } from 'n8n-workflow';
+import type {
+	IDataObject,
+	IExecuteFunctions,
+	INodeExecutionData,
+	INodeType,
+	INodeTypeDescription,
+} from 'n8n-workflow';
+import { NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 
 import { applyClosingRule, buildEnvelope, toAction } from './ActionsFunctions';
+import { LIVECONNECT_BASE_URL, refreshTokenIfExpired } from './GenericFunctions';
+import { liveConnectLoadOptions } from './LoadOptions';
 import {
 	assistantFields,
 	assistantOperations,
