@@ -322,9 +322,9 @@ export const wabaFields: INodeProperties[] = [
 			},
 		},
 		routing: {
-			// El preSend cuelga de este campo porque SIEMPRE está visible: n8n no ejecuta
-			// los preSend de campos ocultos, y los de variables/URL aparecen según la
-			// plantilla elegida.
+			// The preSend hangs off this field because it's ALWAYS visible: n8n doesn't run
+			// the preSend of hidden fields, and the variable/URL fields appear based on the
+			// chosen template.
 			send: { type: 'body', property: 'numero', preSend: [prepareTemplateSend] },
 		},
 	},
@@ -499,9 +499,9 @@ export const wabaFields: INodeProperties[] = [
 				resource: ['waba'],
 				operation: ['sendTemplate'],
 			},
-			// Solo aparece cuando la plantilla elegida lleva un medio en el encabezado
-			// (el valor del selector termina en IMAGE, VIDEO o DOCUMENT); con la plantilla
-			// sin elegir no se muestra nada.
+			// Only appears when the chosen template carries media in the header
+			// (the selector's value ends in IMAGE, VIDEO, or DOCUMENT); with no template
+			// chosen, nothing is shown.
 			hide: {
 				id_plantilla: ['', { _cnd: { regex: '\\|(NONE|TEXT)$' } }],
 			},
@@ -540,9 +540,9 @@ export const wabaFields: INodeProperties[] = [
 				type: 'string',
 				default: '',
 				placeholder: 'Ana, May 12',
-				// Con la plantilla elegida por expresión (envío masivo con una plantilla
-				// distinta por fila) n8n no puede saber cuántos campos "Variable {{n}}"
-				// mostrar, porque displayOptions ve la expresión sin evaluar.
+				// With the template chosen via expression (bulk sending with a different
+				// template per row), n8n can't know how many "Variable {{n}}" fields to
+				// show, because displayOptions sees the expression unevaluated.
 				description:
 					'Only used if you choose the template with an expression: body values separated by commas, in the order {{1}}, {{2}}, etc. If you fill in the "Variable {{n}}" fields, they take precedence.',
 			},

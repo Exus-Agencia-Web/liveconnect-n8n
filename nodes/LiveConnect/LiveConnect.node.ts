@@ -52,7 +52,7 @@ import {
 } from './descriptions';
 
 export class LiveConnect implements INodeType {
-	// Selectores dinámicos: alimentan los campos de ID con los endpoints de listado.
+	// Dynamic selectors: feed the ID fields from the listing endpoints.
 	methods = {
 		loadOptions: liveConnectLoadOptions,
 	};
@@ -90,9 +90,9 @@ export class LiveConnect implements INodeType {
 				name: 'resource',
 				type: 'options',
 				noDataExpression: true,
-				// preSend global: `resource` siempre está visible y es la primera propiedad,
-				// así que su preSend corre en todas las operaciones y antes que cualquier
-				// otro. Sin `property` no envía nada al body ni al query.
+				// Global preSend: `resource` is always visible and is the first property,
+				// so its preSend runs on every operation and before any other one.
+				// Without `property` it sends nothing to the body or the query.
 				routing: {
 					send: { preSend: [refreshTokenIfExpired] },
 				},
@@ -181,7 +181,7 @@ export class LiveConnect implements INodeType {
 			async send(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
 				const items = this.getInputData();
 				const returnData: INodeExecutionData[] = [];
-				// El callback HTTP admite UNA sola respuesta por ejecución.
+				// The HTTP callback allows only ONE response per execution.
 				let responded = false;
 
 				for (let i = 0; i < items.length; i++) {
@@ -194,7 +194,7 @@ export class LiveConnect implements INodeType {
 						if (autoInput) {
 							actions = applyClosingRule(actions);
 						} else if (actions.length === 0) {
-							// El contrato exige data.actions no vacío; sin autoInput no hay keep-alive implícito.
+							// The contract requires a non-empty data.actions; without autoInput there's no implicit keep-alive.
 							throw new NodeOperationError(
 								this.getNode(),
 								'Configure at least one action or enable "Automatically Add Closing Input"',
@@ -206,8 +206,8 @@ export class LiveConnect implements INodeType {
 
 						const respond = this.getNodeParameter('respondWebhook', i, true) as boolean;
 						if (respond && !responded) {
-							// Misma forma que el core Respond to Webhook (IN8nHttpFullResponse).
-							// Sin webhook esperando (ejecución manual) es no-op: no lanza.
+							// Same shape as the core Respond to Webhook (IN8nHttpFullResponse).
+							// With no webhook waiting (manual execution) it's a no-op: it doesn't throw.
 							this.sendResponse({
 								body: envelope,
 								headers: { 'content-type': 'application/json' },
@@ -225,10 +225,10 @@ export class LiveConnect implements INodeType {
 							});
 							continue;
 						}
-						// Siempre se envuelve, incluso lo que ya es NodeOperationError: la regla
-						// `require-node-api-error` del linter de nodos verificados prohíbe relanzar
-						// el error tal cual. NodeOperationError conserva el mensaje del original,
-						// así que el texto que ve el usuario no cambia.
+						// Always wrapped, even when it's already a NodeOperationError: the
+						// `require-node-api-error` rule in the verified-nodes linter forbids
+						// rethrowing the error as-is. NodeOperationError preserves the original
+						// message, so the text the user sees doesn't change.
 						throw new NodeOperationError(this.getNode(), error as Error, { itemIndex: i });
 					}
 				}

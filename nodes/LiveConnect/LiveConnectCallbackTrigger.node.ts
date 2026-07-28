@@ -32,10 +32,10 @@ export class LiveConnectCallbackTrigger implements INodeType {
 				httpMethod: 'POST',
 				responseMode: '={{$parameter["responseMode"]}}',
 				responseData: '={{$parameter["responseMode"] === "lastNode" ? "firstEntryJson" : undefined}}',
-				// Ruta configurable (el default reproduce la URL de versiones anteriores).
-				// La URL completa es <base>/<webhookId>/<ruta>: el webhookId ya es único por
-				// nodo, así que esto no evita choques —no los hay— sino que permite una URL
-				// legible y estable para pegar en el Flowbot.
+				// Configurable path (the default reproduces the URL of earlier versions).
+				// The full URL is <base>/<webhookId>/<path>: the webhookId is already unique per
+				// node, so this doesn't prevent collisions —there aren't any— it just allows a
+				// readable, stable URL to paste into the Flowbot.
 				path: '={{$parameter["path"] || "webhook"}}',
 			},
 		],
@@ -103,13 +103,13 @@ export class LiveConnectCallbackTrigger implements INodeType {
 		],
 	};
 
-	// El Flowbot no expone API de registro de webhooks: la URL se pega a mano en su
-	// configuración (igual que el nodo Webhook del core). checkExists/create/delete no
-	// llaman a ningún API — son no-ops honestos que existen solo porque el escáner de
-	// nodos verificados de n8n exige implementar los tres métodos del ciclo de vida.
-	// OJO si algún día LiveConnect expone API de registro del Flowbot: como checkExists
-	// devuelve true siempre, n8n NUNCA llama a create(). Implementar create() sin tocar
-	// checkExists dejaría código muerto y sin ningún síntoma.
+	// The Flowbot doesn't expose a webhook-registration API: the URL is pasted by hand into
+	// its configuration (same as the core Webhook node). checkExists/create/delete don't
+	// call any API — they're honest no-ops that exist only because n8n's verified-nodes
+	// scanner requires implementing all three lifecycle methods.
+	// HEADS UP if LiveConnect ever exposes a Flowbot registration API: since checkExists
+	// always returns true, n8n will NEVER call create(). Implementing create() without
+	// touching checkExists would leave dead code with no symptom at all.
 	webhookMethods = {
 		default: {
 			async checkExists(this: IHookFunctions): Promise<boolean> {

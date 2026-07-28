@@ -81,8 +81,8 @@ function requireId(
 	campo: string,
 	value: unknown,
 ): number {
-	// Number('') === 0 pasa Number.isInteger: rechazar vacío ANTES de castear.
-	// Solo number|string: Number(true)===1 y Number([5])===5 colarían IDs fantasma.
+	// Number('') === 0 passes Number.isInteger: reject empty values BEFORE casting.
+	// Only number|string: Number(true)===1 and Number([5])===5 would let phantom IDs slip through.
 	if (value === '' || value === null || value === undefined) {
 		fail(node, itemIndex, pos, tipo, `field "${campo}" is required`);
 	}
@@ -106,8 +106,8 @@ const asStr = (value: unknown): string =>
 	typeof value === 'string' ? value : value === null || value === undefined ? '' : String(value);
 
 /**
- * Item de la UI → action del contrato del callback. Solo emite las claves del
- * contrato (el servidor rechaza propiedades extra); valida obligatorios y castea IDs.
+ * UI item → callback contract action. Emits only the contract's keys (the server
+ * rejects extra properties); validates required fields and casts IDs.
  */
 export function toAction(node: INode, ui: IDataObject, pos: number, itemIndex: number): IDataObject {
 	const tipo = asStr(ui.tipo);
@@ -142,7 +142,7 @@ export function toAction(node: INode, ui: IDataObject, pos: number, itemIndex: n
 				varvalue: asStr(ui.varvalue),
 			};
 		case 'input':
-			// '' es válido: keep-alive (espera sin mostrar texto)
+			// '' is valid: keep-alive (waits without showing any text)
 			rejectNonScalar(node, itemIndex, pos, tipo, 'input', ui.input);
 			return { type: tipo, input: asStr(ui.input) };
 		case 'updateContact':
@@ -160,20 +160,20 @@ export function toAction(node: INode, ui: IDataObject, pos: number, itemIndex: n
 }
 
 /**
- * Regla de oro del contrato: todo turno cierra con una acción `input` (vacía sirve),
- * SALVO que haya delegación (userDelegate/teamDelegate) — en ese caso el bot debe
- * salir del callback y cualquier `input` configurado se elimina. Devuelve copia.
+ * Golden rule of the contract: every turn closes with an `input` action (an empty one
+ * works), UNLESS there's a delegation (userDelegate/teamDelegate) — in that case the bot
+ * must exit the callback and any configured `input` is removed. Returns a copy.
  */
 export function applyClosingRule(actions: IDataObject[]): IDataObject[] {
 	const delega = actions.some((a) => a.type === 'userDelegate' || a.type === 'teamDelegate');
 	if (delega) return actions.filter((a) => a.type !== 'input');
-	// El input debe ser el ÚLTIMO elemento — un input intermedio no cierra el turno.
+	// The input must be the LAST element — an input in the middle doesn't close the turn.
 	const last = actions[actions.length - 1];
 	if (last?.type === 'input') return actions;
 	return [...actions, { type: 'input', input: '' }];
 }
 
-/** Envelope apiResp que LiveConnect espera como respuesta síncrona del callback. */
+/** apiResp envelope that LiveConnect expects as the synchronous response to the callback. */
 export function buildEnvelope(actions: IDataObject[]): IDataObject {
 	return { status: 1, status_message: 'Ok', data: { actions } };
 }

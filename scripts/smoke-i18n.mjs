@@ -35,11 +35,6 @@ const diccionario = JSON.parse(readFileSync(resolve(raiz, 'i18n/es.json'), 'utf8
 const PIEZAS = [
 	['liveConnect', 'nodes/LiveConnect/LiveConnect.node.js', 'LiveConnect'],
 	[
-		'liveConnectCallbackResponse',
-		'nodes/LiveConnect/LiveConnectCallbackResponse.node.js',
-		'LiveConnectCallbackResponse',
-	],
-	[
 		'liveConnectCallbackTrigger',
 		'nodes/LiveConnect/LiveConnectCallbackTrigger.node.js',
 		'LiveConnectCallbackTrigger',
@@ -126,10 +121,35 @@ test('el paquete español conserva las funciones del routing', () => {
 test('el package.json generado apunta a los wrappers y no al paquete base', () => {
 	const paquete = JSON.parse(readFileSync(resolve(distEs, 'package.json'), 'utf8'));
 	assert.equal(paquete.name, 'n8n-nodes-liveconnect-es');
-	assert.equal(paquete.n8n.nodes.length, 4);
+	assert.equal(paquete.n8n.nodes.length, 3);
 	for (const ruta of [...paquete.n8n.nodes, ...paquete.n8n.credentials]) {
 		assert.ok(!ruta.startsWith('base/'), `${ruta} apunta al paquete base`);
 		assert.ok(existsSync(resolve(distEs, ruta)), `falta ${ruta}`);
+	}
+});
+
+test('los dos paquetes declaran credenciales distintas (pueden convivir)', () => {
+	// n8n indexa las credenciales por nombre en un espacio global, sin prefijo de paquete:
+	// si ambos declararan `liveConnectApi` serían incompatibles y n8n Cloud los rechaza.
+	const credEs = new (require(resolve(distEs, 'credentials/LiveConnectApi.credentials.js')).LiveConnectApi)();
+	const credEn = new (require(resolve(raiz, 'dist/credentials/LiveConnectApi.credentials.js')).LiveConnectApi)();
+	assert.equal(credEn.name, 'liveConnectApi');
+	assert.equal(credEs.name, 'liveConnectApiEs');
+
+	// Y cada nodo pide la suya.
+	for (const [archivo, clase] of [
+		['nodes/LiveConnect/LiveConnect.node.js', 'LiveConnect'],
+		['nodes/LiveConnect/LiveConnectCallbackTrigger.node.js', 'LiveConnectCallbackTrigger'],
+		['nodes/LiveConnect/LiveConnectProxyTrigger.node.js', 'LiveConnectProxyTrigger'],
+	]) {
+		const nodoEs = new (require(resolve(distEs, archivo))[clase])();
+		const nodoEn = new (require(resolve(raiz, 'dist', archivo))[clase])();
+		for (const c of nodoEs.description.credentials ?? []) {
+			assert.equal(c.name, 'liveConnectApiEs', `${clase} (es) pide ${c.name}`);
+		}
+		for (const c of nodoEn.description.credentials ?? []) {
+			assert.equal(c.name, 'liveConnectApi', `${clase} (en) pide ${c.name}`);
+		}
 	}
 });
 

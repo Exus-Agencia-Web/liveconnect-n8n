@@ -13,8 +13,7 @@ import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { recorrerTextos } from './i18n-paths.mjs';
-import { FUENTES } from './extract-i18n.mjs';
+import { FUENTES, recorrerTextos } from './i18n-paths.mjs';
 
 const require = createRequire(import.meta.url);
 const raiz = resolve(dirname(fileURLToPath(import.meta.url)), '..');

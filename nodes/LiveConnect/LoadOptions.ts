@@ -13,8 +13,8 @@ import {
 } from './GenericFunctions';
 
 /**
- * Llama un endpoint del API y devuelve `data` en crudo.
- * Valida el envelope estándar: `status < 0` es error aun con HTTP 200.
+ * Calls an API endpoint and returns `data` raw.
+ * Validates the standard envelope: `status < 0` is an error even with HTTP 200.
  */
 async function lcRequest(
 	ctx: ILoadOptionsFunctions,
@@ -24,9 +24,9 @@ async function lcRequest(
 ): Promise<unknown> {
 	let response: { status?: number; status_message?: string; data?: unknown };
 
-	// Los selectores NO pasan por el preSend del nodo, así que el token de la credencial
-	// puede estar vencido (el API lo reporta como HTTP 200 con status -403). Se siembra
-	// uno vigente; `authenticate` respeta el header ya presente.
+	// Selectors do NOT go through the node's preSend, so the credential's token might
+	// be expired (the API reports it as HTTP 200 with status -403). A valid one is
+	// seeded here; `authenticate` honors the header that's already present.
 	const tokenContext = ctx as unknown as LcTokenContext;
 	const token = await ensureFreshToken(tokenContext);
 
@@ -56,8 +56,8 @@ async function lcRequest(
 
 	if (typeof response.status === 'number' && response.status < 0) {
 		if (response.status === -403) {
-			// Token rechazado pese a la renovación: se quema para que el siguiente intento
-			// emita uno nuevo en vez de repetir el mismo error.
+			// Token rejected despite the renewal: burn it so the next attempt mints a
+			// new one instead of repeating the same error.
 			await burnTokenForContext(tokenContext);
 			throw new NodeOperationError(
 				ctx.getNode(),
@@ -78,7 +78,7 @@ async function lcRequest(
 	return response.data;
 }
 
-/** Igual que `lcRequest`, pero normalizando la respuesta a filas para los selectores. */
+/** Same as `lcRequest`, but normalizing the response into rows for the selectors. */
 async function lcList(
 	ctx: ILoadOptionsFunctions,
 	endpoint: string,
@@ -89,16 +89,16 @@ async function lcList(
 }
 
 /**
- * Filas de la respuesta. La mayoría de listados devuelve `data` como array, pero
- * algunos lo anidan (p. ej. /direct/waba/getTemplates → `data.templates` + `paging`),
- * así que se busca el primer array dentro del objeto.
+ * Rows from the response. Most listings return `data` as an array, but some nest it
+ * (e.g. /direct/waba/getTemplates → `data.templates` + `paging`), so the first array
+ * found inside the object is used.
  */
 function pickRows(data: unknown): IDataObject[] {
 	if (Array.isArray(data)) return data as IDataObject[];
 	if (data === null || typeof data !== 'object') return [];
 
 	const container = data as IDataObject;
-	// Claves conocidas primero; si el API cambia el nombre, cae al primer array que haya.
+	// Known keys first; if the API changes the name, falls back to the first array found.
 	for (const key of ['templates', 'items', 'list', 'rows', 'results', 'data']) {
 		if (Array.isArray(container[key])) return container[key] as IDataObject[];
 	}
@@ -108,7 +108,7 @@ function pickRows(data: unknown): IDataObject[] {
 	return [];
 }
 
-/** Filas del API → opciones del selector, con el ID visible y orden alfabético español. */
+/** API rows → selector options, with the ID visible and sorted alphabetically in Spanish. */
 function toOptions(
 	rows: IDataObject[],
 	labelKey = 'nombre',
@@ -127,17 +127,17 @@ function toOptions(
 }
 
 /**
- * Ruta EXACTA del parámetro del que depende cada selector, según el recurso y la
- * operación abiertos. Es determinista a propósito: n8n no limpia los valores de los
- * campos que quedan ocultos al cambiar de operación, así que buscar "el primer
- * candidato no vacío" entre varias rutas devolvería el valor de otra operación.
+ * EXACT path of the parameter each selector depends on, based on the currently open
+ * resource and operation. Deliberately deterministic: n8n doesn't clear the values of
+ * fields that become hidden when the operation changes, so looking for "the first
+ * non-empty candidate" across several paths would return another operation's value.
  */
 const DEPENDENCY_PATHS: Record<string, string> = {
-	// id_pipeline → etapas
+	// id_pipeline → stages
 	'crm.getStages.id_pipeline': 'id_pipeline',
 	'deal.create.id_pipeline': 'id_pipeline',
 	'deal.update.id_pipeline': 'updateFields.id_pipeline',
-	// id_canal → plantillas WABA
+	// id_canal → WABA templates
 	'waba.sendTemplate.id_canal': 'id_canal',
 	'automation.create.id_canal': 'additionalFields.id_canal',
 	'automation.update.id_canal': 'updateFields.id_canal',
@@ -151,7 +151,7 @@ function readParameter(
 	const value = ctx.getCurrentNodeParameter(path);
 	if (value === undefined || value === null || value === '' || value === 0) return undefined;
 	if (typeof value === 'string' && value.startsWith('=')) {
-		// En el editor las expresiones no están resueltas: no se puede consultar el API.
+		// Expressions aren't resolved in the editor: the API can't be queried.
 		throw new NodeOperationError(
 			ctx.getNode(),
 			`The list cannot be loaded while ${label} uses an expression`,
@@ -166,8 +166,8 @@ function readParameter(
 }
 
 /**
- * Valor del parámetro del que depende el selector. Usa la ruta exacta del contexto
- * actual y, si el contexto no está mapeado, cae a la ruta top-level.
+ * Value of the parameter the selector depends on. Uses the exact path for the current
+ * context and, if the context isn't mapped, falls back to the top-level path.
  */
 function dependencyValue(
 	ctx: ILoadOptionsFunctions,
@@ -184,7 +184,7 @@ export async function getChannels(this: ILoadOptionsFunctions): Promise<INodePro
 	return toOptions(await lcList(this, '/channels/list'));
 }
 
-/** Texto donde buscar el proveedor de un canal (`proveedor.tipo`, `proveedor.nombre`, nombre). */
+/** Text to search for a channel's provider (`proveedor.tipo`, `proveedor.nombre`, name). */
 function channelSignature(row: IDataObject): string {
 	const proveedor = row.proveedor;
 	const partes: string[] = [];
@@ -199,9 +199,9 @@ function channelSignature(row: IDataObject): string {
 }
 
 /**
- * Filtra los canales por proveedor. Si ninguno coincide (p. ej. el API no devuelve
- * `proveedor` en esta cuenta) se devuelven TODOS: es preferible una lista de más a un
- * desplegable vacío que bloquee al usuario.
+ * Filters channels by provider. If none match (e.g. the API doesn't return `proveedor`
+ * for this account) ALL of them are returned: a longer list is preferable to an empty
+ * dropdown that blocks the user.
  */
 function filterChannels(rows: IDataObject[], incluye: RegExp, excluye?: RegExp): IDataObject[] {
 	const filtrados = rows.filter((row) => {
@@ -212,13 +212,13 @@ function filterChannels(rows: IDataObject[], incluye: RegExp, excluye?: RegExp):
 	return filtrados.length > 0 ? filtrados : rows;
 }
 
-/** Canales de WhatsApp Business API (WABA), los únicos que envían plantillas. */
+/** WhatsApp Business API (WABA) channels, the only ones that send templates. */
 export async function getWabaChannels(this: ILoadOptionsFunctions): Promise<INodePropertyOptions[]> {
 	const rows = await lcList(this, '/channels/list');
 	return toOptions(filterChannels(rows, /waba|business|cloud|meta|gupshup|360dialog/));
 }
 
-/** Canales de WhatsApp QR (instancias no oficiales), excluyendo los WABA. */
+/** WhatsApp QR channels (unofficial instances), excluding WABA ones. */
 export async function getWhatsAppChannels(
 	this: ILoadOptionsFunctions,
 ): Promise<INodePropertyOptions[]> {
@@ -265,7 +265,7 @@ export async function getAssistants(this: ILoadOptionsFunctions): Promise<INodeP
 	return toOptions(await lcList(this, '/assistant/listAssistant'));
 }
 
-/** Plantillas del canal WABA seleccionado. Su ID es string (no entero, como el resto). */
+/** Templates for the selected WABA channel. Its ID is a string (not an integer, unlike the rest). */
 export async function getWabaTemplates(
 	this: ILoadOptionsFunctions,
 ): Promise<INodePropertyOptions[]> {
@@ -280,13 +280,13 @@ export async function getWabaTemplates(
 		id_canal: Number(idCanal),
 	});
 
-	// La etiqueta dice lo que hay que rellenar para enviar esa plantilla: cuántas
-	// variables pide y si necesita imagen, video o documento en el encabezado.
+	// The label states what needs to be filled in to send that template: how many
+	// variables it asks for and whether it needs an image, video, or document header.
 	return rows
 		.filter((row) => row.id !== undefined && row.id !== null)
 		.map((row) => {
 			const estado = typeof row.status === 'string' ? row.status.toUpperCase() : '';
-			// LiveConnect (Gupshup) lo llama languageCode; el formato de Meta, language.
+			// LiveConnect (Gupshup) calls it languageCode; Meta's format calls it language.
 			const idioma = row.languageCode ?? row.language;
 			const detalles = [
 				typeof idioma === 'string' ? idioma : '',
@@ -298,15 +298,15 @@ export async function getWabaTemplates(
 			const nombre = templateLabel(row);
 			return {
 				name: detalles !== '' ? `${nombre} · ${detalles}` : nombre,
-				// El valor codifica qué necesita la plantilla para que el nodo muestre solo
-				// los campos que aplican (ver encodeTemplateValue).
-				// El identificador depende del proveedor del canal (ver templateSendIdentifier).
+				// The value encodes what the template needs so the node shows only the
+				// fields that apply (see encodeTemplateValue).
+				// The identifier depends on the channel's provider (see templateSendIdentifier).
 				value: encodeTemplateValue(
 					templateSendIdentifier(row) ?? String(row.id),
 					countBodyVariables(row),
 					buildTemplateLayout(row).headerFormat,
 				),
-				// Las aprobadas primero: son las únicas que se pueden enviar.
+				// Approved ones first: they're the only ones that can be sent.
 				aprobada: estado === '' || estado === 'APPROVED',
 			};
 		})
@@ -317,7 +317,7 @@ export async function getWabaTemplates(
 		.map(({ name, value }) => ({ name, value }));
 }
 
-/** Variables del cuerpo y del encabezado de texto que hay que rellenar. */
+/** Body and text-header variables that need to be filled in. */
 function countBodyVariables(row: IDataObject): number {
 	return buildTemplateLayout(row).fields.filter(
 		(f) =>
@@ -325,7 +325,7 @@ function countBodyVariables(row: IDataObject): number {
 	).length;
 }
 
-/** Resumen de lo que la plantilla exige: "2 variables · imagen · botón". */
+/** Summary of what the template requires: "2 variables · image · button". */
 function describeTemplateNeeds(row: IDataObject): string {
 	const { fields, headerFormat } = buildTemplateLayout(row);
 	const partes: string[] = [];
@@ -345,8 +345,8 @@ function describeTemplateNeeds(row: IDataObject): string {
 }
 
 /**
- * Identificadores de Meta del tipo `667058365993373_67d4976c2921a_6360` o UUIDs: son
- * técnicamente un "nombre" pero no dicen nada, así que se prefiere el contenido.
+ * Meta identifiers like `667058365993373_67d4976c2921a_6360`, or UUIDs: they're
+ * technically a "name" but say nothing, so the content is preferred instead.
  */
 function esIdentificadorOpaco(value: string): boolean {
 	return (
@@ -356,7 +356,7 @@ function esIdentificadorOpaco(value: string): boolean {
 	);
 }
 
-/** Primer texto legible de una plantilla: nombre, alias o su contenido. */
+/** First readable text for a template: name, alias, or its content. */
 function templateLabel(row: IDataObject): string {
 	const opacos: string[] = [];
 	for (const key of ['name', 'nombre', 'templateName', 'elementName', 'title', 'alias']) {
@@ -371,7 +371,7 @@ function templateLabel(row: IDataObject): string {
 		}
 	}
 
-	// Solo hay identificadores opacos: mejor mostrar el contenido si existe.
+	// Only opaque identifiers are available: better to show the content if it exists.
 	const cuerpo = parseTemplateBody(row.data);
 	if (cuerpo !== undefined) {
 		const limpio = cuerpo.replace(/\s+/g, ' ').trim();
@@ -379,7 +379,7 @@ function templateLabel(row: IDataObject): string {
 	}
 	if (opacos.length > 0) return opacos[0];
 
-	// Algunas cuentas entregan el contenido en `data` (texto plano o JSON serializado).
+	// Some accounts deliver the content in `data` (plain text or serialized JSON).
 	const contenido = parseTemplateBody(row.data);
 	if (contenido !== undefined) {
 		const limpio = contenido.replace(/\s+/g, ' ').trim();
@@ -400,14 +400,14 @@ function parseTemplateBody(data: unknown): string | undefined {
 		}
 		return undefined;
 	} catch {
-		// No era JSON: se usa el texto tal cual.
+		// Wasn't JSON: the text is used as-is.
 		return data;
 	}
 }
 
 /**
- * Plantilla WABA concreta, en crudo. La usa el preSend de "Enviar Plantilla" para saber
- * qué necesita la plantilla antes de enviarla.
+ * A specific WABA template, raw. Used by the "Send Template" preSend to find out
+ * what the template needs before sending it.
  */
 export async function fetchTemplate(
 	ctx: ILoadOptionsFunctions,
@@ -422,7 +422,7 @@ export async function fetchTemplate(
 	return template !== null && typeof template === 'object' ? (template as IDataObject) : undefined;
 }
 
-/** Métodos listos para el bloque `methods.loadOptions` de cada nodo. */
+/** Methods ready for the `methods.loadOptions` block of each node. */
 export const liveConnectLoadOptions = {
 	getAssistants,
 	getCategories,

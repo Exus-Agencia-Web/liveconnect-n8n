@@ -14,6 +14,22 @@
  *   liveConnectApi._._.cKey.displayName
  */
 
+/** Clases del paquete y su clave en el diccionario: [clave, archivo en dist, export]. */
+export const FUENTES = [
+	['liveConnect', 'dist/nodes/LiveConnect/LiveConnect.node.js', 'LiveConnect'],
+	[
+		'liveConnectCallbackTrigger',
+		'dist/nodes/LiveConnect/LiveConnectCallbackTrigger.node.js',
+		'LiveConnectCallbackTrigger',
+	],
+	[
+		'liveConnectProxyTrigger',
+		'dist/nodes/LiveConnect/LiveConnectProxyTrigger.node.js',
+		'LiveConnectProxyTrigger',
+	],
+	['liveConnectApi', 'dist/credentials/LiveConnectApi.credentials.js', 'LiveConnectApi'],
+];
+
 /** Campos de una propiedad que el usuario ve en el editor. */
 export const CAMPOS_VISIBLES = ['displayName', 'description', 'placeholder', 'action', 'hint'];
 

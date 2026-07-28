@@ -20,8 +20,8 @@ export class LiveConnectApi implements ICredentialType {
 
 	displayName = 'LiveConnect API';
 
-	// Mismo ícono de los nodos: dist/credentials/ y dist/nodes/LiveConnect/ son
-	// hermanos bajo dist/, de ahí el "../" (gulpfile.js copia ambos svg tal cual).
+	// Same icon as the nodes: dist/credentials/ and dist/nodes/LiveConnect/ are
+	// siblings under dist/, hence the "../" (gulpfile.js copies both svg files as-is).
 	icon: Icon = {
 		light: 'file:../nodes/LiveConnect/liveconnect2.svg',
 		dark: 'file:../nodes/LiveConnect/liveconnect2.dark.svg',
@@ -57,11 +57,11 @@ export class LiveConnectApi implements ICredentialType {
 		},
 	];
 
-	// POST /account/token {cKey, privateKey} emite el JWT de sesión. Según el caso el
-	// API lo entrega en `data.token` o en el campo raíz `PageGearToken` del body.
-	// Con credenciales inválidas responde 404 (texto plano); con keys faltantes
-	// responde 200 con `status < 0` y un JWT anónimo que NO sirve como sesión.
-	// n8n re-ejecuta esto automáticamente ante un 401 (sessionToken es `expirable`).
+	// POST /account/token {cKey, privateKey} issues the session JWT. Depending on the
+	// case, the API delivers it in `data.token` or in the root `PageGearToken` field
+	// of the body. With invalid credentials it responds 404 (plain text); with missing
+	// keys it responds 200 with `status < 0` and an anonymous JWT that does NOT work
+	// as a session. n8n re-runs this automatically on a 401 (sessionToken is `expirable`).
 	async preAuthentication(this: IHttpRequestHelper, credentials: ICredentialDataDecryptedObject) {
 		let response: LcTokenResponse;
 
@@ -83,21 +83,22 @@ export class LiveConnectApi implements ICredentialType {
 			);
 		}
 
-		// Valida status < 0 antes de leer el token (el API devuelve un JWT anónimo
-		// inservible junto a las respuestas de error).
+		// Validates status < 0 before reading the token (the API returns a useless
+		// anonymous JWT alongside its error responses).
 		return { sessionToken: extractSessionToken(response) };
 	}
 
-	// Forma de FUNCIÓN (no IAuthenticateGeneric) a propósito: n8n aplica `authenticate`
-	// DESPUÉS de los preSend del routing, y la forma genérica pisa el header sin
-	// condición. `refreshTokenIfExpired` siembra aquí un token recién emitido cuando el
-	// de la credencial ya venció; si no hay nada sembrado se usa el de la credencial.
+	// Deliberately the FUNCTION form (not IAuthenticateGeneric): n8n applies `authenticate`
+	// AFTER the routing's preSend hooks, and the generic form overwrites the header
+	// unconditionally. `refreshTokenIfExpired` seeds a freshly minted token here when
+	// the credential's own token has already expired; if nothing was seeded, the
+	// credential's token is used instead.
 	authenticate: IAuthenticate = async (credentials, requestOptions) => {
 		const headers = { ...requestOptions.headers };
 		const seeded = headers[LIVECONNECT_TOKEN_HEADER];
 		if (typeof seeded !== 'string' || seeded === '') {
 			const sessionToken = credentials.sessionToken;
-			// Header vacío = petición sin autenticar con ruido; mejor omitirlo.
+			// Empty header = an unauthenticated request with noise; better to omit it.
 			if (typeof sessionToken === 'string' && sessionToken !== '') {
 				headers[LIVECONNECT_TOKEN_HEADER] = sessionToken;
 			} else {
@@ -113,8 +114,8 @@ export class LiveConnectApi implements ICredentialType {
 			url: '/channels/list',
 			method: 'GET',
 		},
-		// El tester de n8n solo falla ante HTTP no-2xx; LiveConnect responde 200 con
-		// status negativo, así que sin estas reglas diría "Connection successful!".
+		// n8n's tester only fails on a non-2xx HTTP status; LiveConnect responds 200 with
+		// a negative status, so without these rules it would say "Connection successful!".
 		rules: [
 			{
 				type: 'responseSuccessBody',
