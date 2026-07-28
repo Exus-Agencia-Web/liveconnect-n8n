@@ -22,7 +22,7 @@ In n8n: **Workflow → ⋯ (menu) → Import from File** and select the `.json` 
 | 06 | `06-verificar-numero-crear-contacto.json` | Validated signup: verifies the number on WhatsApp, creates the contact, opens a conversation, and sends a welcome message. |
 | 07 | `07-chatbot-callback-trigger.json` | Chatbot with the **LiveConnect Callback Trigger** (v0.2.0+): a rules engine that responds with `data.actions` and the mandatory closing `input`. |
 | 08 | `08-mensajes-proxy-trigger.json` | Incoming messages with the **LiveConnect Proxy Trigger** (v0.2.0+): automatic channel webhook registration + auto-reply. |
-| 09 | `09-chatbot-callback-visual.json` | **No-code** chatbot (v0.4.0+): the **LiveConnect Callback Response** node builds the actions visually and responds to the webhook itself. |
+| 09 | `09-chatbot-callback-visual.json` | **No-code** chatbot: the **Callback Response** resource of the **LiveConnect** node (v2.0.0+) builds the actions visually and responds to the webhook itself. |
 | 10 | `10-chatbot-ia-switch-respuestas.json` | Full chatbot: **Callback Trigger → AI Agent (GPT) that classifies → Switch by intent → a different response per branch** (sales, support with delegation to a human, scheduling, and general). |
 
 ## Requirement for workflow 04 (node as an AI tool)
@@ -51,7 +51,7 @@ When you configure the channel webhook (workflow 01), LiveConnect sends a POST w
 }
 ```
 
-Parsing rule (already included in the examples' Code node): `mensaje = userInput || inputs.mensaje_inicial`.
+Parsing rule (already included in the examples' Code node): `message = userInput || inputs.mensaje_inicial`.
 
 ## IDs you will need
 

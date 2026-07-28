@@ -2,9 +2,9 @@
 
 Nodo comunitario de [n8n](https://n8n.io) para la **API pública de LiveConnect** (mensajería omnicanal + CRM): contactos, conversaciones, WhatsApp QR, WhatsApp Business API (WABA), CRM (deals, tareas, automatizaciones), catálogo, asistentes de IA, historial y más.
 
-Cubre las 58 operaciones de la [especificación OpenAPI pública](https://cdn.liveconnect.chat/liveconnect/public-openapi.json) (la emisión de token es automática vía credenciales), más **dos triggers**: notificaciones del proxy de conversaciones y callbacks del chatbot (Flowbot).
+Cubre las 58 operaciones de la [especificación OpenAPI pública](https://cdn.liveconnect.chat/liveconnect/public-openapi.json) (la emisión de token es automática vía credenciales), más **dos triggers** —notificaciones del proxy de conversaciones y callbacks del chatbot (Flowbot)— y un recurso **Callback Response** que arma la respuesta del callback visualmente.
 
-> ⚠️ **No instales `n8n-nodes-liveconnect` y `n8n-nodes-liveconnect-es` en la misma instancia de n8n.** Los tipos de nodo llevan el prefijo del paquete, pero **los de credencial no**: ambos declaran una credencial `liveConnectApi`, así que una de las dos ganaría y definiría el formulario (y su idioma) para las dos. Elige un paquete por instancia.
+> Este mismo código también se publica en inglés como [`n8n-nodes-liveconnect`](https://www.npmjs.com/package/n8n-nodes-liveconnect) (el paquete que se envía a la verificación de n8n). Cada paquete declara su propia credencial, así que **los dos pueden instalarse en la misma instancia** — ver [docs/08-paquete-espanol.md](https://github.com/Exus-Agencia-Web/liveconnect-n8n/blob/main/docs/08-paquete-espanol.md).
 
 ## Instalación
 
@@ -33,6 +33,7 @@ El nodo llama a `POST /account/token` automáticamente, guarda el JWT de sesión
 | Recurso | Operaciones |
 |---|---|
 | **Assistant** | Get Many, Create, Update |
+| **Callback Response** | Send (arma el envelope de actions y responde el callback del Flowbot de forma síncrona — ver [Triggers](#triggers)) |
 | **Topic** | Get Many, Create, Update (memorias de asistentes) |
 | **Category** | Get Many, Create, Update |
 | **Product** | Get Many, Create, Update |
@@ -43,7 +44,7 @@ El nodo llama a `POST /account/token` automáticamente, guarda el JWT de sesión
 | **CRM Automation** | Create, Update, Delete |
 | **Deal** | Create, Update, Archive |
 | **Deal Task** | Create, Update, Delete |
-| **Group** | Get Many |
+| **Team** | Get Many |
 | **History** | Get Many Conversations, Get Conversation, Get Messages, Get Participants, Get Attachments |
 | **Proxy** | Get Webhook, Set Webhook, Send Message, Send File, Send Quick Reply, Transfer, Get Balance |
 | **Quick Reply** | Create, Update |
@@ -61,9 +62,9 @@ Se dispara con las notificaciones del **proxy de conversaciones**. Gestiona el w
 
 ### LiveConnect Callback Trigger
 
-Recibe los **callbacks del chatbot (Flowbot)**. Activa el workflow y pega la URL Production del trigger en la acción de callback del Flowbot. El trigger valida el secret (query o header) y entrega el evento simplificado: `mensaje` (resuelve el primer turno desde `inputs.mensaje_inicial`), `sessionId` estable para memoria, `esPrimerTurno`, `hayAgenteHumano`, `contacto`, `inputs`, `intent` y `raw`.
+Recibe los **callbacks del chatbot (Flowbot)**. Activa el workflow y pega la URL Production del trigger en la acción de callback del Flowbot. El trigger valida el secret (query o header) y entrega el evento simplificado: `message` (resuelve el primer turno desde `inputs.mensaje_inicial`), `sessionId` estable para memoria, `isFirstTurn`, `hasHumanAgent`, `contact`, `inputs`, `intent` y `raw`. Estas claves son identificadores del código (no se traducen); `raw` sigue entregando el payload de LiveConnect con sus nombres originales.
 
-**El callback exige respuesta síncrona.** La forma fácil (v0.4.0+): el nodo **LiveConnect Respuesta al Callback** arma las acciones visualmente desde el editor (texto, imagen, archivo, etiqueta, variables, delegación, actualizar contacto), aplica solo la regla del `input` de cierre y **responde el webhook él mismo** — sin Code ni Respond to Webhook. Ver [`examples/09-chatbot-callback-visual.json`](examples/09-chatbot-callback-visual.json).
+**El callback exige respuesta síncrona.** La forma fácil: el recurso **Callback Response** del propio nodo LiveConnect arma las acciones visualmente desde el editor (texto, imagen, archivo, etiqueta, variables, delegación, actualizar contacto), aplica solo la regla del `input` de cierre y **responde el webhook él mismo** — sin Code ni Respond to Webhook. Ver [`examples/09-chatbot-callback-visual.json`](https://github.com/Exus-Agencia-Web/liveconnect-n8n/blob/main/examples/09-chatbot-callback-visual.json).
 
 Si prefieres construirla a mano, este es el envelope (devuélvelo con un nodo *Respond to Webhook*):
 
@@ -74,7 +75,7 @@ Si prefieres construirla a mano, este es el envelope (devuélvelo con un nodo *R
 ] } }
 ```
 
-Regla de oro: **cierra siempre con una acción `input`** (vacía sirve) — sin ella LiveConnect abandona el callback y no vuelve a llamar. Única excepción: cuando delegas a un humano (`userDelegate`/`teamDelegate`). Tipos de action soportados: `sendText`, `sendImage`, `sendFile`, `addTag`, `userDelegate`, `teamDelegate`, `addVar`, `setVar`, `input`, `updateContact`. Ver el ejemplo [`examples/07-chatbot-callback-trigger.json`](examples/07-chatbot-callback-trigger.json).
+Regla de oro: **cierra siempre con una acción `input`** (vacía sirve) — sin ella LiveConnect abandona el callback y no vuelve a llamar. Única excepción: cuando delegas a un humano (`userDelegate`/`teamDelegate`). Tipos de action soportados: `sendText`, `sendImage`, `sendFile`, `addTag`, `userDelegate`, `teamDelegate`, `addVar`, `setVar`, `input`, `updateContact`. Ver el ejemplo [`examples/07-chatbot-callback-trigger.json`](https://github.com/Exus-Agencia-Web/liveconnect-n8n/blob/main/examples/07-chatbot-callback-trigger.json).
 
 ## Selectores dinámicos
 
@@ -91,7 +92,7 @@ Es la operación que más datos combina, así que el nodo la resuelve por ti:
 Atajos útiles:
 
 - **Campos Adicionales → Usar Datos de Ejemplo**: rellena lo que dejes vacío con los ejemplos que trae la plantilla, para enviarte una prueba sin escribir nada.
-- **Envío masivo con una plantilla distinta por fila**: pon una expresión en *ID de la Plantilla* y manda los valores por *Campos Adicionales → Variables del Cuerpo Separadas por Comas*, en el orden `{{1}}, {{2}}…` (ver [`examples/02-envio-masivo-plantillas-waba.json`](examples/02-envio-masivo-plantillas-waba.json)).
+- **Envío masivo con una plantilla distinta por fila**: pon una expresión en *ID de la Plantilla* y manda los valores por *Campos Adicionales → Variables del Cuerpo Separadas por Comas*, en el orden `{{1}}, {{2}}…` (ver [`examples/02-envio-masivo-plantillas-waba.json`](https://github.com/Exus-Agencia-Web/liveconnect-n8n/blob/main/examples/02-envio-masivo-plantillas-waba.json)).
 
 ## Respuesta del API
 
@@ -109,7 +110,7 @@ LiveConnect responde siempre `{ status, status_message, data }` (`status > 0` é
 
 ## Ejemplos
 
-En [`examples/`](examples/) hay workflows importables listos para usar: envío masivo de plantillas WABA, chatbot con IA (con memoria por conversación), chatbot vendedor que crea negociaciones en el CRM usando el nodo como herramienta del AI Agent, reporte diario de conversaciones y alta validada de contactos. Ver [examples/README.md](examples/README.md).
+En [`examples/`](https://github.com/Exus-Agencia-Web/liveconnect-n8n/blob/main/examples/) hay workflows importables listos para usar: envío masivo de plantillas WABA, chatbot con IA (con memoria por conversación), chatbot vendedor que crea negociaciones en el CRM usando el nodo como herramienta del AI Agent, reporte diario de conversaciones y alta validada de contactos. Ver [examples/README.md](https://github.com/Exus-Agencia-Web/liveconnect-n8n/blob/main/examples/README.md).
 
 ## Desarrollo
 
@@ -121,8 +122,8 @@ npm run verify                 # compara el nodo compilado con el OpenAPI de Liv
 npm run smoke                  # pruebas de humo (triggers, respuesta, token, selectores, plantillas)
 ```
 
-**Antes de tocar el código, lee [`docs/`](docs/)**: ahí está el comportamiento real del API (lo que el spec no documenta), las trampas del runtime de n8n y el historial de diseños que se descartaron y por qué. Empieza por [docs/README.md](docs/README.md).
+**Antes de tocar el código, lee [`docs/`](docs/)**: ahí está el comportamiento real del API (lo que el spec no documenta), las trampas del runtime de n8n y el historial de diseños que se descartaron y por qué. Empieza por [docs/README.md](https://github.com/Exus-Agencia-Web/liveconnect-n8n/blob/main/docs/README.md).
 
 ## Licencia
 
-[MIT](LICENSE.md)
+[MIT](https://github.com/Exus-Agencia-Web/liveconnect-n8n/blob/main/LICENSE.md)

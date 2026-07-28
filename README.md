@@ -2,11 +2,11 @@
 
 Community node for [n8n](https://n8n.io) that integrates the **LiveConnect public API** — omnichannel messaging and CRM: contacts, conversations, WhatsApp QR, WhatsApp Business API (WABA), CRM deals, tasks and automations, product catalog, AI assistants, conversation history and more.
 
-It covers all 58 operations of the [public OpenAPI specification](https://cdn.liveconnect.chat/liveconnect/public-openapi.json) (token issuing is handled automatically by the credential), plus **two triggers** — conversation proxy notifications and chatbot (Flowbot) callbacks — and a node that builds callback responses visually.
+It covers all 58 operations of the [public OpenAPI specification](https://cdn.liveconnect.chat/liveconnect/public-openapi.json) (token issuing is handled automatically by the credential), plus **two triggers** — conversation proxy notifications and chatbot (Flowbot) callbacks — and a **Callback Response** resource that builds callback actions visually.
 
 > This package is being prepared for submission to the n8n verified community nodes program.
 
-> ⚠️ **Do not install `n8n-nodes-liveconnect` and `n8n-nodes-liveconnect-es` in the same n8n instance.** Node types are namespaced per package, but **credential types are not**: both packages declare a credential named `liveConnectApi`, so one of them would win and define the credential form (and its language) for both. Pick one package per instance.
+> A Spanish-language build of this same package is also published as [`n8n-nodes-liveconnect-es`](https://www.npmjs.com/package/n8n-nodes-liveconnect-es). Each package declares its own credential type, so both can be installed side by side in the same n8n instance — see [docs/08-paquete-espanol.md](docs/08-paquete-espanol.md).
 
 ## What is LiveConnect
 
@@ -16,7 +16,7 @@ It covers all 58 operations of the [public OpenAPI specification](https://cdn.li
 
 - **58 operations** across 18 resources, all derived from the official OpenAPI spec.
 - **Two triggers**: conversation proxy notifications (registers its own webhook) and Flowbot callbacks (synchronous response).
-- **Visual callback response builder** — compose the bot's actions without a Code node.
+- **Callback Response resource** — compose the bot's actions visually, without a Code node.
 - **Dynamic dropdowns** for every ID field (channels, teams, agents, pipelines, stages, lead origins, categories, assistants, WABA templates), loaded from your own account.
 - **WhatsApp template sending** that shows exactly the fields the chosen template needs, and validates before calling the API.
 - **Automatic session-token lifecycle**: issued, cached and renewed transparently.
@@ -61,6 +61,7 @@ The node calls `POST /account/token` on your behalf, caches the session JWT and 
 | Resource | Operations |
 |---|---|
 | **Assistant** | Get Many, Create, Update |
+| **Callback Response** | Send (builds the actions envelope and answers the Flowbot callback synchronously — see [Triggers](#triggers)) |
 | **Topic** | Get Many, Create, Update (assistant memories) |
 | **Category** | Get Many, Create, Update |
 | **Product** | Get Many, Create, Update |
@@ -104,7 +105,7 @@ LiveConnect expects the actions in the same HTTP response:
 ] } }
 ```
 
-The easy way is the **LiveConnect Callback Response** node: it builds the actions from the editor (text, image, file, tag, variables, delegation, contact update), applies the closing rule and answers the webhook itself — no Code node, no Respond to Webhook. See [`examples/09-chatbot-callback-visual.json`](examples/09-chatbot-callback-visual.json).
+The easy way is the **Callback Response** resource of this same node: it builds the actions from the editor (text, image, file, tag, variables, delegation, contact update), applies the closing rule and answers the webhook itself — no Code node, no Respond to Webhook. See [`examples/09-chatbot-callback-visual.json`](examples/09-chatbot-callback-visual.json).
 
 **Closing rule:** always end with an `input` action (an empty one works). Without it LiveConnect abandons the callback and never calls again. The only exception is delegating to a human (`userDelegate` / `teamDelegate`). Supported action types: `sendText`, `sendImage`, `sendFile`, `addTag`, `userDelegate`, `teamDelegate`, `addVar`, `setVar`, `input`, `updateContact`.
 

@@ -8,10 +8,10 @@ El `README.md` de la raíz es para quien **usa** el nodo. Esto es para quien lo 
 
 | Documento | Qué contiene | Léelo antes de… |
 |---|---|---|
-| [01-arquitectura.md](01-arquitectura.md) | Los 4 nodos, la credencial, el diseño declarativo, qué archivo hace qué | tocar cualquier cosa |
+| [01-arquitectura.md](01-arquitectura.md) | Los 3 nodos, la credencial, el diseño declarativo, qué archivo hace qué | tocar cualquier cosa |
 | [02-api-liveconnect.md](02-api-liveconnect.md) | Comportamiento real del API: envelope, `status < 0`, ciclo de vida del token, respuestas anidadas, endpoints con rarezas | añadir o cambiar operaciones |
 | [03-plantillas-waba.md](03-plantillas-waba.md) | Plantillas de WhatsApp: proveedores (Gupshup / Meta), qué identificador acepta cada uno, cómo se decide la UI, el preSend | tocar `Enviar Plantilla` |
-| [04-triggers-y-callbacks.md](04-triggers-y-callbacks.md) | Proxy Trigger, Callback Trigger (contrato del Flowbot) y el nodo de respuesta visual | tocar triggers o respuestas de callback |
+| [04-triggers-y-callbacks.md](04-triggers-y-callbacks.md) | Proxy Trigger, Callback Trigger (contrato del Flowbot) y el recurso de respuesta visual | tocar triggers o respuestas de callback |
 | [05-lecciones-n8n.md](05-lecciones-n8n.md) | Trampas del framework n8n que costaron versiones enteras | cualquier cambio de UI, routing, auth o ESLint |
 | [06-mantenimiento.md](06-mantenimiento.md) | Flujo desde el OpenAPI, contrato de las descriptions, pruebas, build, verificación de n8n y publicación | actualizar el spec o publicar |
 | [07-historial-decisiones.md](07-historial-decisiones.md) | Qué se intentó en cada versión y por qué se descartó | proponer un rediseño |

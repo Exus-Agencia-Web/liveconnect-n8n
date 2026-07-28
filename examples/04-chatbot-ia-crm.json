@@ -34,7 +34,7 @@
 		},
 		{
 			"parameters": {
-				"jsCode": "// Real LiveConnect payload: {chat, inputs, userInput, intent}\nconst raw = $input.first().json;\nconst body = raw.body ?? raw;\nconst chat = body.chat ?? {};\nconst inputs = body.inputs ?? {};\nconst mensaje = String(body.userInput || inputs.mensaje_inicial || '').trim();\n\nreturn [{\n\tjson: {\n\t\tmensaje,\n\t\tid_conversacion: String(chat.id ?? ''),\n\t\tid_canal: chat.id_canal ?? null,\n\t\tcontacto_id: chat.contacto?.id ?? null,\n\t\tcontacto_nombre: chat.contacto?.nombre || 'Customer',\n\t\tcontacto_celular: chat.contacto?.celular || inputs.celular || '',\n\t},\n}];"
+				"jsCode": "// Real LiveConnect payload: {chat, inputs, userInput, intent}\nconst raw = $input.first().json;\nconst body = raw.body ?? raw;\nconst chat = body.chat ?? {};\nconst inputs = body.inputs ?? {};\nconst message = String(body.userInput || inputs.mensaje_inicial || '').trim();\n\nreturn [{\n\tjson: {\n\t\tmessage,\n\t\tconversationId: String(chat.id ?? ''),\n\t\tchannelId: chat.id_canal ?? null,\n\t\tcontactId: chat.contacto?.id ?? null,\n\t\tcontactName: chat.contacto?.nombre || 'Customer',\n\t\tcontactPhone: chat.contacto?.celular || inputs.celular || '',\n\t},\n}];"
 			},
 			"id": "b4000000-0000-4000-8000-000000000003",
 			"name": "Parse Message",
@@ -48,9 +48,9 @@
 		{
 			"parameters": {
 				"promptType": "define",
-				"text": "={{ $json.mensaje }}",
+				"text": "={{ $json.message }}",
 				"options": {
-					"systemMessage": "You are a sales advisor over chat, in English, brief and friendly. The customer's name is {{ $json.contacto_nombre }} (phone: {{ $json.contacto_celular }}).\n\nYour goal: understand what product or service interests them and their approximate budget.\n\nOnce you are clear on (1) the customer's interest and (2) an estimated value, use the 'create_deal' tool ONCE to register the opportunity in the CRM, and confirm to the customer that an advisor will contact them. If you need to check whether they are already a customer, use 'find_contact' with their phone number. Do not make up prices; if you do not know something, offer to transfer them to a human advisor."
+					"systemMessage": "You are a sales advisor over chat, in English, brief and friendly. The customer's name is {{ $json.contactName }} (phone: {{ $json.contactPhone }}).\n\nYour goal: understand what product or service interests them and their approximate budget.\n\nOnce you are clear on (1) the customer's interest and (2) an estimated value, use the 'create_deal' tool ONCE to register the opportunity in the CRM, and confirm to the customer that an advisor will contact them. If you need to check whether they are already a customer, use 'find_contact' with their phone number. Do not make up prices; if you do not know something, offer to transfer them to a human advisor."
 				}
 			},
 			"id": "b4000000-0000-4000-8000-000000000004",
@@ -84,7 +84,7 @@
 		{
 			"parameters": {
 				"sessionIdType": "customKey",
-				"sessionKey": "={{ $('Parse Message').first().json.id_conversacion }}"
+				"sessionKey": "={{ $('Parse Message').first().json.conversationId }}"
 			},
 			"id": "b4000000-0000-4000-8000-000000000006",
 			"name": "Conversation Memory",
@@ -143,7 +143,7 @@
 			"parameters": {
 				"resource": "proxy",
 				"operation": "sendMessage",
-				"id_conversacion": "={{ $('Parse Message').first().json.id_conversacion }}",
+				"id_conversacion": "={{ $('Parse Message').first().json.conversationId }}",
 				"mensaje": "={{ $json.output }}"
 			},
 			"id": "b4000000-0000-4000-8000-000000000009",

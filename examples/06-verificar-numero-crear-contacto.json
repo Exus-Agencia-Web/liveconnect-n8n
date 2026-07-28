@@ -3,7 +3,7 @@
 	"nodes": [
 		{
 			"parameters": {
-				"content": "## Validated WhatsApp contact signup\n\nReceives a form (webhook with `nombre` and `celular`), validates that the number exists on WhatsApp, creates the contact, opens a conversation, and sends the welcome message.\n\n**Configure:**\n- `id_canal` in **Verify Number** and **Create Conversation**: the ID of your WhatsApp QR channel (`Channel · Get Many`).\n- The `usuario` field of **Create Conversation**: `{ \"id_equipo\": <ID> }` assigns it to a team (`Team · Get Many`), or `{ \"id\": <ID>, \"nombre\": \"...\" }` to an agent.\n- The IF condition validates against the real response from `Check Number` — check one execution and adjust the field name if it differs.\n\nTest with: `curl -X POST <webhook-url> -H 'Content-Type: application/json' -d '{\"nombre\":\"Ana\",\"celular\":\"573001112233\"}'`",
+				"content": "## Validated WhatsApp contact signup\n\nReceives a form (webhook with `name` and `phone`), validates that the number exists on WhatsApp, creates the contact, opens a conversation, and sends the welcome message.\n\n**Configure:**\n- `id_canal` in **Verify Number** and **Create Conversation**: the ID of your WhatsApp QR channel (`Channel · Get Many`).\n- The `usuario` field of **Create Conversation**: `{ \"id_equipo\": <ID> }` assigns it to a team (`Team · Get Many`), or `{ \"id\": <ID>, \"nombre\": \"...\" }` to an agent.\n- The IF condition validates against the real response from `Check Number` — check one execution and adjust the field name if it differs.\n\nTest with: `curl -X POST <webhook-url> -H 'Content-Type: application/json' -d '{\"name\":\"Ana\",\"phone\":\"573001112233\"}'`",
 				"height": 400,
 				"width": 480
 			},
@@ -37,7 +37,7 @@
 				"resource": "whatsapp",
 				"operation": "checkNumber",
 				"id_canal": "",
-				"numero": "={{ $json.body.celular }}"
+				"numero": "={{ $json.body.phone }}"
 			},
 			"id": "b6000000-0000-4000-8000-000000000003",
 			"name": "Verify Number",
@@ -85,9 +85,9 @@
 			"parameters": {
 				"resource": "contact",
 				"operation": "create",
-				"nombre": "={{ $('Signup Webhook').first().json.body.nombre }}",
+				"nombre": "={{ $('Signup Webhook').first().json.body.name }}",
 				"additionalFields": {
-					"celular": "={{ $('Signup Webhook').first().json.body.celular }}"
+					"celular": "={{ $('Signup Webhook').first().json.body.phone }}"
 				}
 			},
 			"id": "b6000000-0000-4000-8000-000000000005",
@@ -121,8 +121,8 @@
 			"parameters": {
 				"resource": "proxy",
 				"operation": "sendMessage",
-				"id_conversacion": "={{ String($json.id ?? $json.id_conversacion) }}",
-				"mensaje": "=Hello {{ $('Signup Webhook').first().json.body.nombre }}! 👋 Thanks for signing up. An advisor will assist you shortly."
+				"id_conversacion": "={{ String($json.id ?? $json.conversationId) }}",
+				"mensaje": "=Hello {{ $('Signup Webhook').first().json.body.name }}! 👋 Thanks for signing up. An advisor will assist you shortly."
 			},
 			"id": "b6000000-0000-4000-8000-000000000007",
 			"name": "Welcome Message",
@@ -136,7 +136,7 @@
 		{
 			"parameters": {
 				"respondWith": "json",
-				"responseBody": "{ \"ok\": true, \"mensaje\": \"Contact created and welcome message sent\" }",
+				"responseBody": "{ \"ok\": true, \"message\": \"Contact created and welcome message sent\" }",
 				"options": {}
 			},
 			"id": "b6000000-0000-4000-8000-000000000008",
