@@ -131,7 +131,7 @@
 	"liveConnect.callbackResponse._.acciones.options.accion.values.callbackResponse._.key.placeholder": "name, email, phone, company…",
 	"liveConnect.callbackResponse._.acciones.options.accion.values.callbackResponse._.text.description": "Mensaje que se envía al usuario",
 	"liveConnect.callbackResponse._.acciones.options.accion.values.callbackResponse._.text.displayName": "Texto",
-	"liveConnect.callbackResponse._.acciones.options.accion.values.callbackResponse._.tipo.displayName": "Tipo",
+	"liveConnect.callbackResponse._.acciones.options.accion.values.callbackResponse._.tipo.displayName": "Tipo de Acción",
 	"liveConnect.callbackResponse._.acciones.options.accion.values.callbackResponse._.tipo.options.addTag.description": "Clasifica la conversación con una etiqueta",
 	"liveConnect.callbackResponse._.acciones.options.accion.values.callbackResponse._.tipo.options.addTag.name": "Agregar Etiqueta (addTag)",
 	"liveConnect.callbackResponse._.acciones.options.accion.values.callbackResponse._.tipo.options.addVar.description": "Crea una variable de memoria (primera escritura)",

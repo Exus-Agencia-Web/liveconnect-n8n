@@ -240,16 +240,16 @@ await test('acciones solo con claves del contrato (sin extras de la UI)', async 
 // miraban la lógica (toAction/applyClosingRule), no la UI. Esta lo mira.
 
 const CAMPOS_POR_TIPO = {
-	sendText: ['Type', 'Text'],
-	sendImage: ['Type', 'URL'],
-	sendFile: ['Type', 'URL'],
-	addTag: ['Type', 'Tag ID'],
-	userDelegate: ['Type', 'User Name or ID', 'User Name', 'User Avatar'],
-	teamDelegate: ['Type', 'Team Name or ID'],
-	addVar: ['Type', 'Variable Name', 'Variable Value'],
-	setVar: ['Type', 'Variable Name', 'Variable Value'],
-	input: ['Type', 'Question'],
-	updateContact: ['Type', 'Contact Field', 'Field Value'],
+	sendText: ['Action Type', 'Text'],
+	sendImage: ['Action Type', 'URL'],
+	sendFile: ['Action Type', 'URL'],
+	addTag: ['Action Type', 'Tag ID'],
+	userDelegate: ['Action Type', 'User Name or ID', 'User Name', 'User Avatar'],
+	teamDelegate: ['Action Type', 'Team Name or ID'],
+	addVar: ['Action Type', 'Variable Name', 'Variable Value'],
+	setVar: ['Action Type', 'Variable Name', 'Variable Value'],
+	input: ['Action Type', 'Question'],
+	updateContact: ['Action Type', 'Contact Field', 'Field Value'],
 };
 
 const grupoAcciones = node.description.properties
@@ -270,6 +270,10 @@ for (const [tipo, esperados] of Object.entries(CAMPOS_POR_TIPO)) {
 			[...esperados].sort(),
 			`con tipo=${tipo} se ven: ${visibles.join(', ')}`,
 		);
+		// El selector va SIEMPRE arriba: la regla del linter alfabetiza por displayName,
+		// y por eso se llama "Action Type" y no "Type" — con 13 campos, 'T' lo dejaba
+		// séptimo y el usuario veía el campo de la acción antes que el selector.
+		assert.equal(visibles[0], 'Action Type', `con tipo=${tipo} el selector no va primero`);
 	});
 }
 
