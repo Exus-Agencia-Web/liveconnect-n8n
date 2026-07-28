@@ -12,6 +12,7 @@ import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
 const { LiveConnect } = require('../dist/nodes/LiveConnect/LiveConnect.node.js');
+const { NodeHelpers } = require('n8n-workflow');
 
 const node = new LiveConnect();
 /** La operación custom que n8n invoca en vez del routing para este recurso. */
@@ -231,4 +232,45 @@ await test('acciones solo con claves del contrato (sin extras de la UI)', async 
 	assert.deepEqual(Object.keys(actions[2]).sort(), ['key', 'type', 'value']);
 });
 
-console.log(`\n${passed} pruebas de humo del nodo de respuesta OK`);
+
+// --- visibilidad de los campos del constructor ------------------------------------
+// El autofix del escáner que alfabetizó este fixedCollection en 1.0.1 se llevó por
+// delante los `displayOptions` de los 13 campos: el constructor pasó a mostrarlos TODOS
+// a la vez, eligieras la acción que eligieras. Ninguna prueba lo vio porque todas
+// miraban la lógica (toAction/applyClosingRule), no la UI. Esta lo mira.
+
+const CAMPOS_POR_TIPO = {
+	sendText: ['Type', 'Text'],
+	sendImage: ['Type', 'URL'],
+	sendFile: ['Type', 'URL'],
+	addTag: ['Type', 'Tag ID'],
+	userDelegate: ['Type', 'User Name or ID', 'User Name', 'User Avatar'],
+	teamDelegate: ['Type', 'Team Name or ID'],
+	addVar: ['Type', 'Variable Name', 'Variable Value'],
+	setVar: ['Type', 'Variable Name', 'Variable Value'],
+	input: ['Type', 'Question'],
+	updateContact: ['Type', 'Contact Field', 'Field Value'],
+};
+
+const grupoAcciones = node.description.properties
+	.find((p) => p.name === 'acciones')
+	.options.find((o) => o.name === 'accion');
+
+for (const [tipo, esperados] of Object.entries(CAMPOS_POR_TIPO)) {
+	await test(`al elegir "${tipo}" solo se piden sus campos`, () => {
+		// Dentro de un fixedCollection, displayOptions se evalúa contra los valores del
+		// ÍTEM, no del nodo: por eso los `values` se pasan como nodeValues.
+		const valores = { tipo };
+		const nodo = { name: 'LC', type: 'x', typeVersion: 1, position: [0, 0], parameters: valores };
+		const visibles = grupoAcciones.values
+			.filter((v) => NodeHelpers.displayParameter(valores, v, nodo, node.description))
+			.map((v) => v.displayName);
+		assert.deepEqual(
+			visibles.sort(),
+			[...esperados].sort(),
+			`con tipo=${tipo} se ven: ${visibles.join(', ')}`,
+		);
+	});
+}
+
+console.log(`\n${passed} pruebas de humo del recurso Callback Response OK`);

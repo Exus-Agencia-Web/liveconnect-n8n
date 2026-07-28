@@ -62,6 +62,7 @@ export const callbackResponseFields: INodeProperties[] = [
 					{
 						displayName: 'Contact Field',
 						name: 'key',
+						displayOptions: { show: { tipo: ['updateContact'] } },
 						type: 'string',
 						default: '',
 						placeholder: 'name, email, phone, company…',
@@ -70,6 +71,7 @@ export const callbackResponseFields: INodeProperties[] = [
 					{
 						displayName: 'Field Value',
 						name: 'value',
+						displayOptions: { show: { tipo: ['updateContact'] } },
 						type: 'string',
 						default: '',
 						description: 'Value to store on the contact',
@@ -77,6 +79,7 @@ export const callbackResponseFields: INodeProperties[] = [
 					{
 						displayName: 'Question',
 						name: 'input',
+						displayOptions: { show: { tipo: ['input'] } },
 						type: 'string',
 						default: '',
 						description:
@@ -85,6 +88,7 @@ export const callbackResponseFields: INodeProperties[] = [
 					{
 						displayName: 'Tag ID',
 						name: 'id_tag',
+						displayOptions: { show: { tipo: ['addTag'] } },
 						type: 'number',
 						default: 0,
 						description: 'Integer ID of the tag in LiveConnect',
@@ -92,6 +96,7 @@ export const callbackResponseFields: INodeProperties[] = [
 					{
 						displayName: 'Team Name or ID',
 						name: 'id_team',
+						displayOptions: { show: { tipo: ['teamDelegate'] } },
 						type: 'options',
 						default: '',
 						description:
@@ -100,6 +105,7 @@ export const callbackResponseFields: INodeProperties[] = [
 					{
 						displayName: 'Text',
 						name: 'text',
+						displayOptions: { show: { tipo: ['sendText'] } },
 						type: 'string',
 						default: '',
 						description: 'Message sent to the user',
@@ -167,6 +173,7 @@ export const callbackResponseFields: INodeProperties[] = [
 					{
 						displayName: 'URL',
 						name: 'url',
+						displayOptions: { show: { tipo: ['sendImage', 'sendFile'] } },
 						type: 'string',
 						default: '',
 						placeholder: 'https://…',
@@ -175,6 +182,7 @@ export const callbackResponseFields: INodeProperties[] = [
 					{
 						displayName: 'User Avatar',
 						name: 'user_avatar',
+						displayOptions: { show: { tipo: ['userDelegate'] } },
 						type: 'string',
 						default: '',
 						placeholder: 'https://…',
@@ -183,6 +191,7 @@ export const callbackResponseFields: INodeProperties[] = [
 					{
 						displayName: 'User Name',
 						name: 'user_name',
+						displayOptions: { show: { tipo: ['userDelegate'] } },
 						type: 'string',
 						default: '',
 						description: 'Visible name of the agent being delegated to',
@@ -190,6 +199,7 @@ export const callbackResponseFields: INodeProperties[] = [
 					{
 						displayName: 'User Name or ID',
 						name: 'id_user',
+						displayOptions: { show: { tipo: ['userDelegate'] } },
 						type: 'options',
 						default: '',
 						description:
@@ -198,6 +208,7 @@ export const callbackResponseFields: INodeProperties[] = [
 					{
 						displayName: 'Variable Name',
 						name: 'varname',
+						displayOptions: { show: { tipo: ['addVar', 'setVar'] } },
 						type: 'string',
 						default: '',
 						description: 'Name of the bot memory variable',
@@ -205,6 +216,7 @@ export const callbackResponseFields: INodeProperties[] = [
 					{
 						displayName: 'Variable Value',
 						name: 'varvalue',
+						displayOptions: { show: { tipo: ['addVar', 'setVar'] } },
 						type: 'string',
 						default: '',
 						description: 'Value to store (can be empty)',
