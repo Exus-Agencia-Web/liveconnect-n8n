@@ -8,7 +8,7 @@ import {
 	burnTokenForContext,
 	ensureFreshToken,
 	LIVECONNECT_BASE_URL,
-	LIVECONNECT_CREDENTIALS_NAME,
+	LC_CREDENTIALS,
 	LIVECONNECT_TOKEN_HEADER,
 } from './GenericFunctions';
 
@@ -33,7 +33,7 @@ async function lcRequest(
 	try {
 		response = (await ctx.helpers.httpRequestWithAuthentication.call(
 			ctx,
-			LIVECONNECT_CREDENTIALS_NAME,
+			LC_CREDENTIALS.name,
 			{
 				method,
 				url: `${LIVECONNECT_BASE_URL}${endpoint}`,

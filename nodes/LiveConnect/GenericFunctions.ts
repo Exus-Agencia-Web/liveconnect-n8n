@@ -20,34 +20,43 @@ import {
 
 export const LIVECONNECT_BASE_URL = 'https://api.liveconnect.chat/prod';
 export const LIVECONNECT_TOKEN_HEADER = 'PageGearToken';
-export const LIVECONNECT_CREDENTIALS_NAME = 'liveConnectApi';
+/**
+ * Name of the credential type, kept in a deliberately MUTABLE object.
+ *
+ * n8n indexes credentials by name in a global namespace, with no package prefix:
+ * two extensions that both declare `liveConnectApi` are incompatible and n8n Cloud
+ * rejects them. The generated Spanish package (scripts/build-es-package.mjs) rewrites
+ * this `name` on its own copy of the compiled output, so both can coexist. That's why
+ * this is an object instead of a string constant: it needs to be changeable at load time.
+ */
+export const LC_CREDENTIALS = { name: 'liveConnectApi' };
 
-/** Status con el que LiveConnect reporta un token de sesión vencido o inválido. */
+/** Status code LiveConnect uses to report an expired or invalid session token. */
 const LC_STATUS_INVALID_TOKEN = -403;
-/** Margen ante relojes desfasados: se renueva 60 s antes del `exp`. */
+/** Safety margin for clock skew: renews 60 s before the `exp`. */
 const TOKEN_SKEW_SECONDS = 60;
-/** Vida asumida (~10 min) cuando el `exp` del token emitido no es legible. */
+/** Assumed lifetime (~10 min) when the `exp` of the issued token isn't readable. */
 const TOKEN_FALLBACK_TTL_SECONDS = 540;
 
 type TokenState = {
 	minted?: { token: string; expiresAt: number };
-	/** Hashes de tokens que el API ya rechazó con status -403. */
+	/** Hashes of tokens the API has already rejected with status -403. */
 	burned: Set<string>;
-	/** Último token puesto en el cable, para poder quemarlo si el API lo rechaza. */
+	/** Last token sent over the wire, kept so it can be burned if the API rejects it. */
 	lastSent?: string;
 };
 
 /**
- * Caché en memoria del proceso, una entrada por cuenta.
+ * In-process memory cache, one entry per account.
  *
- * n8n NO persiste el token que emitimos aquí (`updateCredentials` no está expuesto a
- * los nodos), así que sin esta caché cada ítem volvería a pedir uno. La clave es un
- * hash de la cKey: nunca se guardan credenciales en claro.
+ * n8n does NOT persist the token we mint here (`updateCredentials` isn't exposed to
+ * nodes), so without this cache every item would request a new one. The key is a
+ * hash of the cKey: credentials are never stored in plain text.
  */
 const tokenStates = new Map<string, TokenState>();
-/** Emisiones en vuelo: N ítems concurrentes hacen UNA sola llamada a /account/token. */
+/** In-flight mints: N concurrent items make a SINGLE call to /account/token. */
 const inFlightMints = new Map<string, Promise<string>>();
-/** Tope de cuentas en caché: evita crecimiento indefinido en instancias multi-credencial. */
+/** Cap on cached accounts: prevents unbounded growth on multi-credential instances. */
 const MAX_CACHED_ACCOUNTS = 50;
 
 function sha256(value: string): string {
@@ -62,7 +71,7 @@ function stateFor(key: string): TokenState {
 	const existing = tokenStates.get(key);
 	if (existing !== undefined) return existing;
 	if (tokenStates.size >= MAX_CACHED_ACCOUNTS) {
-		// Map conserva el orden de inserción: se descarta la cuenta más antigua.
+		// Map preserves insertion order: the oldest account gets evicted.
 		const oldest = tokenStates.keys().next();
 		if (!oldest.done) tokenStates.delete(oldest.value);
 	}
@@ -71,7 +80,7 @@ function stateFor(key: string): TokenState {
 	return created;
 }
 
-/** Respuesta de POST /account/token en cualquiera de sus formas conocidas. */
+/** Response of POST /account/token in any of its known shapes. */
 export interface LcTokenResponse {
 	status?: number;
 	status_message?: string;
@@ -80,8 +89,8 @@ export interface LcTokenResponse {
 }
 
 /**
- * `exp` (epoch en segundos) del payload de un JWT, o `undefined` si no es decodificable
- * o no trae `exp`. No valida la firma: solo interesa saber si ya venció.
+ * `exp` (epoch in seconds) from a JWT's payload, or `undefined` if it can't be decoded
+ * or carries no `exp`. Doesn't validate the signature: it only cares whether it already expired.
  */
 export function getJwtExpiry(token: string): number | undefined {
 	const parts = token.split('.');
@@ -92,18 +101,18 @@ export function getJwtExpiry(token: string): number | undefined {
 		) as { exp?: unknown };
 		return typeof payload.exp === 'number' && Number.isFinite(payload.exp) ? payload.exp : undefined;
 	} catch {
-		// JWT malformado: no se puede afirmar que venció. La capa reactiva
-		// (handleLcResponse con -403) lo quema si el API lo rechaza.
+		// Malformed JWT: can't tell whether it expired. The reactive layer
+		// (handleLcResponse with -403) will burn it if the API rejects it.
 		return undefined;
 	}
 }
 
 /**
- * Extrae el JWT de sesión de la respuesta de POST /account/token.
+ * Extracts the session JWT from the POST /account/token response.
  *
- * TRAMPA DEL API: con keys faltantes responde HTTP 200 con `status:-2` Y un JWT ANÓNIMO
- * en `PageGearToken` que no sirve como sesión. Por eso `status < 0` se valida ANTES de
- * mirar el token.
+ * API GOTCHA: with missing keys it responds HTTP 200 with `status:-2` AND an ANONYMOUS JWT
+ * in `PageGearToken` that doesn't work as a session. That's why `status < 0` is validated
+ * BEFORE looking at the token.
  */
 export function extractSessionToken(response: LcTokenResponse): string {
 	if (typeof response.status === 'number' && response.status < 0) {
@@ -128,8 +137,8 @@ export function extractSessionToken(response: LcTokenResponse): string {
 }
 
 /**
- * Contexto mínimo para renovar el token. Lo cumplen IExecuteSingleFunctions,
- * ILoadOptionsFunctions e IHookFunctions, que son las tres rutas que hablan con el API.
+ * Minimal context needed to renew the token. Satisfied by IExecuteSingleFunctions,
+ * ILoadOptionsFunctions, and IHookFunctions — the three code paths that talk to the API.
  */
 export interface LcTokenContext {
 	getNode: IExecuteSingleFunctions['getNode'];
@@ -137,7 +146,7 @@ export interface LcTokenContext {
 	helpers: { httpRequest: IExecuteSingleFunctions['helpers']['httpRequest'] };
 }
 
-/** Emite un token nuevo. Deduplica las emisiones concurrentes de la misma cuenta. */
+/** Mints a new token. Deduplicates concurrent mints for the same account. */
 async function mintSessionToken(
 	this: LcTokenContext,
 	key: string,
@@ -201,12 +210,12 @@ async function mintSessionToken(
 }
 
 /**
- * Marca el token vigente como inservible tras un -403 del API (capa reactiva).
+ * Marks the current token as unusable after a -403 from the API (reactive layer).
  *
- * Se quema `lastSent` (el último token puesto en el cable para esa cuenta). Con varios
- * ítems concurrentes podría quemarse un token recién emitido en vez del rechazado: el
- * peor caso es una emisión extra, nunca una falla, porque `mintSessionToken` limpia la
- * lista de quemados al emitir.
+ * Burns `lastSent` (the last token sent over the wire for that account). With several
+ * concurrent items, a freshly minted token could get burned instead of the rejected one:
+ * the worst case is one extra mint, never a failure, because `mintSessionToken` clears
+ * the burned list whenever it mints.
  */
 function burnCurrentToken(cKey: string): void {
 	const state = tokenStates.get(accountKey(cKey));
@@ -216,16 +225,16 @@ function burnCurrentToken(cKey: string): void {
 }
 
 /**
- * preSend compartido por todas las operaciones: garantiza que la request salga con un
- * PageGearToken vigente.
+ * preSend shared by every operation: guarantees the request goes out with a valid
+ * PageGearToken.
  *
- * Por qué existe: el JWT dura ~10 min y n8n solo re-ejecuta `preAuthentication` ante un
- * HTTP 401. LiveConnect reporta el token vencido como HTTP 200 con `status:-403`, así
- * que ese 401 nunca ocurre y la credencial se queda con el token muerto.
+ * Why it exists: the JWT lasts ~10 min and n8n only re-runs `preAuthentication` on an
+ * actual HTTP 401. LiveConnect reports the expired token as HTTP 200 with `status:-403`,
+ * so that 401 never happens and the credential is left holding a dead token.
  *
- * Este preSend SIEMBRA el header y `LiveConnectApi.authenticate` (forma de FUNCIÓN) lo
- * respeta. Con `IAuthenticateGeneric` no funcionaría: n8n aplica la autenticación
- * DESPUÉS de los preSend y pisaría el header sin condición.
+ * This preSend SEEDS the header and `LiveConnectApi.authenticate` (the FUNCTION form)
+ * honors it. It wouldn't work with `IAuthenticateGeneric`: n8n applies authentication
+ * AFTER the preSend hooks and would overwrite the header unconditionally.
  */
 export async function refreshTokenIfExpired(
 	this: IExecuteSingleFunctions,
@@ -252,7 +261,7 @@ export async function refreshTokenIfExpired(
 export async function ensureFreshToken(ctx: LcTokenContext): Promise<string | undefined> {
 	let credentials: { cKey?: string; privateKey?: string; sessionToken?: string };
 	try {
-		credentials = (await ctx.getCredentials(LIVECONNECT_CREDENTIALS_NAME)) as typeof credentials;
+		credentials = (await ctx.getCredentials(LC_CREDENTIALS.name)) as typeof credentials;
 	} catch {
 		// Credencial no configurada (es opcional en el nodo de respuesta al callback):
 		// se deja que la llamada siga y sea n8n quien reporte el error real.
@@ -288,7 +297,7 @@ export async function ensureFreshToken(ctx: LcTokenContext): Promise<string | un
 
 /** Quema el token de la cuenta tras un rechazo del API. Reexportado para las otras rutas. */
 export async function burnTokenForContext(ctx: LcTokenContext): Promise<void> {
-	const credentials = (await ctx.getCredentials(LIVECONNECT_CREDENTIALS_NAME)) as {
+	const credentials = (await ctx.getCredentials(LC_CREDENTIALS.name)) as {
 		cKey?: string;
 	};
 	if (credentials.cKey) burnCurrentToken(credentials.cKey);
@@ -362,7 +371,7 @@ async function loadChannelTemplates(
 		const token = await ensureFreshToken(ctx as unknown as LcTokenContext);
 		const response = (await ctx.helpers.httpRequestWithAuthentication.call(
 			ctx,
-			LIVECONNECT_CREDENTIALS_NAME,
+			LC_CREDENTIALS.name,
 			{
 				method: 'POST',
 				url: `${LIVECONNECT_BASE_URL}/direct/waba/getTemplates`,
@@ -592,7 +601,7 @@ export async function handleLcResponse(
 			// Capa reactiva: se quema el token para que el próximo request renueve,
 			// incluso si el `exp` del JWT no era legible.
 			const credentials = await this.getCredentials<{ cKey?: string }>(
-				LIVECONNECT_CREDENTIALS_NAME,
+				LC_CREDENTIALS.name,
 			);
 			if (credentials.cKey) burnCurrentToken(credentials.cKey);
 

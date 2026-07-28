@@ -5,6 +5,7 @@ import type { IDataObject, IHookFunctions, IWebhookFunctions } from 'n8n-workflo
 import type { LcTokenContext } from './GenericFunctions';
 import {
 	ensureFreshToken,
+	LC_CREDENTIALS,
 	LIVECONNECT_BASE_URL,
 	LIVECONNECT_TOKEN_HEADER,
 } from './GenericFunctions';
@@ -25,7 +26,7 @@ export async function lcHookRequest(
 	// Los webhookMethods tampoco pasan por el preSend del nodo: se siembra un token
 	// vigente para no registrar/eliminar webhooks con un JWT ya vencido.
 	const token = await ensureFreshToken(this as unknown as LcTokenContext);
-	return (await this.helpers.httpRequestWithAuthentication.call(this, 'liveConnectApi', {
+	return (await this.helpers.httpRequestWithAuthentication.call(this, LC_CREDENTIALS.name, {
 		method: 'POST',
 		url: `${LIVECONNECT_BASE_URL}${endpoint}`,
 		body,
@@ -108,15 +109,15 @@ export function simplifyCallbackEvent(body: IDataObject): IDataObject {
 	const esPrimerTurno = userInput === '' && !tieneAdjunto;
 	const mensajeInicial = typeof inputs.mensaje_inicial === 'string' ? inputs.mensaje_inicial : '';
 	return {
-		mensaje: userInput !== '' ? userInput : tieneAdjunto ? '' : mensajeInicial,
+		message: userInput !== '' ? userInput : tieneAdjunto ? '' : mensajeInicial,
 		sessionId: resolveSessionId(chat, inputs),
-		esPrimerTurno,
-		tieneAdjunto,
+		isFirstTurn: esPrimerTurno,
+		hasAttachment: tieneAdjunto,
 		userFile,
-		hayAgenteHumano: hasHumanAgent(chat.usuarios),
-		id_conversacion: typeof chat.id === 'string' ? chat.id : null,
-		id_canal: typeof chat.id_canal === 'number' ? chat.id_canal : null,
-		contacto: asObject(chat.contacto) ?? {},
+		hasHumanAgent: hasHumanAgent(chat.usuarios),
+		conversationId: typeof chat.id === 'string' ? chat.id : null,
+		channelId: typeof chat.id_canal === 'number' ? chat.id_canal : null,
+		contact: asObject(chat.contacto) ?? {},
 		inputs,
 		intent: asObject(body.intent) ?? {},
 		raw: body,
@@ -137,11 +138,11 @@ export function simplifyProxyEvent(body: IDataObject): IDataObject {
 	}
 	const mensajeInicial = typeof inputs?.mensaje_inicial === 'string' ? inputs.mensaje_inicial : '';
 	return {
-		mensaje: userInput !== undefined && userInput !== '' ? userInput : mensajeInicial,
+		message: userInput !== undefined && userInput !== '' ? userInput : mensajeInicial,
 		sessionId: resolveSessionId(chat, inputs),
-		id_conversacion: typeof chat?.id === 'string' ? chat.id : null,
-		id_canal: typeof chat?.id_canal === 'number' ? chat.id_canal : null,
-		contacto: asObject(chat?.contacto) ?? {},
+		conversationId: typeof chat?.id === 'string' ? chat.id : null,
+		channelId: typeof chat?.id_canal === 'number' ? chat.id_canal : null,
+		contact: asObject(chat?.contacto) ?? {},
 		inputs: inputs ?? {},
 		raw: body,
 	};

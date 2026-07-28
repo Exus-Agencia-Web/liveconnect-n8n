@@ -1,6 +1,6 @@
 {
 	"name": "n8n-nodes-liveconnect",
-	"version": "1.0.2",
+	"version": "2.0.0",
 	"description": "n8n community node for the LiveConnect API (omnichannel messaging + CRM): contacts, conversations, WhatsApp QR & Business API, CRM deals, catalog, AI assistants and more",
 	"keywords": [
 		"n8n-community-node-package",
@@ -53,7 +53,6 @@
 		],
 		"nodes": [
 			"dist/nodes/LiveConnect/LiveConnect.node.js",
-			"dist/nodes/LiveConnect/LiveConnectCallbackResponse.node.js",
 			"dist/nodes/LiveConnect/LiveConnectCallbackTrigger.node.js",
 			"dist/nodes/LiveConnect/LiveConnectProxyTrigger.node.js"
 		],

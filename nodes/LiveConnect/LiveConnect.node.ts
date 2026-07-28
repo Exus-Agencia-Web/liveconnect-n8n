@@ -3,11 +3,17 @@ import { NodeConnectionTypes } from 'n8n-workflow';
 
 import { LIVECONNECT_BASE_URL, refreshTokenIfExpired } from './GenericFunctions';
 import { liveConnectLoadOptions } from './LoadOptions';
+import type { IDataObject, IExecuteFunctions, INodeExecutionData } from 'n8n-workflow';
+import { NodeOperationError } from 'n8n-workflow';
+
+import { applyClosingRule, buildEnvelope, toAction } from './ActionsFunctions';
 import {
 	assistantFields,
 	assistantOperations,
 	automationFields,
 	automationOperations,
+	callbackResponseFields,
+	callbackResponseOperations,
 	categoryFields,
 	categoryOperations,
 	channelFields,
@@ -89,6 +95,7 @@ export class LiveConnect implements INodeType {
 				},
 				options: [
 					{ name: 'Assistant', value: 'assistant' },
+					{ name: 'Callback Response', value: 'callbackResponse' },
 					{ name: 'Category', value: 'category' },
 					{ name: 'Channel', value: 'channel' },
 					{ name: 'Contact', value: 'contact' },
@@ -112,6 +119,8 @@ export class LiveConnect implements INodeType {
 
 			...assistantOperations,
 			...assistantFields,
+			...callbackResponseOperations,
+			...callbackResponseFields,
 			...automationOperations,
 			...automationFields,
 			...categoryOperations,
@@ -156,5 +165,73 @@ export class LiveConnect implements INodeType {
 					'Whether to return the full API envelope ({ status, status_message, data }) instead of just the data field',
 			},
 		],
+	};
+
+	/**
+	 * The Callback Response resource does not call the API: it builds the action envelope
+	 * and answers the Flowbot webhook. n8n runs `customOperations` instead of the routing
+	 * for that resource/operation pair, which is how a declarative node can carry one
+	 * custom implementation without turning the other 58 operations programmatic.
+	 */
+	customOperations = {
+		callbackResponse: {
+			async send(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
+				const items = this.getInputData();
+				const returnData: INodeExecutionData[] = [];
+				// El callback HTTP admite UNA sola respuesta por ejecución.
+				let responded = false;
+
+				for (let i = 0; i < items.length; i++) {
+					try {
+						const raw = this.getNodeParameter('acciones', i, {}) as { accion?: IDataObject[] };
+						const autoInput = this.getNodeParameter('autoInput', i, true) as boolean;
+						const uiActions = raw.accion ?? [];
+
+						let actions = uiActions.map((ui, idx) => toAction(this.getNode(), ui, idx + 1, i));
+						if (autoInput) {
+							actions = applyClosingRule(actions);
+						} else if (actions.length === 0) {
+							// El contrato exige data.actions no vacío; sin autoInput no hay keep-alive implícito.
+							throw new NodeOperationError(
+								this.getNode(),
+								'Configure at least one action or enable "Automatically Add Closing Input"',
+								{ itemIndex: i },
+							);
+						}
+
+						const envelope = buildEnvelope(actions);
+
+						const respond = this.getNodeParameter('respondWebhook', i, true) as boolean;
+						if (respond && !responded) {
+							// Misma forma que el core Respond to Webhook (IN8nHttpFullResponse).
+							// Sin webhook esperando (ejecución manual) es no-op: no lanza.
+							this.sendResponse({
+								body: envelope,
+								headers: { 'content-type': 'application/json' },
+								statusCode: 200,
+							});
+							responded = true;
+						}
+
+						returnData.push({ json: envelope, pairedItem: { item: i } });
+					} catch (error) {
+						if (this.continueOnFail()) {
+							returnData.push({
+								json: { error: (error as Error).message },
+								pairedItem: { item: i },
+							});
+							continue;
+						}
+						// Siempre se envuelve, incluso lo que ya es NodeOperationError: la regla
+						// `require-node-api-error` del linter de nodos verificados prohíbe relanzar
+						// el error tal cual. NodeOperationError conserva el mensaje del original,
+						// así que el texto que ve el usuario no cambia.
+						throw new NodeOperationError(this.getNode(), error as Error, { itemIndex: i });
+					}
+				}
+
+				return [returnData];
+			},
+		},
 	};
 }

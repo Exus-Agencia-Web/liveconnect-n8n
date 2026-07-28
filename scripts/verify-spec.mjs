@@ -41,8 +41,16 @@ for (const [p, methods] of Object.entries(spec.paths)) {
 const opRoute = {};
 const nodeEndpoints = new Map();
 let hard = 0;
+/**
+ * Recursos que NO salen del OpenAPI: su operación la implementa `customOperations` del
+ * nodo (no hay endpoint que verificar). Hoy solo `callbackResponse`, que construye la
+ * respuesta del callback del Flowbot.
+ */
+const RECURSOS_LOCALES = new Set(['callbackResponse']);
+
 for (const p of props.filter((p) => p.name === 'operation')) {
 	const res = p.displayOptions.show.resource[0];
+	if (RECURSOS_LOCALES.has(res)) continue;
 	for (const o of p.options) {
 		opRoute[`${res}.${o.value}`] = o.routing.request;
 		const key = `${o.routing.request.method} ${o.routing.request.url}`;
@@ -73,6 +81,7 @@ const sent = {};
 for (const p of props) {
 	if (['resource', 'operation', 'fullResponse'].includes(p.name)) continue;
 	const res = p.displayOptions.show.resource[0];
+	if (RECURSOS_LOCALES.has(res)) continue;
 	for (const op of p.displayOptions.show.operation) {
 		const key = `${res}.${op}`;
 		sent[key] = sent[key] || [];
