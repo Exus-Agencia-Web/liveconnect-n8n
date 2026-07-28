@@ -80,9 +80,33 @@ Resultado: escáner oficial en 0 errores (antes 337); `npm run verify` 58/58; `n
 
 **Compatibilidad**: el tipo del nodo español es `n8n-nodes-liveconnect-es.liveConnect`, distinto del paquete principal. Los workflows existentes no se rompen (siguen en el paquete inglés); quien quiera la UI en español debe instalar el paquete aparte y recrear los nodos.
 
+### 2.0.0 — Un nodo regular, claves de salida en inglés y credencial propia por paquete
+
+Tras 1.0.0, dos releases de parche llegaron a la verificación real de n8n: **1.0.1** corrigió los 2 errores que el escáner oficial encontró en v1.0.0 y que `n8n-node lint` no veía (de ahí `scripts/lint-scanner.mjs`); **1.0.2** corrigió que el paquete español mutaba en sitio los objetos compartidos con el inglés (`clonarDescripcion`) y añadió a ambos README el aviso de "no instalar los dos paquetes en la misma instancia". **n8n rechazó la verificación de 1.0.2** con 3 hallazgos de severidad HIGH — la reseña llegó por el canal de revisión de n8n, no hay registro textual de ella en este repo, así que aquí se resume por lo que cada commit corrigió:
+
+1. El paquete registraba **dos nodos regulares** (`LiveConnect` y `LiveConnectCallbackResponse`); n8n **solo admite uno por paquete verificado** (los triggers no cuentan aparte).
+2. Los dos triggers exponían al workflow claves de salida **en español** (`mensaje`, `esPrimerTurno`, `tieneAdjunto`, `hayAgenteHumano`, `contacto`, `id_conversacion`, `id_canal`), pese a que la interfaz ya estaba en inglés desde 1.0.0.
+3. Los dos paquetes (inglés y español) declaraban **la misma credencial** (`liveConnectApi`); el aviso de "no instalar los dos" que sumó 1.0.2 no bastaba — n8n exige que puedan coexistir.
+
+Cómo se resolvió cada uno:
+
+1. **El nodo de respuesta pasó a ser el recurso `callbackResponse` de `LiveConnect`.** El hallazgo que evitó tener que convertir programáticas las otras 58 operaciones: `n8n-workflow` define `customOperations` justo para "nodes that do not implement an execute method, such as declarative nodes" (`interfaces.d.ts`), lo resuelve `workflow-execute.ts`, y `nodes-base` ya lo usa en `WhatsApp.node.ts`. Las properties del nodo retirado pasaron intactas a `descriptions/CallbackResponseDescription.ts`; su lógica (antes el `execute()` del nodo) es ahora `customOperations.callbackResponse.send` en `LiveConnect.node.ts`, y sigue recibiendo `IExecuteFunctions`, así que `sendResponse()` no cambió. `LiveConnectCallbackResponse.node.ts` se eliminó, `package.json` pasa a registrar 3 nodos, y `scripts/verify-spec.mjs` excluye el recurso (su operación no sale del OpenAPI). `smoke-response.mjs` pasó a ejercitar la operación custom (13/13).
+2. **Las claves de los triggers se tradujeron**: `mensaje`→`message`, `esPrimerTurno`→`isFirstTurn`, `tieneAdjunto`→`hasAttachment`, `hayAgenteHumano`→`hasHumanAgent`, `contacto`→`contact`, `id_conversacion`→`conversationId`, `id_canal`→`channelId` (`simplifyCallbackEvent`/`simplifyProxyEvent` en `TriggerFunctions.ts`). `raw` no cambió: es el payload de LiveConnect, no una salida propia. El diccionario del paquete español (`i18n/es.json`) remapeó las 57 claves del nodo retirado al recurso nuevo y sumó los 5 textos que antes no existían (el propio recurso `callbackResponse` y su operación `send`): cobertura 1067/1067 (100 %, antes 1065/1065).
+3. **Cada paquete declara ahora su propia credencial.** El nombre pasó de estar repetido como literal `'liveConnectApi'` en cada sitio que lo necesitaba, a vivir en un objeto deliberadamente mutable, `LC_CREDENTIALS` (`GenericFunctions.ts`). `scripts/build-es-package.mjs` lo reescribe a `liveConnectApiEs` sobre la copia propia del compilado (`dist-es/base/`), sin tocar el paquete inglés, y hace lo mismo aparte con el `credentials[].name` que declara cada nodo y con el `name` de la propia clase de credencial. Prueba nueva en `smoke-i18n.mjs`: los dos paquetes cargados en el mismo proceso declaran credenciales distintas y cada nodo pide la suya. El aviso de "no instalar los dos paquetes" se quitó de ambos README y de [08-paquete-espanol.md](08-paquete-espanol.md).
+
+De paso, se revisó el código fuente en busca de comentarios que hubieran quedado en español de rondas anteriores; hoy no queda ninguno en `nodes/`, `credentials/` ni `scripts/` (verificado con una búsqueda en todo el árbol). Queda explícito en [CLAUDE.md](../CLAUDE.md): código y comentarios en inglés, `docs/` en español.
+
+**BREAKING**:
+
+- Los workflows con el nodo **LiveConnect Callback Response** no migran solos: hay que rehacerlos con el recurso `callbackResponse` del nodo `LiveConnect`. No hay conversión automática.
+- Cualquier expresión que lea las claves viejas de los triggers (`mensaje`, `esPrimerTurno`, `tieneAdjunto`, `hayAgenteHumano`, `contacto`, `id_conversacion`, `id_canal`) deja de funcionar; hay que actualizarla a la clave nueva en inglés.
+- Quien ya use **`n8n-nodes-liveconnect-es`**: su credencial pasa de tipo `liveConnectApi` a `liveConnectApiEs`. Al actualizar, hay que crear la credencial de nuevo con ese tipo y reasignarla en los nodos — la anterior no migra sola.
+
+Resultado: `npm run verify` 58/58 endpoints (el recurso `callbackResponse` queda fuera adrede, no sale del spec); `npm run smoke` en verde, 116 pruebas (109 del paquete principal + 7 del paquete español, antes 114).
+
 ## Decisiones de fondo que siguen vigentes
 
-- **Nodo declarativo, sin `execute()`**: menos código y menos superficie de error para 58 operaciones. Los triggers y el nodo de respuesta son programáticos porque n8n no ofrece otra vía.
+- **Nodo declarativo, sin `execute()` propio**: menos código y menos superficie de error para 58 operaciones. Los dos triggers son programáticos porque n8n no ofrece otra vía; el recurso `callbackResponse` lo es vía `customOperations`, sin convertir programático el resto del nodo.
 - **El OpenAPI manda**, y `npm run verify` lo comprueba en cada cambio.
 - **Errores que enseñan**: cuando el nodo puede saber qué falta, lo dice con el nombre del campo, en vez de dejar que el API responda algo opaco.
 - **Nunca bloquear por una consulta auxiliar fallida**: si no se puede leer la plantilla, se envía lo configurado y decide el API.

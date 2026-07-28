@@ -2,17 +2,32 @@
 
 La interfaz del paquete principal está en inglés (ver [01-arquitectura.md](01-arquitectura.md) § Idioma) porque lo exige la verificación de nodos comunitarios de n8n. Este documento explica cómo el español **no desaparece**: se publica como un segundo paquete, generado desde el mismo código.
 
-## Los dos paquetes NO pueden convivir en una instancia
+## Los dos paquetes SÍ pueden convivir en una instancia (desde 2.0.0)
 
-Los **tipos de nodo** llevan el prefijo del paquete (`n8n-nodes-liveconnect.liveConnect` vs `n8n-nodes-liveconnect-es.liveConnect`), pero **los tipos de credencial no**: n8n las indexa por `name` en un espacio global, y ambos paquetes declaran `liveConnectApi`. Instalados a la vez, una de las dos clases gana y define el formulario —y su idioma— para los dos. Hoy la lógica es idéntica, así que no se pierden datos; si algún día divergen, el fallo sería silencioso.
+Cada paquete declara su propia credencial: el inglés `liveConnectApi`, el español `liveConnectApiEs`.
 
-**Por qué no se renombra la credencial del paquete español**: el nombre no vive solo en la clase. `GenericFunctions.ts` lo tiene en `LIVECONNECT_CREDENTIALS_NAME` y lo usan el refresco del token, los `loadOptions`, los `webhookMethods` y las consultas del preSend de plantillas. Renombrarlo en el paquete generado exigiría parchear también ese código compilado — mucha más superficie de fallo que el aviso en ambos README.
+**El problema que había**: los **tipos de nodo** llevan el prefijo del paquete (`n8n-nodes-liveconnect.liveConnect` vs `n8n-nodes-liveconnect-es.liveConnect`), pero **los tipos de credencial no** — n8n las indexa por `name` en un espacio **global**. Hasta la 1.0.x los dos paquetes declaraban `liveConnectApi`: instalados a la vez, una de las dos clases ganaba y definía el formulario —y su idioma— para los dos. La revisión de verificación de n8n lo señaló como uno de los puntos a corregir.
 
-Está avisado en los dos README. Si en el futuro hace falta que convivan, el cambio limpio es que el nombre de la credencial salga de una constante configurable en el propio código base, no de un parche en el generador.
+**Cómo se resolvió**: el nombre que usan en tiempo de ejecución el refresco del token, los `loadOptions`, los `webhookMethods` del Proxy Trigger y el preSend de plantillas vive ahora en un objeto deliberadamente MUTABLE, `LC_CREDENTIALS = { name: 'liveConnectApi' }` (`GenericFunctions.ts`), en vez de repetido como literal en cada sitio. Es, casi al pie de la letra, el cambio que esta misma sección pedía antes de la 2.0.0: *"que el nombre de la credencial salga de una constante configurable en el propio código base, no de un parche en el generador"*.
+
+La metadata declarativa —el `credentials: [{ name }]` de cada nodo y el `name` de la propia clase de credencial— sigue siendo el literal `'liveConnectApi'` en el código fuente en inglés (no se lee de `LC_CREDENTIALS` en tiempo de definición). `scripts/build-es-package.mjs` reescribe las dos cosas por separado sobre la copia propia del compilado (`dist-es/base/`, físicamente independiente de `dist/`), nunca sobre el paquete inglés:
+
+```js
+// 1. El valor que usan las llamadas al API en runtime:
+require(".../base/nodes/LiveConnect/GenericFunctions.js").LC_CREDENTIALS.name = "liveConnectApiEs";
+
+// 2. La metadata declarativa de cada wrapper (nodos y credencial), en su constructor:
+if (Array.isArray(this.description?.credentials)) {
+	for (const credencial of this.description.credentials) credencial.name = "liveConnectApiEs";
+}
+if (this.name === "liveConnectApi") this.name = "liveConnectApiEs";
+```
+
+**Verificado en `scripts/smoke-i18n.mjs`**: la prueba *"los dos paquetes declaran credenciales distintas (pueden convivir)"* carga las clases reales de `dist/` y `dist-es/` en el mismo proceso y comprueba que la credencial inglesa sigue siendo `liveConnectApi`, la española es `liveConnectApiEs`, y que cada uno de los 3 nodos de cada paquete pide la credencial que le corresponde. El aviso de "no instalar los dos paquetes" ya no aparece en ningún README.
 
 ## Efecto secundario de `usableAsTool` en los triggers
 
-Los cuatro nodos declaran `usableAsTool: true` porque la regla oficial `node-usable-as-tool` lo exige (solo exime a los nodos con salida de tipo IA e `inputs: []`, y un trigger tiene `outputs: ['main']`). Consecuencia: n8n registra una variante «…Tool» por cada nodo, y la de los triggers no tiene `execute()` — aparecería en el selector de herramientas de un AI Agent y fallaría si alguien la eligiera. No se puede quitar sin romper el lint del escáner: **no lo "arregles"**.
+Los tres nodos declaran `usableAsTool: true` porque la regla oficial `node-usable-as-tool` lo exige (solo exime a los nodos con salida de tipo IA e `inputs: []`, y un trigger tiene `outputs: ['main']`). Consecuencia: n8n registra una variante «…Tool» por cada nodo, y la de los triggers no tiene `execute()` — aparecería en el selector de herramientas de un AI Agent y fallaría si alguien la eligiera. No se puede quitar sin romper el lint del escáner: **no lo "arregles"**.
 
 ## Limitación conocida: los mensajes de error van en inglés
 
@@ -41,18 +56,24 @@ dist-es/
   package.json                        metadatos propios (nombre, files, n8n.nodes/credentials)
 ```
 
-Cada wrapper es una clase que extiende la clase inglesa y, en el constructor, traduce `this.description` (o `this` en el caso de la credencial) con el diccionario:
+Cada wrapper es una clase que extiende la clase inglesa y, en el constructor, **clona** `this.description` (o `this` en el caso de la credencial) y la traduce con el diccionario:
 
 ```js
 class LiveConnect extends base.LiveConnect {
 	constructor() {
 		super(...arguments);
-		traducirDescripcion(this.description, 'liveConnect', diccionario);
+		// Clona ANTES de traducir: las properties del nodo son los mismos objetos que
+		// exportan las descriptions — traducirlas en sitio dejaría el paquete inglés en
+		// español si los dos se cargan en el mismo proceso (ver "Los dos paquetes…" arriba).
+		if (this.description !== undefined) this.description = clonarDescripcion(this.description);
+		traducirDescripcion(this.description ?? this, 'liveConnect', diccionario);
 	}
 }
 ```
 
-n8n carga cada clase por el nombre del archivo, así que el wrapper conserva el nombre y el export originales y hereda **todo lo demás sin tocarlo**: `routing`, `methods` (los `loadOptions`), `webhooks`, `webhookMethods`, `execute`. Solo se traducen los campos visibles — `displayName`, `description`, `placeholder`, `action`, `hint` y `subtitle` — nunca `name`, `value`, `routing` ni `displayOptions`.
+El clon se añadió en 1.0.2, a raíz de una revisión de código: `JSON.parse(JSON.stringify(...))` no sirve porque borraría las funciones (`preSend`/`postReceive` del routing), así que `clonarDescripcion` copia pasando esas funciones **por referencia**.
+
+n8n carga cada clase por el nombre del archivo, así que el wrapper conserva el nombre y el export originales y hereda **todo lo demás sin tocarlo**: `routing`, `methods` (los `loadOptions`), `webhooks`, `webhookMethods`, `customOperations`. Solo se traducen los campos visibles — `displayName`, `description`, `placeholder`, `action`, `hint` y `subtitle` — nunca `name`, `value`, `routing` ni `displayOptions`.
 
 ## 3. Las rutas del diccionario
 
@@ -84,13 +105,14 @@ El código fuente está en inglés porque así lo exige la verificación de n8n.
 
 ## 5. Cobertura y pruebas
 
-Cobertura actual: **1065/1065 (100 %)**. `scripts/smoke-i18n.mjs` (parte de `npm run smoke`, requiere haber generado `dist-es/` antes con `npm run build:es`) carga las clases reales del paquete generado y comprueba:
+Cobertura actual: **1067/1067 (100 %)**. `scripts/smoke-i18n.mjs` (parte de `npm run smoke`, requiere haber generado `dist-es/` antes con `npm run build:es`) carga las clases reales del paquete generado y comprueba:
 
-- que el paquete generado expone las 5 clases (4 nodos + credencial) con su descripción;
+- que el paquete generado expone las 4 clases (3 nodos + credencial) con su descripción;
 - que las rutas del diccionario siguen encajando con la estructura real del nodo (umbral: cobertura ≥ 95 %, hoy 100 %);
 - que un texto sin traducción cae al **inglés**, nunca queda vacío ni rompe nada;
 - que el paquete inglés **no queda traducido**: los wrappers no mutan la clase base (si lo hicieran, el paquete que se envía a verificación saldría en español);
-- que el `package.json` generado apunta a los wrappers (`nodes/…`) y no al paquete base (`base/…`).
+- que el `package.json` generado apunta a los wrappers (`nodes/…`) y no al paquete base (`base/…`);
+- que **los dos paquetes declaran credenciales distintas** (`liveConnectApi` / `liveConnectApiEs`) y cada nodo pide la suya — ver "Los dos paquetes SÍ pueden convivir" arriba.
 
 ## 6. Compatibilidad
 

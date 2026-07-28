@@ -42,7 +42,7 @@ export class LiveConnectCallbackTrigger implements INodeType {
 		properties: [
 			{
 				displayName:
-					'Activate the workflow and paste the <b>production</b> URL of this webhook into the callback action of your Flowbot. LiveConnect expects a synchronous response shaped like <code>{ "status": 1, "status_message": "Ok", "data": { "actions": [...] } }</code> — build it without code using the <b>LiveConnect Callback Response</b> node (recommended: it responds on its own and applies the closing <code>input</code> rule) or with a <b>Respond to Webhook</b> node. Examples from the repository: <b>examples/09</b> (visual) and <b>examples/07</b> (with Code).',
+					'Activate the workflow and paste the <b>production</b> URL of this webhook into the callback action of your Flowbot. LiveConnect expects a synchronous response shaped like <code>{ "status": 1, "status_message": "Ok", "data": { "actions": [...] } }</code> — build it without code with the <b>Callback Response</b> resource of the LiveConnect node (recommended: it responds on its own and applies the closing <code>input</code> rule) or with a <b>Respond to Webhook</b> node. Examples from the repository: <b>examples/09</b> (visual) and <b>examples/07</b> (with Code).',
 				name: 'notice',
 				type: 'notice',
 				default: '',

@@ -1036,7 +1036,7 @@
 	"liveConnectApi._._.privateKey.displayName": "Clave Privada (privateKey)",
 	"liveConnectApi._._.sessionToken.displayName": "Session Token",
 	"liveConnectApi.displayName": "LiveConnect API",
-	"liveConnectCallbackTrigger._._.notice.displayName": "Activa el workflow y pega la URL de <b>producción</b> de este webhook en la acción de callback de tu Flowbot. LiveConnect espera una respuesta síncrona con la forma <code>{ \"status\": 1, \"status_message\": \"Ok\", \"data\": { \"actions\": [...] } }</code> — constrúyela sin código con el nodo <b>LiveConnect Respuesta al Callback</b> (recomendado: responde solo y aplica la regla del <code>input</code> de cierre) o con un nodo <b>Respond to Webhook</b>. Ejemplos del repositorio: <b>examples/09</b> (visual) y <b>examples/07</b> (con Code).",
+	"liveConnectCallbackTrigger._._.notice.displayName": "Activa el workflow y pega la URL de <b>producción</b> de este webhook en la acción de callback de tu Flowbot. LiveConnect espera una respuesta síncrona con la forma <code>{ \"status\": 1, \"status_message\": \"Ok\", \"data\": { \"actions\": [...] } }</code> — constrúyela sin código con el recurso <b>Respuesta al Callback</b> del nodo LiveConnect (recomendado: responde solo y aplica la regla del <code>input</code> de cierre) o con un nodo <b>Respond to Webhook</b>. Ejemplos del repositorio: <b>examples/09</b> (visual) y <b>examples/07</b> (con Code).",
 	"liveConnectCallbackTrigger._._.path.description": "Último tramo de la URL del webhook, para identificarla cuando tienes varios chatbots. Al cambiarla, la URL cambia: actualízala también en el Flowbot.",
 	"liveConnectCallbackTrigger._._.path.displayName": "Ruta del Webhook",
 	"liveConnectCallbackTrigger._._.path.placeholder": "callback-ventas",

@@ -115,7 +115,7 @@ Guía oficial: <https://docs.n8n.io/connect/create-nodes/build-your-node/referen
 
 ## Íconos
 
-El ícono actual es `liveconnect2.svg` (claro) y `liveconnect2.dark.svg` (oscuro, mismo dibujo con degradado aclarado). Los cuatro nodos y la credencial declaran `icon: { light, dark }`: el escáner de nodos verificados (`icon-validation` / `icon-prefer-themed-variants`) exige las dos variantes y **prohíbe que ambas apunten al mismo archivo**, de ahí que exista un segundo SVG y no un simple alias. n8n y el navegador **cachean el ícono con fuerza**: si se cambia el dibujo, hay que **renombrar el archivo** (y sus referencias en los cuatro nodos y la credencial) para que se vea el nuevo.
+El ícono actual es `liveconnect2.svg` (claro) y `liveconnect2.dark.svg` (oscuro, mismo dibujo con degradado aclarado). Los tres nodos y la credencial declaran `icon: { light, dark }`: el escáner de nodos verificados (`icon-validation` / `icon-prefer-themed-variants`) exige las dos variantes y **prohíbe que ambas apunten al mismo archivo**, de ahí que exista un segundo SVG y no un simple alias. n8n y el navegador **cachean el ícono con fuerza**: si se cambia el dibujo, hay que **renombrar el archivo** (y sus referencias en los tres nodos y la credencial) para que se vea el nuevo.
 
 ## Idioma de la UI
 
