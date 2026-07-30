@@ -166,6 +166,13 @@ export class LiveConnect implements INodeType {
 				default: false,
 				description:
 					'Whether to return the full API envelope ({ status, status_message, data }) instead of just the data field',
+				// Hidden for Callback Response: that resource never calls the API, so there is
+				// no envelope to unwrap and the toggle would only add noise.
+				displayOptions: {
+					hide: {
+						resource: ['callbackResponse'],
+					},
+				},
 			},
 		],
 	};
